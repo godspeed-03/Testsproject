@@ -96,8 +96,8 @@ export default function AnalyticsPage() {
     <div className="flex-1 p-6 lg:p-10 max-w-7xl mx-auto w-full">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <Link href="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-2 text-sm font-medium">
-            <ArrowLeft size={16} /> Back to Dashboard
+          <Link href={data.testId ? `/dashboard/test/${data.testId}` : '/dashboard'} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 text-sm font-medium">
+            <ArrowLeft size={16} /> Back to Test History
           </Link>
           <h1 className="text-3xl font-bold text-foreground mb-1">Performance Report</h1>
           <p className="text-muted-foreground">Test: <span className="font-semibold text-foreground/90">{testName}</span></p>

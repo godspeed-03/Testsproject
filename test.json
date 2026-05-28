@@ -1,0 +1,1206 @@
+[
+  {
+    "testId": "test-001-pure-mcq-single",
+    "testName": "General Knowledge - Single Correct MCQ",
+    "description": "Basic MCQ test with only single correct answers",
+    "totalTime": 600,
+    "passingScore": 60,
+    "sections": [
+      {
+        "sectionId": "gk-001",
+        "sectionName": "General Knowledge",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q1",
+            "type": "mcq-single",
+            "question": "What is the capital of France?",
+            "topic": "Geography",
+            "options": ["London", "Paris", "Berlin", "Madrid"],
+            "correctAnswer": [1],
+            "explanation": "Paris is the capital and largest city of France, located in northern France.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q2",
+            "type": "mcq-single",
+            "question": "Which planet is known as the Red Planet?",
+            "topic": "Astronomy",
+            "options": ["Venus", "Mars", "Jupiter", "Saturn"],
+            "correctAnswer": [1],
+            "explanation": "Mars is known as the Red Planet due to its reddish appearance caused by iron oxide on its surface.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q3",
+            "type": "mcq-single",
+            "question": "Who wrote 'Romeo and Juliet'?",
+            "topic": "Literature",
+            "options": ["Jane Austen", "William Shakespeare", "Charles Dickens", "Mark Twain"],
+            "correctAnswer": [1],
+            "explanation": "William Shakespeare wrote this famous tragedy during the early part of his career.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q4",
+            "type": "mcq-single",
+            "question": "What is the smallest prime number?",
+            "topic": "Mathematics",
+            "options": ["0", "1", "2", "3"],
+            "correctAnswer": [2],
+            "explanation": "2 is the smallest prime number and the only even prime number.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q5",
+            "type": "mcq-single",
+            "question": "In which year did World War II end?",
+            "topic": "History",
+            "options": ["1943", "1944", "1945", "1946"],
+            "correctAnswer": [2],
+            "explanation": "World War II officially ended in 1945 with the surrender of Japan in September.",
+            "difficulty": "medium"
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "testId": "test-002-mcq-multiple",
+    "testName": "Science - Multiple Correct MCQ",
+    "description": "Test with multiple correct answers - choose all that apply",
+    "totalTime": 1200,
+    "passingScore": 65,
+    "sections": [
+      {
+        "sectionId": "sci-001",
+        "sectionName": "Physics",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q1",
+            "type": "mcq-multiple",
+            "question": "Which of the following are properties of light? (Select all that apply)",
+            "topic": "Optics",
+            "options": [
+              "Light travels in straight lines",
+              "Light can be refracted",
+              "Light always moves at the same speed in all mediums",
+              "Light exhibits wave-particle duality"
+            ],
+            "correctAnswer": [0, 1, 3],
+            "explanation": "Light travels in straight lines (ray optics), can be refracted when passing through different mediums, and exhibits wave-particle duality. However, light speed varies in different mediums, not constant.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q2",
+            "type": "mcq-multiple",
+            "question": "Which of these are SI base units? (Select all that apply)",
+            "topic": "Measurements",
+            "options": ["Kilogram", "Gram", "Second", "Kilometer", "Ampere"],
+            "correctAnswer": [0, 2, 4],
+            "explanation": "SI base units include kilogram (mass), second (time), and ampere (electric current). Gram is not an SI base unit, and kilometer is a derived unit.",
+            "difficulty": "medium"
+          }
+        ]
+      },
+      {
+        "sectionId": "sci-002",
+        "sectionName": "Chemistry",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q3",
+            "type": "mcq-multiple",
+            "question": "Which elements are halogens? (Select all that apply)",
+            "topic": "Periodic Table",
+            "options": ["Chlorine", "Bromine", "Oxygen", "Fluorine", "Nitrogen"],
+            "correctAnswer": [0, 1, 3],
+            "explanation": "Halogens are Group 17 elements: Fluorine, Chlorine, Bromine, Iodine. Oxygen and Nitrogen belong to other groups.",
+            "difficulty": "medium"
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "testId": "test-003-true-false",
+    "testName": "Technology Basics - True/False",
+    "description": "Quick assessment with true/false questions",
+    "totalTime": 300,
+    "passingScore": 70,
+    "sections": [
+      {
+        "sectionId": "tech-001",
+        "sectionName": "Technology",
+        "sectionTime": 300,
+        "questions": [
+          {
+            "questionId": "q1",
+            "type": "true-false",
+            "question": "HTML is a programming language.",
+            "topic": "Web Development",
+            "correctAnswer": [false],
+            "explanation": "HTML is a markup language, not a programming language. It is used to structure content on web pages."
+          },
+          {
+            "questionId": "q2",
+            "type": "true-false",
+            "question": "Python is an interpreted language.",
+            "topic": "Programming Languages",
+            "correctAnswer": [true],
+            "explanation": "Python is interpreted, meaning code is executed line by line by an interpreter rather than being compiled first."
+          },
+          {
+            "questionId": "q3",
+            "type": "true-false",
+            "question": "MongoDB stores data in tables and rows like SQL databases.",
+            "topic": "Databases",
+            "correctAnswer": [false],
+            "explanation": "MongoDB is a NoSQL database that stores data in JSON-like documents (BSON format), not in traditional tables and rows."
+          },
+          {
+            "questionId": "q4",
+            "type": "true-false",
+            "question": "JavaScript can only run in web browsers.",
+            "topic": "JavaScript",
+            "correctAnswer": [false],
+            "explanation": "JavaScript can run in web browsers, but also on servers (Node.js) and other environments."
+          },
+          {
+            "questionId": "q5",
+            "type": "true-false",
+            "question": "API stands for Application Programming Interface.",
+            "topic": "Concepts",
+            "correctAnswer": [true],
+            "explanation": "Yes, API is a set of protocols and tools for building application software that specifies how software components interact."
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "testId": "test-004-mixed-all-types",
+    "testName": "UPSC GS Preparation - Mixed Question Types",
+    "description": "Comprehensive test with all question types - MCQ single, MCQ multiple, True/False, and Matching",
+    "totalTime": 2700,
+    "passingScore": 60,
+    "sections": [
+      {
+        "sectionId": "gs-01-history",
+        "sectionName": "Indian History",
+        "sectionTime": 900,
+        "questions": [
+          {
+            "questionId": "q1",
+            "type": "mcq-single",
+            "question": "Who was the first President of Independent India?",
+            "topic": "Modern India",
+            "options": ["Jawaharlal Nehru", "Dr. Rajendra Prasad", "Vallabhbhai Patel", "Abul Kalam Azad"],
+            "correctAnswer": [1],
+            "explanation": "Dr. Rajendra Prasad was elected as the first President of India in 1950 and served until 1962.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q2",
+            "type": "mcq-multiple",
+            "question": "Which of the following were features of the Mauryan Empire? (Select all that apply)",
+            "topic": "Ancient India",
+            "options": [
+              "Administrative system with provinces",
+              "Elaborate intelligence network",
+              "Decentralized governance without central authority",
+              "Economic prosperity with trade networks"
+            ],
+            "correctAnswer": [0, 1, 3],
+            "explanation": "The Mauryan Empire under Ashoka had a centralized administration, sophisticated spy network, and extensive trade. It was NOT decentralized.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q3",
+            "type": "true-false",
+            "question": "The Battle of Plassey (1757) was fought between British and French forces.",
+            "topic": "Colonial India",
+            "correctAnswer": [false],
+            "explanation": "The Battle of Plassey was fought between the British East India Company and Bengali Nawab Siraj-ud-Daulah, not the French."
+          }
+        ]
+      },
+      {
+        "sectionId": "gs-02-polity",
+        "sectionName": "Indian Polity",
+        "sectionTime": 900,
+        "questions": [
+          {
+            "questionId": "q4",
+            "type": "mcq-single",
+            "question": "How many fundamental rights are listed in the Indian Constitution?",
+            "topic": "Constitution",
+            "options": ["5", "6", "7", "8"],
+            "correctAnswer": [1],
+            "explanation": "The Indian Constitution lists 6 fundamental rights: Right to Equality, Right to Freedom, Right against Exploitation, Right to Freedom of Religion, Cultural and Educational Rights, and Right to Constitutional Remedies.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q5",
+            "type": "mcq-multiple",
+            "question": "Which of the following are DPSP (Directive Principles of State Policy)? (Select all that apply)",
+            "topic": "Constitution",
+            "options": [
+              "Prohibition of child labor",
+              "Free legal aid to poor",
+              "Equal pay for equal work",
+              "Right to vote"
+            ],
+            "correctAnswer": [0, 1, 2],
+            "explanation": "The first three are DPSP which are non-justiciable guidelines for the state. Right to vote is a fundamental right.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q6",
+            "type": "matching",
+            "question": "Match the Articles of Indian Constitution with their content:",
+            "topic": "Constitution",
+            "pairs": [
+              {
+                "left": "Article 15",
+                "right": "Abolition of Untouchability"
+              },
+              {
+                "left": "Article 17",
+                "right": "Prohibition of Discrimination on grounds of religion, race, caste, sex or place of birth"
+              },
+              {
+                "left": "Article 23",
+                "right": "Prohibition of traffic in human beings and forced labour"
+              },
+              {
+                "left": "Article 19",
+                "right": "Protection of certain rights regarding freedom of speech"
+              }
+            ],
+            "correctMatches": {
+              "0": "1",
+              "1": "3",
+              "2": "2",
+              "3": "0"
+            },
+            "explanation": "Article 15: Non-discrimination | Article 17: Abolition of untouchability | Article 19: Freedom of speech | Article 23: Prohibition of traffic in human beings",
+            "difficulty": "hard"
+          }
+        ]
+      },
+      {
+        "sectionId": "gs-03-geography",
+        "sectionName": "Indian Geography",
+        "sectionTime": 900,
+        "questions": [
+          {
+            "questionId": "q7",
+            "type": "mcq-single",
+            "question": "Which is the longest river in India?",
+            "topic": "Physical Geography",
+            "options": ["Brahmaputra", "Ganges", "Yamuna", "Godavari"],
+            "correctAnswer": [1],
+            "explanation": "The Ganges (Ganga) is the longest river in India with a length of approximately 2,525 km.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q8",
+            "type": "mcq-multiple",
+            "question": "Which of the following states are completely landlocked? (Select all that apply)",
+            "topic": "Political Geography",
+            "options": ["Madhya Pradesh", "Chhattisgarh", "Odisha", "Jharkhand", "Assam"],
+            "correctAnswer": [0, 1, 3],
+            "explanation": "Madhya Pradesh, Chhattisgarh, and Jharkhand are completely landlocked. Odisha and Assam have coastal/river access.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q9",
+            "type": "true-false",
+            "question": "The Deccan Plateau covers more area than the Indo-Gangetic Plains.",
+            "topic": "Physical Geography",
+            "correctAnswer": [true],
+            "explanation": "The Deccan Plateau is the largest plateau in India and covers a larger area than the Indo-Gangetic Plains."
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "testId": "test-005-coding-interview",
+    "testName": "JavaScript Technical Interview - Mixed",
+    "description": "Technical assessment for JavaScript developers with various question types",
+    "totalTime": 1800,
+    "passingScore": 65,
+    "sections": [
+      {
+        "sectionId": "js-basics",
+        "sectionName": "JavaScript Basics",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q1",
+            "type": "mcq-single",
+            "question": "What is the output of: console.log(typeof typeof 1)?",
+            "topic": "Data Types",
+            "options": ["number", "string", "undefined", "object"],
+            "correctAnswer": [1],
+            "explanation": "typeof 1 returns 'number' (a string), then typeof 'number' returns 'string'.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q2",
+            "type": "mcq-multiple",
+            "question": "Which of these are falsy values in JavaScript? (Select all that apply)",
+            "topic": "Data Types",
+            "options": ["0", "'false'", "null", "undefined", "false", "NaN"],
+            "correctAnswer": [0, 2, 3, 4, 5],
+            "explanation": "Falsy values: 0, null, undefined, false, NaN, and empty string ''. The string 'false' is truthy.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q3",
+            "type": "true-false",
+            "question": "In JavaScript, [] == {} evaluates to true.",
+            "topic": "Comparison",
+            "correctAnswer": [false],
+            "explanation": "[] == {} evaluates to false because they are different object instances, even though both are truthy."
+          }
+        ]
+      },
+      {
+        "sectionId": "js-advanced",
+        "sectionName": "Advanced Concepts",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q4",
+            "type": "mcq-single",
+            "question": "What does Promise.race() do?",
+            "topic": "Promises & Async",
+            "options": [
+              "Waits for all promises to resolve",
+              "Returns the result of whichever promise settles first",
+              "Creates multiple race conditions",
+              "Executes promises in sequence"
+            ],
+            "correctAnswer": [1],
+            "explanation": "Promise.race() returns a promise that settles with the result of whichever promise in the iterable settles first.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q5",
+            "type": "mcq-multiple",
+            "question": "What are the uses of 'this' keyword in JavaScript? (Select all that apply)",
+            "topic": "Context",
+            "options": [
+              "Refers to the object that the method is called on",
+              "Refers to the global object in functions",
+              "Can be explicitly set using call(), apply(), or bind()",
+              "Always refers to the window object",
+              "Can be used to access object properties"
+            ],
+            "correctAnswer": [0, 1, 2, 4],
+            "explanation": "'this' context depends on how a function is called. It doesn't always refer to window (e.g., in strict mode it's undefined).",
+            "difficulty": "hard"
+          },
+          {
+            "questionId": "q6",
+            "type": "matching",
+            "question": "Match JavaScript methods with their descriptions:",
+            "topic": "Array Methods",
+            "pairs": [
+              {
+                "left": "map()",
+                "right": "Reduces array to single value by applying function"
+              },
+              {
+                "left": "filter()",
+                "right": "Creates new array with elements passing test"
+              },
+              {
+                "left": "reduce()",
+                "right": "Transforms each element and returns new array"
+              },
+              {
+                "left": "forEach()",
+                "right": "Executes function for each element (no return)"
+              }
+            ],
+            "correctMatches": {
+              "0": "2",
+              "1": "1",
+              "2": "0",
+              "3": "3"
+            },
+            "explanation": "map() transforms, filter() selects, reduce() aggregates, forEach() iterates.",
+            "difficulty": "medium"
+          }
+        ]
+      },
+      {
+        "sectionId": "js-practical",
+        "sectionName": "Practical Scenarios",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q7",
+            "type": "mcq-single",
+            "question": "What is the best way to detect if a variable is an array?",
+            "topic": "Type Checking",
+            "options": [
+              "typeof arr === 'array'",
+              "arr instanceof Array",
+              "Array.isArray(arr)",
+              "arr.length !== undefined"
+            ],
+            "correctAnswer": [2],
+            "explanation": "Array.isArray() is the most reliable method. typeof returns 'object' for arrays, and instanceof can fail across frames.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q8",
+            "type": "true-false",
+            "question": "const variables cannot be reassigned but their properties can be modified.",
+            "topic": "Variables",
+            "correctAnswer": [true],
+            "explanation": "const prevents reassignment but doesn't make objects immutable. You can still modify properties of const objects."
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "testId": "test-006-economics",
+    "testName": "Economics Fundamentals - All Types",
+    "description": "Mixed format economics test suitable for competitive exams",
+    "totalTime": 1500,
+    "passingScore": 60,
+    "sections": [
+      {
+        "sectionId": "eco-micro",
+        "sectionName": "Microeconomics",
+        "sectionTime": 750,
+        "questions": [
+          {
+            "questionId": "q1",
+            "type": "mcq-single",
+            "question": "What happens to equilibrium price when both demand and supply increase equally?",
+            "topic": "Market Equilibrium",
+            "options": ["Price increases", "Price decreases", "Price remains the same", "Price becomes unpredictable"],
+            "correctAnswer": [2],
+            "explanation": "When both demand and supply shift right equally, quantity increases but price remains unchanged as the shifts cancel out in price terms.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q2",
+            "type": "mcq-multiple",
+            "question": "Which of these are characteristics of perfect competition? (Select all that apply)",
+            "topic": "Market Structures",
+            "options": [
+              "Many buyers and sellers",
+              "Homogeneous products",
+              "Free entry and exit",
+              "Firms are price makers",
+              "Perfect information"
+            ],
+            "correctAnswer": [0, 1, 2, 4],
+            "explanation": "Perfect competition has many buyers/sellers, homogeneous products, free entry/exit, and perfect information. Firms are price takers, not makers.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q3",
+            "type": "true-false",
+            "question": "Marginal Revenue equals Price in monopoly markets.",
+            "topic": "Monopoly",
+            "correctAnswer": [false],
+            "explanation": "In monopoly, MR < Price because the firm must lower price to sell more units. Only in perfect competition does MR = Price."
+          }
+        ]
+      },
+      {
+        "sectionId": "eco-macro",
+        "sectionName": "Macroeconomics",
+        "sectionTime": 750,
+        "questions": [
+          {
+            "questionId": "q4",
+            "type": "mcq-single",
+            "question": "Which is NOT included in GDP calculation?",
+            "topic": "National Income",
+            "options": [
+              "Sales of used goods",
+              "Government services",
+              "Construction of new buildings",
+              "Business investments"
+            ],
+            "correctAnswer": [0],
+            "explanation": "GDP measures only new production. Sales of used goods are not counted as they don't represent new economic activity.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q5",
+            "type": "mcq-multiple",
+            "question": "Which factors contribute to inflation? (Select all that apply)",
+            "topic": "Inflation",
+            "options": [
+              "Increase in money supply",
+              "Rise in production costs",
+              "Increase in aggregate demand",
+              "Technological advancement",
+              "Decrease in consumer spending"
+            ],
+            "correctAnswer": [0, 1, 2],
+            "explanation": "Inflation is caused by increased money supply, rising costs, and high demand. Technological advancement reduces inflation, and decreased spending reduces it.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q6",
+            "type": "matching",
+            "question": "Match economic terms with their definitions:",
+            "topic": "Economic Concepts",
+            "pairs": [
+              {
+                "left": "Fiscal Policy",
+                "right": "Central bank controlling interest rates and money supply"
+              },
+              {
+                "left": "Monetary Policy",
+                "right": "Government spending and taxation decisions"
+              },
+              {
+                "left": "Recession",
+                "right": "Sustained increase in general price level"
+              },
+              {
+                "left": "Inflation",
+                "right": "Period of negative economic growth"
+              }
+            ],
+            "correctMatches": {
+              "0": "1",
+              "1": "0",
+              "2": "3",
+              "3": "2"
+            },
+            "explanation": "Fiscal = government budget | Monetary = central bank | Recession = negative growth | Inflation = rising prices",
+            "difficulty": "easy"
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "testId": "test-007-biology-competitive",
+    "testName": "Biology for NEET/JEE - Comprehensive Mixed",
+    "description": "Competitive exam biology with all question types and multiple sections",
+    "totalTime": 3600,
+    "passingScore": 60,
+    "sections": [
+      {
+        "sectionId": "bio-cell",
+        "sectionName": "Cell Biology",
+        "sectionTime": 900,
+        "questions": [
+          {
+            "questionId": "q1",
+            "type": "mcq-single",
+            "question": "Which organelle is responsible for protein synthesis?",
+            "topic": "Cell Organelles",
+            "options": ["Mitochondria", "Golgi apparatus", "Ribosome", "Endoplasmic reticulum"],
+            "correctAnswer": [2],
+            "explanation": "Ribosomes are the sites of protein synthesis. They read mRNA and translate it into proteins.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q2",
+            "type": "mcq-multiple",
+            "question": "Which of these are membrane-bound organelles? (Select all that apply)",
+            "topic": "Cell Organelles",
+            "options": ["Mitochondria", "Golgi apparatus", "Ribosome", "Nucleus", "Centrosome"],
+            "correctAnswer": [0, 1, 3],
+            "explanation": "Mitochondria, Golgi, and nucleus are membrane-bound. Ribosomes and centrosomes are not membrane-bound.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q3",
+            "type": "true-false",
+            "question": "Prokaryotic cells have a nucleus.",
+            "topic": "Cell Types",
+            "correctAnswer": [false],
+            "explanation": "Prokaryotic cells lack a membrane-bound nucleus. Their genetic material is located in the nucleoid region."
+          }
+        ]
+      },
+      {
+        "sectionId": "bio-genetics",
+        "sectionName": "Genetics",
+        "sectionTime": 900,
+        "questions": [
+          {
+            "questionId": "q4",
+            "type": "mcq-single",
+            "question": "In a monohybrid cross between heterozygous parents (Aa x Aa), what is the phenotypic ratio?",
+            "topic": "Mendelian Genetics",
+            "options": ["1:1", "1:2:1", "3:1", "9:3:3:1"],
+            "correctAnswer": [2],
+            "explanation": "For a heterozygous monohybrid cross (Aa x Aa), the offspring ratio is 3 dominant : 1 recessive (3:1).",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q5",
+            "type": "mcq-multiple",
+            "question": "Which of these statements about DNA are true? (Select all that apply)",
+            "topic": "DNA Structure",
+            "options": [
+              "DNA is a double helix",
+              "DNA uses thymine while RNA uses uracil",
+              "DNA always exists as a double strand",
+              "DNA is made of nucleotides containing deoxyribose sugar",
+              "DNA replication is semi-conservative"
+            ],
+            "correctAnswer": [0, 1, 3, 4],
+            "explanation": "Most statements are true. However, mitochondrial DNA can be single-stranded, and not all DNA is strictly double-stranded in all organisms.",
+            "difficulty": "hard"
+          },
+          {
+            "questionId": "q6",
+            "type": "matching",
+            "question": "Match the stage of mitosis with its characteristics:",
+            "topic": "Cell Division",
+            "pairs": [
+              {
+                "left": "Prophase",
+                "right": "Spindle fibers attach to centromeres"
+              },
+              {
+                "left": "Metaphase",
+                "right": "Chromosomes align at cell equator"
+              },
+              {
+                "left": "Anaphase",
+                "right": "Sister chromatids separate and move to poles"
+              },
+              {
+                "left": "Telophase",
+                "right": "Nuclear envelope reforms"
+              }
+            ],
+            "correctMatches": {
+              "0": "0",
+              "1": "1",
+              "2": "2",
+              "3": "3"
+            },
+            "explanation": "Each phase has distinct characteristics in chromosome behavior and nuclear envelope changes.",
+            "difficulty": "medium"
+          }
+        ]
+      },
+      {
+        "sectionId": "bio-physiology",
+        "sectionName": "Human Physiology",
+        "sectionTime": 900,
+        "questions": [
+          {
+            "questionId": "q7",
+            "type": "mcq-single",
+            "question": "Which hormone is produced by the pancreas to lower blood glucose?",
+            "topic": "Endocrine System",
+            "options": ["Glucagon", "Insulin", "Epinephrine", "Cortisol"],
+            "correctAnswer": [1],
+            "explanation": "Insulin is produced by beta cells in the pancreas and works to lower blood glucose levels by promoting glucose uptake.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q8",
+            "type": "mcq-multiple",
+            "question": "Which of these are functions of the liver? (Select all that apply)",
+            "topic": "Digestive System",
+            "options": [
+              "Production of bile",
+              "Storage of glycogen",
+              "Detoxification of drugs and poisons",
+              "Production of red blood cells",
+              "Synthesis of blood clotting factors"
+            ],
+            "correctAnswer": [0, 1, 2, 4],
+            "explanation": "Liver produces bile, stores glycogen, detoxifies, and makes clotting factors. Blood cells are made in bone marrow.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q9",
+            "type": "true-false",
+            "question": "The heart has four chambers: two atria and two ventricles.",
+            "topic": "Circulatory System",
+            "correctAnswer": [true],
+            "explanation": "The human heart indeed has four chambers - two upper atria and two lower ventricles."
+          }
+        ]
+      },
+      {
+        "sectionId": "bio-ecology",
+        "sectionName": "Ecology",
+        "sectionTime": 900,
+        "questions": [
+          {
+            "questionId": "q10",
+            "type": "mcq-single",
+            "question": "Which is the first trophic level in an ecosystem?",
+            "topic": "Ecology",
+            "options": ["Primary consumers", "Secondary consumers", "Producers", "Decomposers"],
+            "correctAnswer": [2],
+            "explanation": "Producers (plants) form the first trophic level. They convert solar energy into chemical energy through photosynthesis.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q11",
+            "type": "mcq-multiple",
+            "question": "Which of these are abiotic factors in an ecosystem? (Select all that apply)",
+            "topic": "Ecology",
+            "options": ["Temperature", "Humidity", "Soil pH", "Plant population", "Light intensity"],
+            "correctAnswer": [0, 1, 2, 4],
+            "explanation": "Abiotic factors are non-living. Plant population is biotic (living). Temperature, humidity, pH, and light are all abiotic.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q12",
+            "type": "true-false",
+            "question": "Primary succession can occur in a previously vegetated area.",
+            "topic": "Succession",
+            "correctAnswer": [false],
+            "explanation": "Primary succession occurs on bare, newly exposed land. Secondary succession occurs in previously vegetated areas after disturbance."
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "testId": "test-008-fitness-nutrition",
+    "testName": "Fitness & Nutrition Basics - Practice",
+    "description": "Practical fitness and nutrition assessment (good for practice mode with immediate feedback)",
+    "totalTime": 900,
+    "passingScore": 70,
+    "sections": [
+      {
+        "sectionId": "fit-nutrition",
+        "sectionName": "Nutrition",
+        "sectionTime": 450,
+        "questions": [
+          {
+            "questionId": "q1",
+            "type": "mcq-single",
+            "question": "How many calories are in 1 gram of protein?",
+            "topic": "Macronutrients",
+            "options": ["2 calories", "4 calories", "7 calories", "9 calories"],
+            "correctAnswer": [1],
+            "explanation": "Both protein and carbohydrates provide 4 calories per gram. Fat provides 9 calories per gram.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q2",
+            "type": "mcq-multiple",
+            "question": "Which of these are complete proteins (containing all 9 amino acids)? (Select all that apply)",
+            "topic": "Proteins",
+            "options": ["Eggs", "Lentils", "Chicken", "Beans", "Milk"],
+            "correctAnswer": [0, 2, 4],
+            "explanation": "Eggs, chicken, and milk are complete proteins. Lentils and beans are incomplete but can form complete proteins when combined.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q3",
+            "type": "true-false",
+            "question": "Carbohydrates should be avoided completely for weight loss.",
+            "topic": "Diet",
+            "correctAnswer": [false],
+            "explanation": "Carbohydrates are essential macronutrients. Moderate carbohydrate intake combined with exercise is healthier than complete avoidance."
+          }
+        ]
+      },
+      {
+        "sectionId": "fit-exercise",
+        "sectionName": "Exercise Science",
+        "sectionTime": 450,
+        "questions": [
+          {
+            "questionId": "q4",
+            "type": "mcq-single",
+            "question": "What does HIIT stand for in fitness?",
+            "topic": "Training Methods",
+            "options": [
+              "High Intensity Interval Training",
+              "High Impact Interval Training",
+              "High Intensity Internal Training",
+              "High Impact Internal Training"
+            ],
+            "correctAnswer": [0],
+            "explanation": "HIIT = High Intensity Interval Training, combining short bursts of intense exercise with recovery periods.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q5",
+            "type": "mcq-multiple",
+            "question": "Which of these are benefits of regular resistance training? (Select all that apply)",
+            "topic": "Strength Training",
+            "options": [
+              "Increased muscle mass",
+              "Improved bone density",
+              "Enhanced metabolic rate",
+              "Decreased flexibility",
+              "Better insulin sensitivity"
+            ],
+            "correctAnswer": [0, 1, 2, 4],
+            "explanation": "Resistance training increases muscle, bone density, metabolism, and insulin sensitivity. It should improve, not decrease, flexibility.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q6",
+            "type": "matching",
+            "question": "Match exercise types with their primary benefits:",
+            "topic": "Exercise Types",
+            "pairs": [
+              {
+                "left": "Cardio",
+                "right": "Increases muscle mass and strength"
+              },
+              {
+                "left": "Strength Training",
+                "right": "Improves cardiovascular endurance"
+              },
+              {
+                "left": "Flexibility Work",
+                "right": "Improves range of motion and reduces injury risk"
+              },
+              {
+                "left": "HIIT",
+                "right": "Combines high intensity with recovery for cardio and muscle"
+              }
+            ],
+            "correctMatches": {
+              "0": "1",
+              "1": "0",
+              "2": "2",
+              "3": "3"
+            },
+            "explanation": "Each exercise type has specific benefits for different aspects of fitness.",
+            "difficulty": "medium"
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "testId": "test-009-english-grammar-lit",
+    "testName": "English Grammar & Literature - Mixed Format",
+    "description": "Comprehensive English test covering grammar, vocabulary, and literature",
+    "totalTime": 1200,
+    "passingScore": 65,
+    "sections": [
+      {
+        "sectionId": "eng-grammar",
+        "sectionName": "Grammar",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q1",
+            "type": "mcq-single",
+            "question": "Identify the correct sentence:",
+            "topic": "Sentence Structure",
+            "options": [
+              "She don't like the movie.",
+              "She doesn't like the movie.",
+              "She do not like the movie.",
+              "She didn't likes the movie."
+            ],
+            "correctAnswer": [1],
+            "explanation": "The correct form uses 'doesn't' (does not) with the base form 'like' for third person singular.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q2",
+            "type": "mcq-multiple",
+            "question": "Which of these are correct uses of semicolons? (Select all that apply)",
+            "topic": "Punctuation",
+            "options": [
+              "To join two independent clauses",
+              "Before a dependent clause",
+              "Before a list after a complete clause",
+              "To separate items in a complex list",
+              "Instead of a period between related sentences"
+            ],
+            "correctAnswer": [0, 2, 3, 4],
+            "explanation": "Semicolons join independent clauses, precede lists after complete clauses, separate complex list items, and connect related sentences.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q3",
+            "type": "true-false",
+            "question": "The phrase 'to boldly go' is an example of a split infinitive.",
+            "topic": "Infinitives",
+            "correctAnswer": [true],
+            "explanation": "A split infinitive occurs when an adverb (boldly) is placed between 'to' and the verb (go)."
+          }
+        ]
+      },
+      {
+        "sectionId": "eng-literature",
+        "sectionName": "Literature",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q4",
+            "type": "mcq-single",
+            "question": "Who wrote 'Pride and Prejudice'?",
+            "topic": "Classic Literature",
+            "options": ["Charlotte Brontë", "Jane Austen", "Mary Shelley", "Emily Dickinson"],
+            "correctAnswer": [1],
+            "explanation": "Jane Austen wrote 'Pride and Prejudice', published in 1813, a novel exploring themes of marriage and social class.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q5",
+            "type": "mcq-multiple",
+            "question": "Which of these are literary devices? (Select all that apply)",
+            "topic": "Literary Devices",
+            "options": ["Metaphor", "Simile", "Allusion", "Dialogue", "Imagery", "Exposition"],
+            "correctAnswer": [0, 1, 2, 4, 5],
+            "explanation": "All except 'dialogue' are literary devices. Dialogue is a narrative element, though technically a device too. All listed are valid literary techniques.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q6",
+            "type": "matching",
+            "question": "Match authors with their famous works:",
+            "topic": "Classic Literature",
+            "pairs": [
+              {
+                "left": "F. Scott Fitzgerald",
+                "right": "Wuthering Heights"
+              },
+              {
+                "left": "Emily Brontë",
+                "right": "The Great Gatsby"
+              },
+              {
+                "left": "George Orwell",
+                "right": "1984"
+              },
+              {
+                "left": "Jane Austen",
+                "right": "Emma"
+              }
+            ],
+            "correctMatches": {
+              "0": "1",
+              "1": "0",
+              "2": "2",
+              "3": "3"
+            },
+            "explanation": "Fitzgerald wrote Gatsby | Brontë wrote Wuthering Heights | Orwell wrote 1984 | Austen wrote Emma",
+            "difficulty": "medium"
+          }
+        ]
+      }
+    ]
+  },
+
+  {
+    "testId": "test-010-data-structures-algo",
+    "testName": "Data Structures & Algorithms - Technical Assessment",
+    "description": "Comprehensive DSA test for coding interviews with mixed question types",
+    "totalTime": 2400,
+    "passingScore": 60,
+    "sections": [
+      {
+        "sectionId": "dsa-basics",
+        "sectionName": "Fundamentals",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q1",
+            "type": "mcq-single",
+            "question": "What is the time complexity of binary search?",
+            "topic": "Search Algorithms",
+            "options": ["O(n)", "O(log n)", "O(n²)", "O(2^n)"],
+            "correctAnswer": [1],
+            "explanation": "Binary search has O(log n) time complexity because it eliminates half of the remaining elements with each comparison.",
+            "difficulty": "easy"
+          },
+          {
+            "questionId": "q2",
+            "type": "mcq-multiple",
+            "question": "Which of these sorting algorithms have O(n log n) average case complexity? (Select all that apply)",
+            "topic": "Sorting",
+            "options": ["Merge Sort", "Quick Sort", "Bubble Sort", "Heap Sort", "Insertion Sort"],
+            "correctAnswer": [0, 1, 3],
+            "explanation": "Merge sort, quick sort, and heap sort all have O(n log n) average complexity. Bubble and insertion sort are O(n²).",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q3",
+            "type": "true-false",
+            "question": "A linked list provides O(1) access to the nth element.",
+            "topic": "Data Structures",
+            "correctAnswer": [false],
+            "explanation": "Linked lists require O(n) time to access the nth element because you must traverse from the head."
+          }
+        ]
+      },
+      {
+        "sectionId": "dsa-structures",
+        "sectionName": "Data Structures",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q4",
+            "type": "mcq-single",
+            "question": "What is the primary advantage of a hash table?",
+            "topic": "Hash Tables",
+            "options": [
+              "Maintains sorted order",
+              "Provides O(1) average case lookup",
+              "Minimizes memory usage",
+              "Allows duplicate keys"
+            ],
+            "correctAnswer": [1],
+            "explanation": "Hash tables provide O(1) average case time complexity for lookups, insertions, and deletions through hashing.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q5",
+            "type": "mcq-multiple",
+            "question": "Which of these are valid uses of stack data structure? (Select all that apply)",
+            "topic": "Stacks",
+            "options": [
+              "Function call stack in programming",
+              "Undo/Redo functionality",
+              "Expression evaluation (infix to postfix)",
+              "BFS traversal",
+              "Balancing parentheses"
+            ],
+            "correctAnswer": [0, 1, 2, 4],
+            "explanation": "Stacks (LIFO) are used for function calls, undo/redo, expression evaluation, and parenthesis matching. BFS uses queues (FIFO).",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q6",
+            "type": "matching",
+            "question": "Match data structures with their key characteristics:",
+            "topic": "DS Characteristics",
+            "pairs": [
+              {
+                "left": "Queue",
+                "right": "LIFO - Last In First Out"
+              },
+              {
+                "left": "Stack",
+                "right": "FIFO - First In First Out"
+              },
+              {
+                "left": "Binary Tree",
+                "right": "Each node has at most 2 children"
+              },
+              {
+                "left": "Graph",
+                "right": "Collection of nodes connected by edges"
+              }
+            ],
+            "correctMatches": {
+              "0": "1",
+              "1": "0",
+              "2": "2",
+              "3": "3"
+            },
+            "explanation": "Queue is FIFO | Stack is LIFO | Binary Tree has 2 children max | Graph has nodes and edges",
+            "difficulty": "easy"
+          }
+        ]
+      },
+      {
+        "sectionId": "dsa-algorithms",
+        "sectionName": "Algorithms",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q7",
+            "type": "mcq-single",
+            "question": "In DFS (Depth First Search), which data structure is typically used?",
+            "topic": "Graph Algorithms",
+            "options": ["Queue", "Stack", "Priority Queue", "Deque"],
+            "correctAnswer": [1],
+            "explanation": "DFS uses a stack (or recursion which uses the call stack) to explore deeply before backtracking.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q8",
+            "type": "mcq-multiple",
+            "question": "Which of these are dynamic programming concepts? (Select all that apply)",
+            "topic": "Dynamic Programming",
+            "options": [
+              "Optimal substructure",
+              "Memoization",
+              "Overlapping subproblems",
+              "Greedy choice",
+              "Tabulation"
+            ],
+            "correctAnswer": [0, 1, 2, 4],
+            "explanation": "DP uses optimal substructure, memoization, overlapping subproblems, and tabulation. Greedy choice is not a DP concept.",
+            "difficulty": "medium"
+          },
+          {
+            "questionId": "q9",
+            "type": "true-false",
+            "question": "Dijkstra's algorithm can handle negative edge weights.",
+            "topic": "Graph Algorithms",
+            "correctAnswer": [false],
+            "explanation": "Dijkstra's algorithm fails with negative edge weights. Bellman-Ford algorithm is used for graphs with negative weights."
+          }
+        ]
+      },
+      {
+        "sectionId": "dsa-problems",
+        "sectionName": "Problem Solving",
+        "sectionTime": 600,
+        "questions": [
+          {
+            "questionId": "q10",
+            "type": "mcq-single",
+            "question": "What is the optimal time complexity to find the longest common subsequence (LCS) of two strings?",
+            "topic": "String Problems",
+            "options": ["O(n)", "O(n log n)", "O(n × m)", "O(2^(n+m))"],
+            "correctAnswer": [2],
+            "explanation": "LCS requires dynamic programming with O(n × m) time complexity, where n and m are the lengths of the two strings.",
+            "difficulty": "hard"
+          },
+          {
+            "questionId": "q11",
+            "type": "mcq-multiple",
+            "question": "Which approaches can solve the 'Word Ladder' problem? (Select all that apply)",
+            "topic": "Graph Problems",
+            "options": ["BFS", "DFS", "Dynamic Programming", "Bidirectional BFS", "Dijkstra's Algorithm"],
+            "correctAnswer": [0, 1, 3],
+            "explanation": "Word Ladder can be solved with BFS, DFS, or optimized with bidirectional BFS. DP and Dijkstra are not optimal.",
+            "difficulty": "hard"
+          },
+          {
+            "questionId": "q12",
+            "type": "true-false",
+            "question": "The Two-Sum problem can be solved in O(n) time using a hash map.",
+            "topic": "Array Problems",
+            "correctAnswer": [true],
+            "explanation": "Yes, Two-Sum can be solved in O(n) time by storing elements in a hash map and checking for complements."
+          }
+        ]
+      }
+    ]
+  }
+]

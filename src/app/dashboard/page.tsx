@@ -147,7 +147,7 @@ export default function UserDashboard() {
                           </div>
                         </div>
                         <div className="mt-auto pt-4 border-t border-border">
-                          <Link href={`/analytics/test/${test.testId}`} className="w-full btn-secondary text-center py-2 flex items-center justify-center gap-2 text-sm">
+                          <Link href={`/dashboard/test/${test.testId}`} className="w-full btn-secondary text-center py-2 flex items-center justify-center gap-2 text-sm">
                             View Detailed History
                           </Link>
                         </div>

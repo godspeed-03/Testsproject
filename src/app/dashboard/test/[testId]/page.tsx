@@ -46,7 +46,7 @@ export default function TestAnalyticsPage() {
         <div className="text-center">
           <h2 className="text-xl font-bold text-foreground mb-2">No History Found</h2>
           <p className="text-muted-foreground mb-6">You haven't completed any attempts for this test yet.</p>
-          <Link href="/analytics" className="btn-primary py-2 px-6">Back to Global Analytics</Link>
+          <Link href="/dashboard" className="btn-primary py-2 px-6">Back to Dashboard</Link>
         </div>
       </div>
     );
@@ -70,8 +70,8 @@ export default function TestAnalyticsPage() {
 
   return (
     <div className="flex-1 p-6 lg:p-10 max-w-7xl mx-auto w-full">
-      <Link href="/analytics" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 text-sm font-medium">
-        <ArrowLeft size={16} /> Back to Global Analytics
+      <Link href="/dashboard" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-6 text-sm font-medium">
+        <ArrowLeft size={16} /> Back to Dashboard
       </Link>
       
       <div className="mb-10">
@@ -209,7 +209,7 @@ export default function TestAnalyticsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <Link 
-                      href={`/analytics/${attempt._id}`}
+                      href={`/dashboard/attempt/${attempt._id}`}
                       className="text-blue-400 hover:text-blue-300 font-medium hover:underline"
                     >
                       View Details →

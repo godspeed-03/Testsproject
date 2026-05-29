@@ -14,7 +14,7 @@ export interface ITest extends Document {
     goLiveDate?: Date | null;
     allowPracticeMode: boolean;
     allowTestMode: boolean;
-    timingMode: 'full' | 'per-question';
+    timingMode: 'full' | 'per-question' | 'both';
   };
 }
 
@@ -32,7 +32,7 @@ const TestSchema: Schema<ITest> = new Schema({
     goLiveDate: { type: Date, default: null },
     allowPracticeMode: { type: Boolean, default: true },
     allowTestMode: { type: Boolean, default: true },
-    timingMode: { type: String, enum: ['full', 'per-question'], default: 'full' }
+    timingMode: { type: String, enum: ['full', 'per-question', 'both'], default: 'both' }
   }
 });
 

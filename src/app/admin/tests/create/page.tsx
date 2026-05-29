@@ -400,8 +400,17 @@ export default function CreateTestPage() {
                   </div>
                   
                   <div className="px-4 text-center">
-                    <p className="text-xs text-muted-foreground mb-1">Time</p>
-                    <p className="text-sm font-medium text-foreground">{Math.floor(section.sectionTime / 60)}m</p>
+                    <p className="text-xs text-muted-foreground mb-1">Time (sec)</p>
+                    <Input 
+                      type="number"
+                      value={section.sectionTime}
+                      onChange={(e) => {
+                        const newData = { ...parsedData };
+                        newData.sections[idx].sectionTime = Number(e.target.value);
+                        setParsedData(newData);
+                      }}
+                      className="bg-muted border-border text-foreground h-9 w-24 text-center"
+                    />
                   </div>
                   <div className="px-4 text-center">
                     <p className="text-xs text-muted-foreground mb-1">Questions</p>

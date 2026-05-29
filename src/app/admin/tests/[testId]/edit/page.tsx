@@ -56,7 +56,7 @@ export default function EditTestPage({ params }: { params: Promise<{ testId: str
             goLiveDate: new Date().toISOString(),
             allowPracticeMode: true,
             allowTestMode: true,
-            timingMode: 'full' 
+            timingMode: 'both' 
           };
         } else if (!data.test.settings.goLiveDate) {
           data.test.settings.goLiveDate = new Date().toISOString();
@@ -343,15 +343,15 @@ export default function EditTestPage({ params }: { params: Promise<{ testId: str
                   </span>
                   <select 
                     className="w-full h-10 bg-card border border-border rounded text-sm px-3 text-foreground outline-none focus:border-blue-500"
-                    value={testData.settings.timingMode || 'full'}
+                    value={testData.settings.timingMode || 'both'}
                     onChange={(e) => setTestData({
                       ...testData,
                       settings: { ...testData.settings, timingMode: e.target.value }
                     })}
                   >
+                    <option value="both">Let Student Choose</option>
                     <option value="full">Full Test Timer</option>
                     <option value="per-question">Per-Question Timer</option>
-                    <option value="both">Let Student Choose</option>
                   </select>
                 </div>
               </div>

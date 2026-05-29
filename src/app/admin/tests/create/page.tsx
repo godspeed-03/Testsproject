@@ -39,7 +39,7 @@ export default function CreateTestPage() {
         goLiveDate: parsed.settings?.goLiveDate || new Date().toISOString(), // Auto-fill with current time
         allowPracticeMode: parsed.settings?.allowPracticeMode ?? true,
         allowTestMode: parsed.settings?.allowTestMode ?? true,
-        timingMode: parsed.settings?.timingMode || 'full'
+        timingMode: parsed.settings?.timingMode || 'both'
       };
       
       setParsedData(parsed);
@@ -331,7 +331,8 @@ export default function CreateTestPage() {
                   settings: { ...parsedData.settings, timingMode: e.target.value }
                 })}
               >
-                <option value="full">Full Test Timing (Default)</option>
+                <option value="both">Let Student Choose (Default)</option>
+                <option value="full">Full Test Timing</option>
                 <option value="per-question">Per-Question Timing</option>
               </select>
             </div>

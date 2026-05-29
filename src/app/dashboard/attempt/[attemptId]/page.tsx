@@ -52,9 +52,11 @@ export default function AnalyticsPage() {
 
   const { analytics, testName } = data;
   const {
-    score, totalQuestions, accuracy, correctCount, incorrectCount, unansweredCount,
+    score, maxScore, totalQuestions, accuracy, correctCount, incorrectCount, unansweredCount,
     totalTimeTaken, avgTimePerQuestion, questionAnalysis, topicPerformance
   } = analytics;
+
+  const displayMaxScore = maxScore !== undefined ? maxScore : totalQuestions;
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -113,7 +115,7 @@ export default function AnalyticsPage() {
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-violet-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <Award size={32} className="text-yellow-400 mb-3" />
           <p className="text-muted-foreground text-sm mb-1">Total Score</p>
-          <p className="text-3xl font-bold text-foreground">{score} <span className="text-lg text-muted-foreground">/ {totalQuestions}</span></p>
+          <p className="text-3xl font-bold text-foreground">{score} <span className="text-lg text-muted-foreground">/ {displayMaxScore}</span></p>
         </div>
         <div className="glass-panel p-6 flex flex-col justify-center items-center text-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -165,7 +167,7 @@ export default function AnalyticsPage() {
       <div className="glass-panel p-6 mb-8">
         <h3 className="text-lg font-bold text-foreground mb-4">Performance Analysis</h3>
         <p className="text-foreground/90 leading-relaxed">
-          You scored <strong className="text-foreground">{score}</strong> out of <strong className="text-foreground">{totalQuestions}</strong>, giving you an accuracy of <strong className="text-blue-400">{accuracy.toFixed(1)}%</strong>. 
+          You scored <strong className="text-foreground">{score}</strong> out of <strong className="text-foreground">{displayMaxScore}</strong>, giving you an accuracy of <strong className="text-blue-400">{accuracy.toFixed(1)}%</strong>. 
           You spent an average of <strong className="text-foreground">{avgTimePerQuestion.toFixed(1)}s</strong> per question.
           {accuracy >= 80 ? ' Excellent work! You have a strong grasp of the material.' :
            accuracy >= 50 ? ' Good effort! Focus on reviewing your incorrect answers to improve.' :

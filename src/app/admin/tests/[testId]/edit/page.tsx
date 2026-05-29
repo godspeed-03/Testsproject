@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle, AlertTriangle, FileJson, Save, Settings, GripVertical, Plus, Trash2, Edit3, Eye } from 'lucide-react';
+import { ArrowLeft, CheckCircle, AlertTriangle, FileJson, Save, Settings, GripVertical, Plus, Trash2, Edit3, Eye, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +13,7 @@ export default function EditTestPage({ params }: { params: Promise<{ testId: str
   const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<'settings' | 'questions'>('settings');
+  const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
   
   const [testData, setTestData] = useState<any>(null);
   
@@ -261,11 +262,67 @@ export default function EditTestPage({ params }: { params: Promise<{ testId: str
                   value={testData.testJSON?.totalTime || ''}
                   onChange={(e) => {
                     const newData = { ...testData };
-                    if (newData.testJSON) newData.testJSON.totalTime = Number(e.target.value);
+                    if (newData.testJSON) {
+                      const newTotal = Number(e.target.value);
+                      newData.testJSON.totalTime = newTotal;
+                      if (newData.testJSON.sections && newData.testJSON.sections.length > 0) {
+                        const timePerSec = Math.floor(newTotal / newData.testJSON.sections.length);
+                        newData.testJSON.sections = newData.testJSON.sections.map((sec: any) => ({
+                          ...sec,
+                          sectionTime: timePerSec
+                        }));
+                      }
+                    }
                     setTestData(newData);
                   }}
                   className="bg-card border-border text-foreground"
                 />
+              </div>
+              <div className="flex gap-4">
+                <div className="mb-4 flex-1">
+                  <label className="text-xs text-muted-foreground mb-1 block">Correct Marks (+)</label>
+                  <Input 
+                    type="number"
+                    value={testData.testJSON?.correctMarks ?? 1}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      const newData = { ...testData };
+                      if (newData.testJSON) {
+                        newData.testJSON.correctMarks = val;
+                        if (newData.testJSON.sections) {
+                          newData.testJSON.sections = newData.testJSON.sections.map((sec: any) => ({
+                            ...sec,
+                            correctMarks: val
+                          }));
+                        }
+                      }
+                      setTestData(newData);
+                    }}
+                    className="bg-card border-border text-foreground"
+                  />
+                </div>
+                <div className="mb-4 flex-1">
+                  <label className="text-xs text-muted-foreground mb-1 block">Incorrect Marks (-)</label>
+                  <Input 
+                    type="number"
+                    value={testData.testJSON?.incorrectMarks ?? 0.25}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      const newData = { ...testData };
+                      if (newData.testJSON) {
+                        newData.testJSON.incorrectMarks = val;
+                        if (newData.testJSON.sections) {
+                          newData.testJSON.sections = newData.testJSON.sections.map((sec: any) => ({
+                            ...sec,
+                            incorrectMarks: val
+                          }));
+                        }
+                      }
+                      setTestData(newData);
+                    }}
+                    className="bg-card border-border text-foreground"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -411,6 +468,32 @@ export default function EditTestPage({ params }: { params: Promise<{ testId: str
                         className="bg-muted border-border text-foreground h-9 w-24 text-center"
                       />
                     </div>
+                    <div className="px-4 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Correct (+)</p>
+                      <Input 
+                        type="number"
+                        value={section.correctMarks ?? testData.testJSON?.correctMarks ?? 1}
+                        onChange={(e) => {
+                          const newData = { ...testData };
+                          newData.testJSON.sections[idx].correctMarks = Number(e.target.value);
+                          setTestData(newData);
+                        }}
+                        className="bg-muted border-border text-foreground h-9 w-20 text-center"
+                      />
+                    </div>
+                    <div className="px-4 text-center">
+                      <p className="text-xs text-muted-foreground mb-1">Incorrect (-)</p>
+                      <Input 
+                        type="number"
+                        value={section.incorrectMarks ?? testData.testJSON?.incorrectMarks ?? 0.25}
+                        onChange={(e) => {
+                          const newData = { ...testData };
+                          newData.testJSON.sections[idx].incorrectMarks = Number(e.target.value);
+                          setTestData(newData);
+                        }}
+                        className="bg-muted border-border text-foreground h-9 w-20 text-center"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -460,103 +543,219 @@ export default function EditTestPage({ params }: { params: Promise<{ testId: str
               )}
 
               <div className="p-4 space-y-6">
-                {section.questions.map((q: any, qIdx: number) => (
-                  <div key={q.questionId} className="bg-card border border-border rounded-lg p-5 relative group">
-                    <button onClick={() => deleteQuestion(sIdx, qIdx)} className="absolute top-4 right-4 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Trash2 size={18} />
-                    </button>
-                    
-                    <div className="flex gap-4 mb-4">
-                      <div className="w-16">
-                        <label className="text-xs text-muted-foreground block mb-1">ID</label>
-                        <Input value={q.questionId} onChange={(e) => handleQuestionChange(sIdx, qIdx, 'questionId', e.target.value)} className="h-8 bg-card border-border text-xs px-2" />
-                      </div>
-                      <div className="w-32">
-                        <label className="text-xs text-muted-foreground block mb-1">Type</label>
-                        <select 
-                          value={q.type} 
-                          onChange={(e) => handleQuestionChange(sIdx, qIdx, 'type', e.target.value)}
-                          className="w-full h-8 bg-card border border-border rounded text-xs px-2 text-foreground outline-none focus:border-blue-500"
-                        >
-                          <option value="mcq-single">MCQ (Single)</option>
-                          <option value="mcq-multiple">MCQ (Multiple)</option>
-                          <option value="true-false">True/False</option>
-                        </select>
-                      </div>
-                      <div className="w-32">
-                        <label className="text-xs text-muted-foreground block mb-1">Topic</label>
-                        <Input value={q.topic || ''} onChange={(e) => handleQuestionChange(sIdx, qIdx, 'topic', e.target.value)} className="h-8 bg-card border-border text-xs px-2" />
-                      </div>
-                    </div>
+                {section.questions.map((q: any, qIdx: number) => {
+                  const isEditing = editingQuestion === `${sIdx}-${qIdx}`;
+                  
+                  if (isEditing) {
+                    return (
+                      <div key={q.questionId} className="bg-card border-2 border-blue-500/50 rounded-lg p-5 relative shadow-md">
+                        <div className="flex justify-between items-center mb-4 pb-2 border-b border-border">
+                          <h4 className="font-bold text-foreground flex items-center gap-2">
+                            <Edit3 size={16} className="text-blue-500" /> Editing Question Q{qIdx + 1}
+                          </h4>
+                          <button onClick={() => setEditingQuestion(null)} className="p-1 text-muted-foreground hover:text-foreground">
+                            <X size={18} />
+                          </button>
+                        </div>
 
-                    <div className="mb-4">
-                      <label className="text-xs text-muted-foreground block mb-1">Question Text</label>
-                      <textarea 
-                        value={q.question}
-                        onChange={(e) => handleQuestionChange(sIdx, qIdx, 'question', e.target.value)}
-                        className="w-full min-h-[80px] bg-card border border-border rounded p-3 text-sm text-foreground focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
+                        <div className="flex gap-4 mb-4">
+                          <div className="w-16">
+                            <label className="text-xs text-muted-foreground block mb-1">ID</label>
+                            <Input value={q.questionId} onChange={(e) => handleQuestionChange(sIdx, qIdx, 'questionId', e.target.value)} className="h-8 bg-card border-border text-xs px-2" />
+                          </div>
+                          <div className="w-32">
+                            <label className="text-xs text-muted-foreground block mb-1">Type</label>
+                            <select 
+                              value={q.type} 
+                              onChange={(e) => handleQuestionChange(sIdx, qIdx, 'type', e.target.value)}
+                              className="w-full h-8 bg-card border border-border rounded text-xs px-2 text-foreground outline-none focus:border-blue-500"
+                            >
+                              <option value="mcq-single">MCQ (Single)</option>
+                              <option value="mcq-multiple">MCQ (Multiple)</option>
+                              <option value="true-false">True/False</option>
+                            </select>
+                          </div>
+                          <div className="w-32">
+                            <label className="text-xs text-muted-foreground block mb-1">Topic</label>
+                            <Input value={q.topic || ''} onChange={(e) => handleQuestionChange(sIdx, qIdx, 'topic', e.target.value)} className="h-8 bg-card border-border text-xs px-2" />
+                          </div>
+                          <div className="w-24">
+                            <label className="text-xs text-muted-foreground block mb-1">Correct (+)</label>
+                            <Input type="number" value={q.correctMarks ?? section.correctMarks ?? testData.testJSON?.correctMarks ?? 1} onChange={(e) => handleQuestionChange(sIdx, qIdx, 'correctMarks', Number(e.target.value))} className="h-8 bg-card border-border text-xs px-2" />
+                          </div>
+                          <div className="w-24">
+                            <label className="text-xs text-muted-foreground block mb-1">Incorrect (-)</label>
+                            <Input type="number" value={q.incorrectMarks ?? section.incorrectMarks ?? testData.testJSON?.incorrectMarks ?? 0.25} onChange={(e) => handleQuestionChange(sIdx, qIdx, 'incorrectMarks', Number(e.target.value))} className="h-8 bg-card border-border text-xs px-2" />
+                          </div>
+                        </div>
 
-                    {q.type !== 'true-false' && (
-                      <div className="mb-4">
-                        <label className="text-xs text-muted-foreground block mb-2">Options & Correct Answers (Check correct ones)</label>
+                        <div className="mb-4">
+                          <label className="text-xs text-muted-foreground block mb-1">Question Text</label>
+                          <textarea 
+                            value={q.question}
+                            onChange={(e) => handleQuestionChange(sIdx, qIdx, 'question', e.target.value)}
+                            className="w-full min-h-[80px] bg-card border border-border rounded p-3 text-sm text-foreground focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+                        {q.images && q.images.length > 0 && (
+                          <div className="mb-4">
+                            <label className="text-xs text-muted-foreground block mb-2">Attached Images (Read-only)</label>
+                            <div className="flex gap-4 overflow-x-auto pb-2">
+                              {q.images.map((imgUrl: string, idx: number) => (
+                                <img key={idx} src={imgUrl} className="max-h-32 w-auto rounded border border-border bg-muted/50 p-1 object-contain" alt="Question asset" />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {q.type !== 'true-false' && (
+                          <div className="mb-4">
+                            <label className="text-xs text-muted-foreground block mb-2">Options & Correct Answers (Check correct ones)</label>
+                            <div className="space-y-2">
+                              {q.options?.map((opt: string, optIdx: number) => {
+                                const isCorrect = q.correctAnswer?.includes(opt);
+                                return (
+                                  <div key={optIdx} className="flex items-center gap-3">
+                                    <input 
+                                      type={q.type === 'mcq-single' ? 'radio' : 'checkbox'} 
+                                      name={`correct-${sIdx}-${qIdx}`}
+                                      checked={isCorrect}
+                                      onChange={() => toggleCorrectAnswer(sIdx, qIdx, opt, q.type)}
+                                      className="w-4 h-4 cursor-pointer text-blue-500 bg-card border-border"
+                                    />
+                                    <Input 
+                                      value={opt}
+                                      onChange={(e) => handleOptionChange(sIdx, qIdx, optIdx, e.target.value)}
+                                      className={`h-9 bg-card flex-1 ${isCorrect ? 'border-green-500/50 text-green-400' : 'border-border text-foreground'}`}
+                                    />
+                                    <button 
+                                      onClick={() => {
+                                        const newData = { ...testData };
+                                        newData.testJSON.sections[sIdx].questions[qIdx].options.splice(optIdx, 1);
+                                        setTestData(newData);
+                                      }}
+                                      className="text-muted-foreground hover:text-red-400"
+                                    >
+                                      &times;
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => {
+                                  const newData = { ...testData };
+                                  newData.testJSON.sections[sIdx].questions[qIdx].options.push('New Option');
+                                  setTestData(newData);
+                                }}
+                                className="text-xs text-blue-400 mt-1 h-7 px-2"
+                              >
+                                + Add Option
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="mb-2">
+                          <label className="text-xs text-muted-foreground block mb-1">Explanation</label>
+                          <textarea 
+                            value={q.explanation || ''}
+                            onChange={(e) => handleQuestionChange(sIdx, qIdx, 'explanation', e.target.value)}
+                            className="w-full h-16 bg-card border border-border rounded p-2 text-xs text-foreground/90 focus:outline-none focus:border-blue-500"
+                          />
+                        </div>
+
+                        <div className="mt-4 flex justify-end">
+                          <Button size="sm" onClick={() => setEditingQuestion(null)} className="bg-blue-600 hover:bg-blue-500">
+                            Done Editing
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // View Mode
+                  return (
+                    <div key={q.questionId} className="bg-card border border-border rounded-lg p-6 relative group shadow-sm transition-all hover:border-blue-500/30">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex gap-2 items-center flex-wrap">
+                          <span className="bg-blue-500/10 text-blue-500 text-xs font-bold px-2 py-1 rounded">
+                            Q{qIdx + 1}
+                          </span>
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                            ID: {q.questionId}
+                          </span>
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded capitalize">
+                            {q.type.replace('-', ' ')}
+                          </span>
+                          {q.topic && (
+                            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                              {q.topic}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button onClick={() => setEditingQuestion(`${sIdx}-${qIdx}`)} className="p-2 text-muted-foreground hover:text-blue-400 bg-muted rounded flex items-center gap-1 text-xs font-medium transition-colors">
+                            <Edit3 size={14} /> Edit
+                          </button>
+                          <button onClick={() => deleteQuestion(sIdx, qIdx)} className="p-2 text-muted-foreground hover:text-red-400 bg-muted rounded transition-colors">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="text-base font-medium text-foreground mb-5 whitespace-pre-wrap">
+                        {q.question}
+                      </div>
+
+                      {q.images && q.images.length > 0 && (
+                        <div className="mb-5 flex flex-col gap-3">
+                          {q.images.map((imgUrl: string, idx: number) => (
+                            <img key={idx} src={imgUrl} alt={`Question image ${idx + 1}`} className="max-w-full h-auto rounded-lg border border-border bg-muted/20" />
+                          ))}
+                        </div>
+                      )}
+
+                      {q.type !== 'true-false' ? (
                         <div className="space-y-2">
                           {q.options?.map((opt: string, optIdx: number) => {
                             const isCorrect = q.correctAnswer?.includes(opt);
                             return (
-                              <div key={optIdx} className="flex items-center gap-3">
-                                <input 
-                                  type={q.type === 'mcq-single' ? 'radio' : 'checkbox'} 
-                                  name={`correct-${sIdx}-${qIdx}`}
-                                  checked={isCorrect}
-                                  onChange={() => toggleCorrectAnswer(sIdx, qIdx, opt, q.type)}
-                                  className="w-4 h-4 cursor-pointer text-blue-500 bg-card border-border"
-                                />
-                                <Input 
-                                  value={opt}
-                                  onChange={(e) => handleOptionChange(sIdx, qIdx, optIdx, e.target.value)}
-                                  className={`h-9 bg-card flex-1 ${isCorrect ? 'border-green-500/50 text-green-400' : 'border-border text-foreground'}`}
-                                />
-                                <button 
-                                  onClick={() => {
-                                    const newData = { ...testData };
-                                    newData.testJSON.sections[sIdx].questions[qIdx].options.splice(optIdx, 1);
-                                    setTestData(newData);
-                                  }}
-                                  className="text-muted-foreground hover:text-red-400"
-                                >
-                                  &times;
-                                </button>
+                              <div key={optIdx} className={`p-3 rounded border text-sm flex items-center gap-3 ${isCorrect ? 'border-green-500/50 bg-green-500/5' : 'border-border bg-muted/30'}`}>
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isCorrect ? 'border-green-500 bg-green-500 text-white' : 'border-muted-foreground/30'}`}>
+                                  {isCorrect && <CheckCircle size={10} />}
+                                </div>
+                                <span className={isCorrect ? 'text-foreground font-medium' : 'text-foreground/80'}>{opt}</span>
                               </div>
-                            );
+                            )
                           })}
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => {
-                              const newData = { ...testData };
-                              newData.testJSON.sections[sIdx].questions[qIdx].options.push('New Option');
-                              setTestData(newData);
-                            }}
-                            className="text-xs text-blue-400 mt-1 h-7 px-2"
-                          >
-                            + Add Option
-                          </Button>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <div className="flex gap-4">
+                          {['True', 'False'].map(opt => {
+                            const isCorrect = q.correctAnswer?.includes(opt.toLowerCase() === 'true');
+                            return (
+                              <div key={opt} className={`px-5 py-3 rounded border text-sm flex items-center gap-2 flex-1 justify-center cursor-default ${isCorrect ? 'border-green-500/50 bg-green-500/5' : 'border-border bg-muted/30'}`}>
+                                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${isCorrect ? 'border-green-500 bg-green-500 text-white' : 'border-muted-foreground/30'}`}>
+                                  {isCorrect && <CheckCircle size={10} />}
+                                </div>
+                                <span className={isCorrect ? 'text-foreground font-medium' : 'text-foreground/80'}>{opt}</span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
 
-                    <div className="mb-2">
-                      <label className="text-xs text-muted-foreground block mb-1">Explanation</label>
-                      <textarea 
-                        value={q.explanation || ''}
-                        onChange={(e) => handleQuestionChange(sIdx, qIdx, 'explanation', e.target.value)}
-                        className="w-full h-16 bg-card border border-border rounded p-2 text-xs text-foreground/90 focus:outline-none focus:border-blue-500"
-                      />
+                      {q.explanation && (
+                        <div className="mt-5 p-4 bg-muted/50 rounded-lg border border-border text-sm text-muted-foreground">
+                          <strong className="text-foreground block mb-1">Explanation:</strong> 
+                          <span className="whitespace-pre-wrap">{q.explanation}</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </>
           )}

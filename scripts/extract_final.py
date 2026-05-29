@@ -3,13 +3,27 @@ import json
 import fitz
 import os
 
+def clean_newlines(lines_list):
+    res = []
+    for line in lines_list:
+        if not res:
+            res.append(line)
+        else:
+            prev = res[-1]
+            if re.match(r'^(\d+\.|[A-D]\.)', line) or re.search(r'[:.?]$', prev):
+                res.append(line)
+            else:
+                res[-1] = prev + " " + line
+    return "\n".join(res)
+
 pdf_path = '../public/ancient history.pdf'
 doc = fitz.open(pdf_path)
 
-TEST_ID = "test-ancient-history"
+TEST_ID = "test-ancient-history-pre-upsc-cse"
 OUTPUT_DIR = f'../public/{TEST_ID}'
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+print("Extracting images...")
 img_count = 1
 for i, page in enumerate(doc):
     imgs = page.get_images()
@@ -24,6 +38,7 @@ for i, page in enumerate(doc):
             f.write(image_bytes)
         img_count += 1
 
+print("Extracting text from PDF...")
 lines = []
 for page in doc:
     text = page.get_text()
@@ -59,19 +74,20 @@ for line in q_lines:
     is_new_question = False
     if q_match:
         num = int(q_match.group(1))
-        # Ensure it's sequentially close to the expected question number
         if num == expected_q_num or num == expected_q_num + 1:
-            is_new_question = True
-            expected_q_num = num + 1
+            if current_q is None or current_q.get('seen_options'):
+                is_new_question = True
+                expected_q_num = num + 1
 
     if is_new_question:
         if current_q is not None:
             questions.append(current_q)
-        current_q = {'id': num, 'raw_q': []}
+        current_q = {'id': num, 'raw_q': [], 'seen_options': False}
         if q_match.group(2):
             current_q['raw_q'].append(q_match.group(2))
     elif opt_match:
         if current_q is not None:
+            current_q['seen_options'] = True
             current_q['raw_q'].append(opt_match.group(1))
             if opt_match.group(2):
                 current_q['raw_q'].append(opt_match.group(2))
@@ -96,13 +112,90 @@ for q_data in questions:
     
     if 'a' in opt_indices and 'b' in opt_indices and 'c' in opt_indices and 'd' in opt_indices:
         q_end = opt_indices['a']
-        question_text = "\n".join(raw_q[:q_end])
-        options.append("\n".join(raw_q[opt_indices['a']+1:opt_indices['b']]))
-        options.append("\n".join(raw_q[opt_indices['b']+1:opt_indices['c']]))
-        options.append("\n".join(raw_q[opt_indices['c']+1:opt_indices['d']]))
-        options.append("\n".join(raw_q[opt_indices['d']+1:]))
+        q_lines_raw = raw_q[:q_end]
+        
+        options.append(" ".join(raw_q[opt_indices['a']+1:opt_indices['b']]))
+        options.append(" ".join(raw_q[opt_indices['b']+1:opt_indices['c']]))
+        options.append(" ".join(raw_q[opt_indices['c']+1:opt_indices['d']]))
+        options.append(" ".join(raw_q[opt_indices['d']+1:]))
     else:
-        question_text = "\n".join(raw_q)
+        q_lines_raw = raw_q
+
+    # ----- FIX FORMATTING -----
+    cleaned_q = []
+    i = 0
+    while i < len(q_lines_raw):
+        line = q_lines_raw[i]
+        
+        # 1. Merge List-I and List-II headers side-by-side
+        if re.match(r'^List-I', line) and i+1 < len(q_lines_raw) and re.match(r'^List-II', q_lines_raw[i+1]):
+            cleaned_q.append(f"{line.ljust(30)} {q_lines_raw[i+1]}")
+            i += 2
+            continue
+            
+        # 2. Merge A. Item 1. Item into a table
+        if re.match(r'^[A-D]\.$', line) and i+3 < len(q_lines_raw) and re.match(r'^\d+\.$', q_lines_raw[i+2]):
+            merged = f"{line.ljust(3)} {q_lines_raw[i+1].ljust(26)} {q_lines_raw[i+2].ljust(3)} {q_lines_raw[i+3]}"
+            cleaned_q.append(merged)
+            i += 4
+            continue
+            
+        # 2b. General 2-column numbered list (1. Left Right)
+        if re.match(r'^\d+\.$', line) and i+2 < len(q_lines_raw) and not re.match(r'^\d+\.$', q_lines_raw[i+1]) and not re.match(r'^\d+\.$', q_lines_raw[i+2]):
+            is_2_col = False
+            if i+3 < len(q_lines_raw) and re.match(r'^\d+\.$', q_lines_raw[i+3]):
+                is_2_col = True
+            elif i+3 >= len(q_lines_raw) or re.match(r'^(Which|Select|Codes)', q_lines_raw[i+3], re.I):
+                if cleaned_q and re.match(r'^\d+\.\s', cleaned_q[-1]) and len(cleaned_q[-1]) > 10:
+                    is_2_col = True
+            
+            if is_2_col:
+                # Also try to format previous 2 lines as headers if they exist and are standalone
+                if i >= 2 and len(cleaned_q) >= 2 and not re.match(r'^\[', cleaned_q[-1]) and not re.match(r'^\[', cleaned_q[-2]) and not re.match(r'^\d+\.\s', cleaned_q[-1]):
+                    header_merged = f"{cleaned_q[-2].strip().ljust(30)} {cleaned_q[-1].strip()}"
+                    cleaned_q = cleaned_q[:-2]
+                    cleaned_q.append(header_merged)
+
+                merged = f"{line.ljust(3)} {q_lines_raw[i+1].ljust(26)} {q_lines_raw[i+2]}"
+                cleaned_q.append(merged)
+                i += 3
+                continue
+
+        # 3. Merge 1. Statement OR 5. Right-column-item
+        if re.match(r'^\d+\.$', line) and i+1 < len(q_lines_raw):
+            if cleaned_q and re.match(r'^[A-D]\.\s', cleaned_q[-1]):
+                # It's an extra item for List-II, indent it to match
+                merged = f"{' '.ljust(30)} {line.ljust(3)} {q_lines_raw[i+1]}"
+                cleaned_q.append(merged)
+            else:
+                # Regular statement
+                cleaned_q.append(f"{line} {q_lines_raw[i+1]}")
+            i += 2
+            continue
+            
+        cleaned_q.append(line)
+        i += 1
+
+    # Clean intra-sentence newlines for the question intro text
+    final_q = []
+    for line in cleaned_q:
+        if not final_q:
+            final_q.append(line)
+        else:
+            prev = final_q[-1]
+            if re.match(r'^([A-D]\.|\d+\.|List-|Codes:|\[\d{4}(?:-[IV]+)?\]|\s+)', line):
+                final_q.append(line)
+            elif re.match(r'^(Which|Select|Codes:?|In the context|With reference)', line, re.I):
+                final_q.append(line)
+            elif re.match(r'^\[\d{4}(?:-[IV]+)?\]$', prev.strip()):
+                final_q.append(line)
+            elif re.search(r'[:.?]$', prev.strip()):
+                final_q.append(line)
+            else:
+                final_q[-1] = prev + " " + line
+
+    question_text = "\n".join(final_q)
+    # --------------------------
 
     q_obj = {
         "questionId": f"q{q_data['id']}",
@@ -118,7 +211,8 @@ for q_data in questions:
     if "map" in question_text.lower() and ("following" in question_text.lower() or "given" in question_text.lower()):
         img_idx = 1 if q_data['id'] < 40 else 2
         ext = "png" if img_idx == 1 else "jpeg"
-        q_obj["images"] = [f"https://test.nxtdev.in/{TEST_ID}/image{img_idx}.{ext}"]
+        # Relative image paths
+        q_obj["images"] = [f"/{TEST_ID}/image{img_idx}.{ext}"]
         
     formatted_questions.append(q_obj)
 
@@ -161,7 +255,7 @@ while i < len(a_lines):
 
     if is_new_answer:
         if current_a is not None and current_a in q_map:
-            q_map[current_a]['explanation'] = "\n".join(current_ans_text)
+            q_map[current_a]['explanation'] = clean_newlines(current_ans_text)
         
         current_a = ans_num
         if current_a in q_map and ans_char is not None:
@@ -197,7 +291,8 @@ test_json = [
   }
 ]
 
-with open(f'../public/{TEST_ID}.json', 'w') as f:
+out_path = f'../public/test-jsons/{TEST_ID}.json'
+with open(out_path, 'w') as f:
     json.dump(test_json, f, indent=2)
 
-print(f"Extraction complete. Processed {len(formatted_questions)} questions.")
+print(f"Extraction complete. Processed {len(formatted_questions)} questions. Saved to {out_path}")

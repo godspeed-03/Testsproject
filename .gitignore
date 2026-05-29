@@ -43,3 +43,7 @@ venv/
 .venv/
 **/venv/
 **/.venv/
+
+**/drop_db.py
+drop_db.py
+*/drop_db.py

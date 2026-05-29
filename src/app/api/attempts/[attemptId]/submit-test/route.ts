@@ -30,15 +30,33 @@ export async function POST(req: Request, { params }: { params: Promise<{ attempt
 
     // Calculate score and section scores
     let score = 0;
+    let maxScore = 0;
     const sectionScores: Record<string, number> = {};
+
+    const globalCorrectMarks = test.testJSON.correctMarks ?? 1;
+    const globalIncorrectMarks = test.testJSON.incorrectMarks ?? 0.25;
 
     for (const section of test.testJSON.sections || []) {
       sectionScores[section.sectionId] = 0;
+      const sectionCorrectMarks = section.correctMarks ?? globalCorrectMarks;
+      const sectionIncorrectMarks = section.incorrectMarks ?? globalIncorrectMarks;
+
       for (const question of section.questions || []) {
+        const qCorrectMarks = question.correctMarks ?? sectionCorrectMarks;
+        const qIncorrectMarks = question.incorrectMarks ?? sectionIncorrectMarks;
+
+        maxScore += qCorrectMarks;
+
         const response = attempt.responses.find(r => r.questionId === question.questionId);
-        if (response && response.isCorrect) {
-          score += 1;
-          sectionScores[section.sectionId] += 1;
+        
+        if (response && response.isCorrect === true) {
+          score += qCorrectMarks;
+          sectionScores[section.sectionId] += qCorrectMarks;
+        } else if (response && response.isCorrect === false && response.selectedAnswer !== null && response.selectedAnswer !== undefined) {
+          // Subtract incorrect marks only if a wrong answer was selected
+          // Depending on schema, it might be positive number indicating deduction
+          score -= Math.abs(qIncorrectMarks);
+          sectionScores[section.sectionId] -= Math.abs(qIncorrectMarks);
         }
       }
     }
@@ -47,12 +65,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ attempt
     attempt.endTime = new Date();
     attempt.score = score;
     attempt.sectionScores = sectionScores;
+    // You might want to define maxScore in Attempt schema if needed, but for now we can just store it in an unstructured way or return it
+    // attempt.maxScore = maxScore;
     
     await attempt.save();
 
     return NextResponse.json({ 
       message: 'Test submitted successfully', 
       score: attempt.score,
+      maxScore: maxScore,
       totalQuestions: test.totalQuestions
     });
     

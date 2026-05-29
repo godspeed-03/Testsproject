@@ -34,8 +34,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ attemptI
     const topicPerformance: Record<string, { correct: number, total: number }> = {};
     const difficultyAnalysis: Record<string, { correct: number, total: number }> = {};
     
+    const globalCorrectMarks = test.testJSON.correctMarks ?? 1;
+    
+    let maxScore = 0;
+    
     for (const section of test.testJSON.sections || []) {
+      const sectionCorrectMarks = section.correctMarks ?? globalCorrectMarks;
       for (const question of section.questions || []) {
+        const qCorrectMarks = question.correctMarks ?? sectionCorrectMarks;
+        maxScore += qCorrectMarks;
+        
         const response = attempt.responses.find((r: any) => r.questionId === question.questionId);
         
         // Topic metrics
@@ -79,13 +87,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ attemptI
       }
     }
 
-    const accuracy = attempt.score !== undefined && test.totalQuestions > 0 
-      ? (attempt.score / test.totalQuestions) * 100 
+    // fallback to totalQuestions if maxScore is 0 for some reason (e.g. empty test)
+    const divisor = maxScore > 0 ? maxScore : (test.totalQuestions > 0 ? test.totalQuestions : 1);
+    const accuracy = attempt.score !== undefined 
+      ? (attempt.score / divisor) * 100 
       : 0;
 
     return NextResponse.json({ 
       analytics: {
         score: attempt.score,
+        maxScore,
         totalQuestions: test.totalQuestions,
         accuracy,
         correctCount,

@@ -6,7 +6,6 @@ from google.genai import types
 from PIL import Image
 import io
 
-API_KEY = "AQ.Ab8RN6JpIANNdgtrdJNP5ijDscMcvUT9tlbEqdDI5Y362jZWzw"
 
 # Initialize the client
 client = genai.Client(api_key=API_KEY)

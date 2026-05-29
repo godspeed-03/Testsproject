@@ -360,7 +360,15 @@ export default function TakeTestPage() {
             </div>
 
             <div className="glass-panel p-8 mb-6 text-lg">
-              <p className="mb-8">{currentQuestion.question}</p>
+              <p className="mb-8 whitespace-pre-wrap">{currentQuestion.question}</p>
+
+              {currentQuestion.images && currentQuestion.images.length > 0 && (
+                <div className="mb-8 space-y-4">
+                  {currentQuestion.images.map((img: string, i: number) => (
+                    <img key={i} src={img} alt={`Question image ${i + 1}`} className="max-w-full h-auto rounded-lg shadow-sm" />
+                  ))}
+                </div>
+              )}
 
               {/* MCQ Single Option */}
               {currentQuestion.type === 'mcq-single' && (

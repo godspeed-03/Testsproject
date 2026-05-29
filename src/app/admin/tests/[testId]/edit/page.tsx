@@ -254,6 +254,19 @@ export default function EditTestPage({ params }: { params: Promise<{ testId: str
                   className="bg-card border-border text-foreground"
                 />
               </div>
+              <div className="mb-4">
+                <label className="text-xs text-muted-foreground mb-1 block">Total Time (seconds)</label>
+                <Input 
+                  type="number"
+                  value={testData.testJSON?.totalTime || ''}
+                  onChange={(e) => {
+                    const newData = { ...testData };
+                    if (newData.testJSON) newData.testJSON.totalTime = Number(e.target.value);
+                    setTestData(newData);
+                  }}
+                  className="bg-card border-border text-foreground"
+                />
+              </div>
             </CardContent>
           </Card>
 

@@ -217,8 +217,13 @@ export default function CreateTestPage() {
                 <p className="font-medium text-foreground">{parsedData.testName}</p>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider mb-1">Total Time</p>
-                <p className="font-medium text-foreground">{Math.floor(parsedData.totalTime / 60)} Minutes</p>
+                <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider mb-1">Total Time (seconds)</p>
+                <Input 
+                  type="number"
+                  value={parsedData.totalTime}
+                  onChange={(e) => setParsedData({ ...parsedData, totalTime: Number(e.target.value) })}
+                  className="h-8 bg-card border-border text-sm text-foreground max-w-[120px]"
+                />
               </div>
               <div>
                 <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider mb-1">Total Sections</p>

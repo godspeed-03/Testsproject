@@ -56,7 +56,7 @@ export default function DailyModule({
           <button
             type="button"
             onClick={onOpenEditTargetsModal}
-            className="bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-extrabold px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-all shadow"
+            className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-800 dark:hover:bg-slate-700 text-xs sm:text-sm font-extrabold px-4 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-xs border border-slate-700/50"
           >
             <Edit2 size={14} /> Edit Weekly Target Hours
           </button>
@@ -65,15 +65,15 @@ export default function DailyModule({
         <div className="overflow-x-auto">
           <table className="w-full text-xs sm:text-sm text-left border-collapse min-w-[600px]">
             <thead>
-              <tr className={`${tableHeaderBg} uppercase text-xs tracking-wider border-b border-slate-300 dark:border-slate-800`}>
-                <th className="p-3 font-extrabold">Subject / Track</th>
-                <th className="p-3 font-extrabold">Target (Weekly)</th>
-                <th className="p-3 font-extrabold">Actual Logged (This Week)</th>
-                <th className="p-3 w-1/3 font-extrabold">Progress</th>
-                <th className="p-3 font-extrabold">Status</th>
+              <tr className={`${isLight ? 'bg-slate-100/80 text-slate-700' : 'bg-slate-900/80 text-slate-300'} text-[11px] font-bold tracking-wider uppercase border-b border-slate-200 dark:border-slate-800`}>
+                <th className="p-3.5 font-extrabold">Subject / Track</th>
+                <th className="p-3.5 font-extrabold">Target (Weekly)</th>
+                <th className="p-3.5 font-extrabold">Actual Logged (This Week)</th>
+                <th className="p-3.5 w-1/3 font-extrabold">Progress</th>
+                <th className="p-3.5 font-extrabold">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-300 dark:divide-slate-800">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {weeklyTargetsList.map((t) => {
                 let actual = 0;
                 if (t.id === 'gs') {
@@ -97,20 +97,32 @@ export default function DailyModule({
 
                 const pct = t.target > 0 ? Math.min(100, Math.round((actual / t.target) * 100)) : 0;
                 return (
-                  <tr key={t.id} className="hover:bg-slate-200/60 dark:hover:bg-slate-800/40 transition-colors font-bold">
-                    <td className={`p-3 font-extrabold ${textTitle}`}>{t.name}</td>
-                    <td className={`p-3 ${textMuted}`}>{t.target}h</td>
-                    <td className="p-3 font-extrabold text-amber-700 dark:text-cyan-400">{actual.toFixed(1)}h</td>
-                    <td className="p-3">
-                      <div className="w-full bg-slate-300 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                  <tr key={t.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors font-bold">
+                    <td className={`p-3.5 font-extrabold ${textTitle}`}>{t.name}</td>
+                    <td className={`p-3.5 ${textMuted}`}>{t.target}h</td>
+                    <td className={`p-3.5 font-extrabold ${actual > 0 ? (isLight ? 'text-indigo-600' : 'text-cyan-400') : textMuted}`}>
+                      {actual.toFixed(1)}h
+                    </td>
+                    <td className="p-3.5">
+                      <div className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
                         <div
-                          className={`h-full transition-all ${pct >= 100 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                          className={`h-full transition-all ${
+                            pct >= 100 ? 'bg-emerald-500' : pct > 0 ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-700'
+                          }`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
                     </td>
-                    <td className="p-3">
-                      <span className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold ${pct >= 100 ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
+                    <td className="p-3.5">
+                      <span
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                          pct >= 100
+                            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                            : pct > 0
+                            ? 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-500/30'
+                            : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                        }`}
+                      >
                         {pct}%
                       </span>
                     </td>
@@ -134,7 +146,7 @@ export default function DailyModule({
           <button
             type="button"
             onClick={onOpenAddDailyLogModal}
-            className="bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs sm:text-sm px-4 py-2 rounded-lg flex items-center gap-1.5 shadow"
+            className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 font-extrabold text-xs sm:text-sm px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all"
           >
             <Plus size={16} /> Log Today's Study
           </button>
@@ -214,30 +226,35 @@ export default function DailyModule({
                   const rRatio = totSplit > 0 ? Math.round(((l.revH || 0) / totSplit) * 100) : 0;
                   return (
                     <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors font-bold">
-                      <td className={`p-3.5 font-extrabold ${textTitle}`}>
-                        <div className="flex items-center gap-1.5">
+                      <td className={`p-4 font-extrabold ${textTitle} whitespace-nowrap align-middle`}>
+                        <div className="flex items-center gap-2">
                           <span>{l.date}</span>
                           {isTodayLog && (
-                            <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-extrabold">
+                            <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded-full font-extrabold shadow-2xs">
                               Today
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="p-3.5">
+                      <td className="p-4 align-middle">
                         {l.subjectTags && l.subjectTags.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex flex-wrap gap-2 py-1">
                             {l.subjectTags.map((t: any, idx: number) => (
                               <span
                                 key={idx}
-                                className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-bold border transition-all ${
+                                className={`inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-lg font-extrabold border shadow-2xs transition-all ${
                                   t.isRevision
-                                    ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/30'
-                                    : 'bg-indigo-500/10 text-indigo-800 dark:text-indigo-300 border-indigo-500/30'
+                                    ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                                    : 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800'
                                 }`}
                               >
-                                <Tag size={11} /> [{t.category}] {t.subject}: {t.topic}{' '}
-                                <strong className="text-[10px] opacity-75">{t.isRevision ? '(Rev)' : '(New)'}</strong>
+                                <Tag size={12} className="opacity-70 shrink-0" />
+                                <span>
+                                  [{t.category}] {t.subject}: {t.topic}
+                                </span>
+                                <span className="text-[10px] opacity-75 ml-0.5">
+                                  {t.isRevision ? '(Rev)' : '(New)'}
+                                </span>
                               </span>
                             ))}
                           </div>
@@ -247,34 +264,36 @@ export default function DailyModule({
                           </div>
                         )}
                       </td>
-                      <td className="p-3 font-extrabold text-amber-700 dark:text-cyan-400">{l.total?.toFixed(1)} Hrs</td>
-                      <td className={`p-3 font-bold ${textMuted}`}>
+                      <td className={`p-4 font-extrabold align-middle whitespace-nowrap ${l.total > 0 ? (isLight ? 'text-indigo-600' : 'text-cyan-400') : textMuted}`}>
+                        {l.total?.toFixed(1)} Hrs
+                      </td>
+                      <td className={`p-4 font-bold align-middle whitespace-nowrap ${textMuted}`}>
                         GS: {l.gs}h | M: {l.maths}h | CA: {l.ca}h
                       </td>
-                      <td className={`p-3 font-bold ${textMuted}`}>
+                      <td className={`p-4 font-bold align-middle whitespace-nowrap ${textMuted}`}>
                         {l.newH}h New / {l.revH}h Rev{' '}
-                        <span className={`font-extrabold ${rRatio < 30 ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                        <span className={`font-extrabold ${rRatio < 30 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                           ({rRatio}%)
                         </span>
                       </td>
-                      <td className={`p-3 font-extrabold ${textTitle}`}>{l.ansCount} ans</td>
-                      <td className="p-3 text-amber-500">{'⭐'.repeat(l.focus || 3)}</td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-1.5">
+                      <td className={`p-4 font-extrabold align-middle whitespace-nowrap ${textTitle}`}>{l.ansCount} ans</td>
+                      <td className="p-4 text-amber-500 align-middle whitespace-nowrap">{'⭐'.repeat(l.focus || 3)}</td>
+                      <td className="p-4 align-middle whitespace-nowrap">
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => onOpenViewDailyLogModal(l)}
-                            className="p-1.5 bg-blue-600 text-white rounded flex items-center gap-1 text-xs font-bold shadow-sm"
+                            className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 dark:text-indigo-300 rounded-xl flex items-center gap-1.5 text-xs font-extrabold border border-indigo-200 dark:border-indigo-800 shadow-2xs transition-all"
                           >
-                            <Eye size={13} /> View
+                            <Eye size={14} /> View
                           </button>
                           {isTodayLog && (
                             <button
                               type="button"
                               onClick={() => onOpenEditDailyLogModal(l)}
-                              className="p-1.5 bg-amber-600 text-white rounded flex items-center gap-1 text-xs font-bold shadow-sm"
+                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 rounded-xl flex items-center gap-1.5 text-xs font-extrabold border border-slate-300 dark:border-slate-700 shadow-2xs transition-all"
                             >
-                              <Edit2 size={13} /> Edit
+                              <Edit2 size={14} /> Edit
                             </button>
                           )}
                         </div>

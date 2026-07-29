@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
-import { Inter, Geist } from "next/font/google";
+import { Oxanium } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-const inter = Inter({ subsets: ["latin"] });
+const oxanium = Oxanium({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-oxanium"
+});
 
 export const metadata: Metadata = {
-  title: "Test Platform",
-  description: "Advanced secure test hosting platform",
+  title: "UPSC CSE 2027 Master Tracker | Spaced Repetition Engine",
+  description: "Advanced UPSC automated subject tracking, spaced repetition engine, and daily study analytics",
 };
 
 export default function RootLayout({
@@ -19,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full", "antialiased", inter.className, "font-sans", geist.variable)} suppressHydrationWarning>
-      <body className="min-h-full flex flex-col bg-background text-foreground" suppressHydrationWarning>
+    <html lang="en" className={cn("h-full", "antialiased", oxanium.className, oxanium.variable)} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-background text-foreground font-sans" suppressHydrationWarning>
         <Navbar />
         <main className="flex-1 flex flex-col">
           {children}

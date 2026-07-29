@@ -13,14 +13,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
-    }
+    let user = await User.findOne({ email });
 
-    const isMatch = await bcrypt.compare(password, user.passwordHash);
-    if (!isMatch) {
-      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    if (!user) {
+      // Auto-create new user account if not registered yet
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(password, salt);
+      user = await User.create({
+        email,
+        passwordHash,
+        role: 'user'
+      });
+    } else {
+      // Validate password for existing account
+      const isMatch = await bcrypt.compare(password, user.passwordHash);
+      if (!isMatch) {
+        return NextResponse.json({ error: 'Incorrect password for existing account' }, { status: 401 });
+      }
     }
 
     const token = signToken({
@@ -30,7 +39,7 @@ export async function POST(req: Request) {
     });
 
     const response = NextResponse.json({
-      message: 'Logged in successfully',
+      message: 'Authenticated successfully',
       user: { id: user._id, email: user.email, role: user.role }
     });
 
@@ -45,7 +54,7 @@ export async function POST(req: Request) {
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Unified Auth error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

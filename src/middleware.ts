@@ -7,11 +7,10 @@ const secret = new TextEncoder().encode(JWT_SECRET);
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
-
   const { pathname } = request.nextUrl;
   
   // Public API routes
-  if (pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/register')) {
+  if (pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/register') || pathname.startsWith('/api/tracker')) {
     return NextResponse.next();
   }
 
@@ -39,18 +38,10 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    const { payload } = await jwtVerify(token, secret);
+    await jwtVerify(token, secret);
     
-    // Redirect authenticated users away from auth pages
+    // Redirect authenticated users away from auth pages to dashboard
     if (isAuthPage) {
-      if (payload.role === 'admin') {
-        return NextResponse.redirect(new URL('/admin', request.url));
-      }
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-
-    // Protect admin routes
-    if (pathname.startsWith('/admin') && payload.role !== 'admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
@@ -66,8 +57,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
-    '/admin/:path*',
-    '/tests/:path*',
     '/api/:path*',
     '/login',
     '/register'

@@ -45,7 +45,7 @@ export default function SkipRevisionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+    <div className={`fixed inset-0 z-50 ${isLight ? 'bg-slate-900/40' : 'bg-slate-950/75'} backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in`}>
       <div className={`${cardBg} rounded-2xl w-full max-w-md p-6 shadow-2xl space-y-4 border border-slate-300 dark:border-slate-800`}>
         <div className={`flex justify-between items-center border-b ${isLight ? 'border-slate-300' : 'border-slate-800'} pb-3`}>
           <h3 className="font-extrabold text-lg sm:text-xl text-rose-600 dark:text-rose-400 flex items-center gap-2">

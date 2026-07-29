@@ -134,7 +134,7 @@ export default function ShadcnDatePicker({
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 z-50 w-72 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-4 space-y-3 animate-scale-up">
+        <div className="absolute left-0 mt-2 z-50 w-72 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl p-4 space-y-3 animate-scale-up">
           <div className="flex items-center justify-between gap-1 border-b border-slate-200 dark:border-slate-800 pb-2">
             <button
               type="button"

@@ -30,9 +30,6 @@ export default function NavbarClient({ user }: NavbarClientProps) {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('open-daily-log-modal'));
     }
-    if (pathname !== '/daily' && pathname !== '/revision') {
-      router.push('/daily?openLog=true');
-    }
   };
 
   return (

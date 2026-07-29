@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import MasterRoutineTable from '@/components/MasterRoutineTable';
 import CountdownHeader from '@/components/dashboard/CountdownHeader';
 import RedFlagAlerts from '@/components/dashboard/RedFlagAlerts';
@@ -59,6 +59,7 @@ const addDaysStr = (dateStr: string, days: number) => {
 
 export default function DashboardPage() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Active Tab Sync
   const [activeTab, setActiveTab] = useState<'syllabus' | 'revision' | 'daily' | 'tests' | 'timetable'>('syllabus');
@@ -71,17 +72,36 @@ export default function DashboardPage() {
     else setActiveTab('syllabus');
   }, [pathname]);
 
+  // Listener for Quick 3-Min Log from Navbar
+  useEffect(() => {
+    const handleOpenModal = () => {
+      setEditLogId(null);
+      setLogDate(getTodayStr());
+      setShowDailyModal(true);
+    };
+
+    window.addEventListener('open-daily-log-modal', handleOpenModal);
+
+    if (searchParams?.get('openLog') === 'true') {
+      handleOpenModal();
+    }
+
+    return () => {
+      window.removeEventListener('open-daily-log-modal', handleOpenModal);
+    };
+  }, [searchParams]);
+
   // Theme Mode
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     const saved = localStorage.getItem('upsc_theme');
-    if (saved === 'light') {
-      setTheme('light');
-      document.documentElement.classList.remove('dark');
-    } else {
+    if (saved === 'dark') {
       setTheme('dark');
       document.documentElement.classList.add('dark');
+    } else {
+      setTheme('light');
+      document.documentElement.classList.remove('dark');
     }
   }, []);
 

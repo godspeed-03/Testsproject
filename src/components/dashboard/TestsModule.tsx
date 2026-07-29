@@ -60,8 +60,21 @@ export default function TestsModule({
           <tbody className="divide-y divide-slate-300 dark:divide-slate-800">
             {testLogs.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-8 text-slate-500 font-bold">
-                  No test series results logged yet. Click "Log New Test Score" above!
+                <td colSpan={8} className="p-8">
+                  <div className="text-center space-y-3 p-6">
+                    <div className="w-12 h-12 rounded-full bg-purple-500/10 text-purple-500 flex items-center justify-center mx-auto border border-purple-500/20">
+                      <Award size={24} />
+                    </div>
+                    <h4 className={`font-extrabold ${textTitle} text-base sm:text-lg`}>No Test Series Results Logged Yet</h4>
+                    <p className={`text-xs sm:text-sm ${textMuted} max-w-md mx-auto`}>Track mock test scores, accuracy %, and mistake breakdowns. Click below to add your first test log.</p>
+                    <button
+                      type="button"
+                      onClick={onOpenAddTestModal}
+                      className="mt-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs px-4 py-2 rounded-lg shadow-sm transition-all inline-flex items-center gap-1.5"
+                    >
+                      <Plus size={15} /> Log New Test Score
+                    </button>
+                  </div>
                 </td>
               </tr>
             ) : (

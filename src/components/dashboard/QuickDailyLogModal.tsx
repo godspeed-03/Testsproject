@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Zap, CalendarDays, RotateCcw, Tag, Plus, X, Loader2 } from 'lucide-react';
 import ShadcnDatePicker from '@/components/ui/ShadcnDatePicker';
+import ShadcnSelect, { SelectOption } from '@/components/ui/ShadcnSelect';
 
 interface QuickDailyLogModalProps {
   isOpen: boolean;
@@ -156,42 +157,45 @@ export default function QuickDailyLogModal({
   };
 
   return (
-    <div className={`fixed inset-0 z-50 ${isLight ? 'bg-slate-900/40' : 'bg-slate-950/75'} backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in`}>
-      <div className={`${cardBg} rounded-2xl w-full max-w-xl p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border border-slate-300 dark:border-slate-800`}>
-        <div className={`flex justify-between items-center border-b ${isLight ? 'border-slate-300' : 'border-slate-800'} pb-3`}>
+    <div className={`fixed inset-0 z-50 ${isLight ? 'bg-slate-900/40' : 'bg-slate-950/75'} backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in`}>
+      <div className={`${cardBg} rounded-2xl w-full max-w-2xl sm:max-w-3xl shadow-2xl border border-slate-300 dark:border-slate-800 flex flex-col max-h-[90vh]`}>
+        {/* Pinned Header */}
+        <div className={`flex justify-between items-center px-6 py-4 border-b ${isLight ? 'border-slate-300' : 'border-slate-800'} shrink-0`}>
           <h3 className={`font-extrabold text-base sm:text-lg ${textTitle} flex items-center gap-2`}>
-            <Zap size={16} className="text-amber-500" /> {editLogId ? 'Edit Daily Study Log' : 'Quick Daily Study Log (< 3 Mins)'}
+            <Zap size={18} className="text-amber-500" /> {editLogId ? 'Edit Daily Study Log' : 'Quick Daily Study Log (< 3 Mins)'}
           </h3>
-          <button type="button" onClick={onClose} disabled={loading} className={`${textMuted} hover:text-amber-600`}>
+          <button type="button" onClick={onClose} disabled={loading} className={`${textMuted} hover:text-amber-600 p-1.5 rounded-lg transition-colors`}>
             <X size={20} />
           </button>
         </div>
 
-        <div className="space-y-4 text-xs sm:text-sm font-bold">
-          <div>
-            <label className={`block ${textMuted} mb-1.5 font-extrabold flex items-center gap-1.5`}>
-              <CalendarDays size={16} className="text-amber-600" /> Select Date
-            </label>
-            <div className="pt-1">
+        {/* Scrollable Content Body */}
+        <div className="p-6 overflow-y-auto custom-scrollbar space-y-5 text-xs sm:text-sm font-bold flex-1">
+          {/* Top Control Bar: Date Selector + Rest Day Toggle in ONE clean line */}
+          <div className={`${cardInnerBg} p-3.5 rounded-xl border border-slate-300 dark:border-slate-800 flex flex-wrap sm:flex-nowrap items-center justify-between gap-4`}>
+            <div className="flex items-center gap-2.5">
+              <label className={`font-extrabold flex items-center gap-1.5 ${textTitle} text-xs sm:text-sm shrink-0`}>
+                <CalendarDays size={16} className="text-amber-500" /> Select Date:
+              </label>
               <ShadcnDatePicker
                 selectedDate={logDate}
                 onSelectDate={setLogDate}
                 disablePastDates={true}
               />
             </div>
-          </div>
 
-          <div className={`flex items-center gap-2 ${cardInnerBg} p-3 rounded-lg border border-slate-300 dark:border-slate-800`}>
-            <input
-              type="checkbox"
-              id="chkOff"
-              checked={logOffDay}
-              onChange={(e) => setLogOffDay(e.target.checked)}
-              className="w-4 h-4 accent-amber-600 cursor-pointer"
-            />
-            <label htmlFor="chkOff" className="text-amber-950 dark:text-amber-200 font-extrabold cursor-pointer">
-              Log as Honesty Rule Off / Rest Day (0 Hours)
-            </label>
+            <div className="flex items-center gap-2 bg-amber-500/10 dark:bg-amber-500/15 px-3 py-2 rounded-lg border border-amber-500/30 shrink-0">
+              <input
+                type="checkbox"
+                id="chkOff"
+                checked={logOffDay}
+                onChange={(e) => setLogOffDay(e.target.checked)}
+                className="w-4 h-4 accent-amber-600 cursor-pointer"
+              />
+              <label htmlFor="chkOff" className="text-amber-900 dark:text-amber-200 font-extrabold text-xs cursor-pointer select-none">
+                Honesty Rule Off / Rest Day
+              </label>
+            </div>
           </div>
 
           {!logOffDay && (
@@ -260,10 +264,20 @@ export default function QuickDailyLogModal({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs sm:text-sm">
                   <div>
                     <label className={`block ${textMuted} mb-1 font-extrabold`}>Category</label>
-                    <select
+                    <ShadcnSelect
                       value={tagCategory}
-                      onChange={(e) => {
-                        const newCat = e.target.value;
+                      isLight={isLight}
+                      options={[
+                        { value: 'GS1', label: 'GS1 (His, Geo, Soc)' },
+                        { value: 'GS2', label: 'GS2 (Pol, Gov, IR)' },
+                        { value: 'GS3', label: 'GS3 (Eco, Env, Sci)' },
+                        { value: 'GS4', label: 'GS4 (Ethics, Integrity)' },
+                        { value: 'MATHS', label: 'Maths Optional' },
+                        { value: 'CA', label: 'Current Affairs' },
+                        { value: 'ESSAY', label: 'Essay' },
+                        { value: 'CSAT', label: 'CSAT' },
+                      ]}
+                      onChange={(newCat) => {
                         setTagCategory(newCat);
                         const filtered = syllabusList.filter((s) => s.category === newCat);
                         if (filtered.length > 0) {
@@ -272,42 +286,27 @@ export default function QuickDailyLogModal({
                           setTagSubject('');
                         }
                       }}
-                      className={`w-full ${inputBg} rounded-lg p-2.5 font-extrabold outline-none`}
-                    >
-                      <option value="GS1">GS1 (His, Geo, Soc)</option>
-                      <option value="GS2">GS2 (Pol, Gov, IR)</option>
-                      <option value="GS3">GS3 (Eco, Env, Sci)</option>
-                      <option value="GS4">GS4 (Ethics, Integrity)</option>
-                      <option value="MATHS">Maths Optional</option>
-                      <option value="CA">Current Affairs</option>
-                      <option value="ESSAY">Essay</option>
-                      <option value="CSAT">CSAT</option>
-                    </select>
+                    />
                   </div>
 
                   <div>
                     <label className={`block ${textMuted} mb-1 font-extrabold`}>Subject Name ({tagCategory})</label>
                     {syllabusList.filter((s) => s.category === tagCategory).length > 0 ? (
-                      <select
+                      <ShadcnSelect
                         value={tagSubject}
-                        onChange={(e) => setTagSubject(e.target.value)}
-                        className={`w-full ${inputBg} rounded-lg p-2.5 font-extrabold outline-none`}
-                      >
-                        {syllabusList
+                        isLight={isLight}
+                        options={syllabusList
                           .filter((s) => s.category === tagCategory)
-                          .map((s) => (
-                            <option key={s.id || s.customId || s._id} value={s.subject}>
-                              {s.subject}
-                            </option>
-                          ))}
-                      </select>
+                          .map((s) => ({ value: s.subject, label: s.subject }))}
+                        onChange={(newSub) => setTagSubject(newSub)}
+                      />
                     ) : (
                       <input
                         type="text"
                         placeholder="Subject (e.g. Geo, Polity)"
                         value={tagSubject}
                         onChange={(e) => setTagSubject(e.target.value)}
-                        className={`w-full ${inputBg} rounded-lg p-2.5 outline-none font-bold`}
+                        className={`w-full ${inputBg} rounded-xl p-2.5 outline-none font-bold`}
                       />
                     )}
                   </div>
@@ -444,14 +443,15 @@ export default function QuickDailyLogModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className={`block ${textMuted} mb-1 font-bold`}>CA Read Done?</label>
-                  <select
+                  <ShadcnSelect
                     value={logCaDone}
-                    onChange={(e) => setLogCaDone(e.target.value)}
-                    className={`w-full ${inputBg} rounded-lg p-2.5 outline-none`}
-                  >
-                    <option value="YES">Yes</option>
-                    <option value="NO">No</option>
-                  </select>
+                    isLight={isLight}
+                    options={[
+                      { value: 'YES', label: 'Yes — Reading Completed' },
+                      { value: 'NO', label: 'No — Pending' },
+                    ]}
+                    onChange={(val) => setLogCaDone(val)}
+                  />
                 </div>
                 <div>
                   <label className={`block ${textMuted} mb-1 font-bold`}>Mains Answers Written</label>
@@ -460,35 +460,37 @@ export default function QuickDailyLogModal({
                     placeholder="e.g. 3"
                     value={logAnsCount}
                     onChange={(e) => setLogAnsCount(e.target.value)}
-                    className={`w-full ${inputBg} rounded-lg p-2.5 outline-none`}
+                    className={`w-full ${inputBg} rounded-xl p-2.5 outline-none font-bold`}
                   />
                 </div>
               </div>
 
               <div>
                 <label className={`block ${textMuted} mb-1 font-bold`}>Focus Quality Rating</label>
-                <select
+                <ShadcnSelect
                   value={logFocusQuality}
-                  onChange={(e) => setLogFocusQuality(e.target.value)}
-                  className={`w-full ${inputBg} rounded-lg p-2.5 outline-none`}
-                >
-                  <option value="5">⭐⭐⭐⭐⭐ (5/5 — Deep Focus)</option>
-                  <option value="4">⭐⭐⭐⭐ (4/5 — Good Focus)</option>
-                  <option value="3">⭐⭐⭐ (3/5 — Moderate)</option>
-                  <option value="2">⭐⭐ (2/5 — Distracted)</option>
-                  <option value="1">⭐ (1/5 — Poor Output)</option>
-                </select>
+                  isLight={isLight}
+                  options={[
+                    { value: '5', label: '⭐⭐⭐⭐⭐ (5/5 — Deep Focus)' },
+                    { value: '4', label: '⭐⭐⭐⭐ (4/5 — Good Focus)' },
+                    { value: '3', label: '⭐⭐⭐ (3/5 — Moderate)' },
+                    { value: '2', label: '⭐⭐ (2/5 — Distracted)' },
+                    { value: '1', label: '⭐ (1/5 — Poor Output)' },
+                  ]}
+                  onChange={(val) => setLogFocusQuality(val)}
+                />
               </div>
             </>
           )}
         </div>
 
-        <div className={`flex justify-end gap-2 border-t ${isLight ? 'border-slate-300' : 'border-slate-800'} pt-3`}>
+        {/* Pinned Footer */}
+        <div className={`flex justify-end gap-3 px-5 sm:px-6 py-4 border-t ${isLight ? 'border-slate-300' : 'border-slate-800'} shrink-0`}>
           <button
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 bg-slate-300 hover:bg-slate-400 text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 text-xs sm:text-sm font-bold rounded-lg"
+            className="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 text-xs sm:text-sm font-extrabold rounded-xl transition-all"
           >
             Cancel
           </button>
@@ -496,7 +498,7 @@ export default function QuickDailyLogModal({
             type="button"
             onClick={handleSave}
             disabled={loading}
-            className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 disabled:opacity-50 text-white text-xs sm:text-sm font-extrabold rounded-lg shadow flex items-center gap-2"
+            className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs sm:text-sm font-extrabold rounded-xl shadow-lg transition-all flex items-center gap-2"
           >
             {loading ? (
               <>

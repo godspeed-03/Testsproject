@@ -63,14 +63,14 @@ export default function DailyModule({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-xs sm:text-sm text-left border-collapse min-w-[600px]">
+          <table className="w-full text-xs sm:text-sm text-left border-collapse min-w-[700px]">
             <thead>
               <tr className={`${isLight ? 'bg-slate-100/80 text-slate-700' : 'bg-slate-900/80 text-slate-300'} text-[11px] font-bold tracking-wider uppercase border-b border-slate-200 dark:border-slate-800`}>
-                <th className="p-3.5 font-extrabold">Subject / Track</th>
-                <th className="p-3.5 font-extrabold">Target (Weekly)</th>
-                <th className="p-3.5 font-extrabold">Actual Logged (This Week)</th>
-                <th className="p-3.5 w-1/3 font-extrabold">Progress</th>
-                <th className="p-3.5 font-extrabold">Status</th>
+                <th className="px-5 py-3.5 font-extrabold w-[240px]">Subject / Track</th>
+                <th className="px-5 py-3.5 font-extrabold w-[130px] text-center">Target (Weekly)</th>
+                <th className="px-5 py-3.5 font-extrabold w-[180px] text-center">Actual Logged</th>
+                <th className="px-5 py-3.5 font-extrabold min-w-[180px]">Progress</th>
+                <th className="px-5 py-3.5 font-extrabold w-[110px] text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -98,12 +98,12 @@ export default function DailyModule({
                 const pct = t.target > 0 ? Math.min(100, Math.round((actual / t.target) * 100)) : 0;
                 return (
                   <tr key={t.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors font-bold">
-                    <td className={`p-3.5 font-extrabold ${textTitle}`}>{t.name}</td>
-                    <td className={`p-3.5 ${textMuted}`}>{t.target}h</td>
-                    <td className={`p-3.5 font-extrabold ${actual > 0 ? (isLight ? 'text-indigo-600' : 'text-cyan-400') : textMuted}`}>
+                    <td className={`px-5 py-4 font-extrabold ${textTitle}`}>{t.name}</td>
+                    <td className={`px-5 py-4 text-center ${textMuted}`}>{t.target}h</td>
+                    <td className={`px-5 py-4 text-center font-extrabold ${actual > 0 ? (isLight ? 'text-indigo-600' : 'text-cyan-400') : textMuted}`}>
                       {actual.toFixed(1)}h
                     </td>
-                    <td className="p-3.5">
+                    <td className="px-5 py-4">
                       <div className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
                         <div
                           className={`h-full transition-all ${
@@ -113,9 +113,9 @@ export default function DailyModule({
                         />
                       </div>
                     </td>
-                    <td className="p-3.5">
+                    <td className="px-5 py-4 text-center">
                       <span
-                        className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                        className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all ${
                           pct >= 100
                             ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
                             : pct > 0
@@ -153,17 +153,17 @@ export default function DailyModule({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-xs sm:text-sm text-left border-collapse min-w-[850px]">
+          <table className="w-full text-xs sm:text-sm text-left border-collapse min-w-[1100px]">
             <thead>
               <tr className={`${isLight ? 'bg-slate-100/80 text-slate-700' : 'bg-slate-900/80 text-slate-300'} text-[11px] font-bold tracking-wider uppercase border-b border-slate-200 dark:border-slate-800`}>
-                <th className="p-3.5 font-extrabold">Date</th>
-                <th className="p-3.5 font-extrabold">Today's Revised & Read Topics (Tags)</th>
-                <th className="p-3.5 font-extrabold">Total Hours</th>
-                <th className="p-3.5 font-extrabold">GS / Maths / CA</th>
-                <th className="p-3.5 font-extrabold">New vs Rev</th>
-                <th className="p-3.5 font-extrabold">Answers</th>
-                <th className="p-3.5 font-extrabold">Focus</th>
-                <th className="p-3.5 font-extrabold">Actions</th>
+                <th className="px-5 py-3.5 font-extrabold w-[130px] whitespace-nowrap">Date</th>
+                <th className="px-5 py-3.5 font-extrabold min-w-[340px]">Today's Revised & Read Topics (Tags)</th>
+                <th className="px-5 py-3.5 font-extrabold w-[120px] text-center whitespace-nowrap">Total Hours</th>
+                <th className="px-5 py-3.5 font-extrabold w-[170px] text-center whitespace-nowrap">GS / Maths / CA</th>
+                <th className="px-5 py-3.5 font-extrabold w-[170px] text-center whitespace-nowrap">New vs Rev</th>
+                <th className="px-5 py-3.5 font-extrabold w-[100px] text-center whitespace-nowrap">Answers</th>
+                <th className="px-5 py-3.5 font-extrabold w-[110px] text-center whitespace-nowrap">Focus</th>
+                <th className="px-5 py-3.5 font-extrabold w-[130px] text-center whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -176,7 +176,7 @@ export default function DailyModule({
                       <button
                         type="button"
                         onClick={onOpenAddDailyLogModal}
-                        className="mt-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs px-4 py-2 rounded-xl shadow-sm transition-all inline-flex items-center gap-1.5"
+                        className="mt-2 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all inline-flex items-center gap-1.5"
                       >
                         <Plus size={15} /> Log Today's Study
                       </button>
@@ -189,22 +189,22 @@ export default function DailyModule({
                   if (l.isOff) {
                     return (
                       <tr key={l.id} className="bg-amber-50/50 dark:bg-amber-500/10 font-bold">
-                        <td className={`p-3 font-extrabold ${textTitle} flex items-center gap-1`}>
+                        <td className={`px-5 py-4 font-extrabold ${textTitle} flex items-center gap-1.5 whitespace-nowrap`}>
                           {l.date} {isTodayLog && <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-extrabold">Today</span>}
                         </td>
-                        <td colSpan={2} className={`p-3 ${textMuted} font-bold italic`}>
+                        <td colSpan={2} className={`px-5 py-4 ${textMuted} font-bold italic`}>
                           Off Day / Rest Day Logged (Honesty Rule)
                         </td>
-                        <td colSpan={3} className="p-3 text-amber-950 dark:text-amber-200 font-bold">
+                        <td colSpan={3} className="px-5 py-4 text-amber-950 dark:text-amber-200 font-bold">
                           Note: {l.weakest || 'Rest Day'}
                         </td>
-                        <td className={`p-3 ${textMuted}`}>-</td>
-                        <td className="p-3">
-                          <div className="flex items-center gap-1.5">
+                        <td className={`px-5 py-4 ${textMuted} text-center`}>-</td>
+                        <td className="px-5 py-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
                             <button
                               type="button"
                               onClick={() => onOpenViewDailyLogModal(l)}
-                              className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 dark:text-indigo-300 rounded-lg flex items-center gap-1 text-xs font-extrabold transition-all border border-indigo-200 dark:border-indigo-800"
+                              className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 dark:text-indigo-300 rounded-xl flex items-center gap-1 text-xs font-extrabold transition-all border border-indigo-200 dark:border-indigo-800"
                             >
                               <Eye size={13} /> View
                             </button>
@@ -212,7 +212,7 @@ export default function DailyModule({
                               <button
                                 type="button"
                                 onClick={() => onOpenEditDailyLogModal(l)}
-                                className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:hover:bg-amber-900/60 dark:text-amber-300 rounded-lg flex items-center gap-1 text-xs font-extrabold transition-all border border-amber-200 dark:border-amber-800"
+                                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 rounded-xl flex items-center gap-1 text-xs font-extrabold transition-all border border-slate-300 dark:border-slate-700"
                               >
                                 <Edit2 size={13} /> Edit
                               </button>
@@ -226,17 +226,17 @@ export default function DailyModule({
                   const rRatio = totSplit > 0 ? Math.round(((l.revH || 0) / totSplit) * 100) : 0;
                   return (
                     <tr key={l.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors font-bold">
-                      <td className={`p-4 font-extrabold ${textTitle} whitespace-nowrap align-middle`}>
+                      <td className={`px-5 py-4 font-extrabold ${textTitle} whitespace-nowrap align-middle`}>
                         <div className="flex items-center gap-2">
                           <span>{l.date}</span>
                           {isTodayLog && (
-                            <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded-full font-extrabold shadow-2xs">
+                            <span className="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded-full font-extrabold shadow-2xs">
                               Today
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="p-4 align-middle">
+                      <td className="px-5 py-4 align-middle">
                         {l.subjectTags && l.subjectTags.length > 0 ? (
                           <div className="flex flex-wrap gap-2 py-1">
                             {l.subjectTags.map((t: any, idx: number) => (
@@ -264,22 +264,22 @@ export default function DailyModule({
                           </div>
                         )}
                       </td>
-                      <td className={`p-4 font-extrabold align-middle whitespace-nowrap ${l.total > 0 ? (isLight ? 'text-indigo-600' : 'text-cyan-400') : textMuted}`}>
+                      <td className={`px-5 py-4 text-center font-extrabold align-middle whitespace-nowrap ${l.total > 0 ? (isLight ? 'text-indigo-600' : 'text-cyan-400') : textMuted}`}>
                         {l.total?.toFixed(1)} Hrs
                       </td>
-                      <td className={`p-4 font-bold align-middle whitespace-nowrap ${textMuted}`}>
+                      <td className={`px-5 py-4 text-center font-bold align-middle whitespace-nowrap ${textMuted}`}>
                         GS: {l.gs}h | M: {l.maths}h | CA: {l.ca}h
                       </td>
-                      <td className={`p-4 font-bold align-middle whitespace-nowrap ${textMuted}`}>
+                      <td className={`px-5 py-4 text-center font-bold align-middle whitespace-nowrap ${textMuted}`}>
                         {l.newH}h New / {l.revH}h Rev{' '}
                         <span className={`font-extrabold ${rRatio < 30 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                           ({rRatio}%)
                         </span>
                       </td>
-                      <td className={`p-4 font-extrabold align-middle whitespace-nowrap ${textTitle}`}>{l.ansCount} ans</td>
-                      <td className="p-4 text-amber-500 align-middle whitespace-nowrap">{'⭐'.repeat(l.focus || 3)}</td>
-                      <td className="p-4 align-middle whitespace-nowrap">
-                        <div className="flex items-center gap-2">
+                      <td className={`px-5 py-4 text-center font-extrabold align-middle whitespace-nowrap ${textTitle}`}>{l.ansCount} ans</td>
+                      <td className="px-5 py-4 text-center text-amber-500 align-middle whitespace-nowrap">{'⭐'.repeat(l.focus || 3)}</td>
+                      <td className="px-5 py-4 text-center align-middle whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             type="button"
                             onClick={() => onOpenViewDailyLogModal(l)}

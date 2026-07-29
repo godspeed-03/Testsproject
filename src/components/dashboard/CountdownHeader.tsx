@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Hourglass, Target, Flame, Moon, Sun, Download, Upload } from 'lucide-react';
+import { Hourglass, Target, Moon, Sun, Download, Upload } from 'lucide-react';
 
 interface CountdownHeaderProps {
   theme: string;
@@ -39,13 +39,25 @@ export default function CountdownHeader({
   const isLight = theme === 'light';
 
   return (
-    <div className="bg-slate-900 border border-slate-800 dark:bg-slate-900 light:bg-white rounded-xl p-3 sm:p-4 mb-4 flex flex-col sm:flex-row justify-between items-center gap-3 text-xs sm:text-sm shadow-md">
-      <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-start w-full sm:w-auto">
-        <span className="inline-flex items-center gap-1.5 bg-slate-800/90 text-slate-100 border border-slate-700/80 px-3 py-1 rounded-full text-xs font-extrabold shadow-sm">
-          <Hourglass size={14} className="text-blue-400" /> Prelims 2027: <strong className="text-blue-300">{cdPrelims}</strong>
+    <div className={`rounded-2xl p-3.5 sm:p-4 mb-4 flex flex-col sm:flex-row justify-between items-center gap-3.5 text-xs sm:text-sm border transition-colors shadow-sm ${
+      isLight 
+        ? 'bg-white border-slate-200 text-slate-800' 
+        : 'bg-slate-900 border-slate-800 text-slate-100'
+    }`}>
+      <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap justify-center sm:justify-start w-full sm:w-auto">
+        <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold border transition-all ${
+          isLight 
+            ? 'bg-blue-50 text-blue-900 border-blue-200/80 shadow-2xs' 
+            : 'bg-blue-500/10 text-blue-300 border-blue-500/30'
+        }`}>
+          <Hourglass size={14} className="text-blue-500" /> Prelims 2027: <strong className={isLight ? 'text-blue-700' : 'text-blue-400'}>{cdPrelims}</strong>
         </span>
-        <span className="inline-flex items-center gap-1.5 bg-slate-800/90 text-slate-100 border border-slate-700/80 px-3 py-1 rounded-full text-xs font-extrabold shadow-sm">
-          <Target size={14} className="text-purple-400" /> Mains 2027: <strong className="text-purple-300">{cdMains}</strong>
+        <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold border transition-all ${
+          isLight 
+            ? 'bg-purple-50 text-purple-900 border-purple-200/80 shadow-2xs' 
+            : 'bg-purple-500/10 text-purple-300 border-purple-500/30'
+        }`}>
+          <Target size={14} className="text-purple-500" /> Mains 2027: <strong className={isLight ? 'text-purple-700' : 'text-purple-400'}>{cdMains}</strong>
         </span>
       </div>
 
@@ -53,13 +65,21 @@ export default function CountdownHeader({
         <button
           type="button"
           onClick={onExportData}
-          className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs transition-all border border-slate-700 shadow-sm"
+          className={`font-extrabold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 text-xs transition-all border shadow-xs ${
+            isLight
+              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+              : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+          }`}
           title="Backup system database to JSON"
         >
           <Download size={14} /> Export Backup
         </button>
 
-        <label className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs transition-all border border-slate-700 shadow-sm cursor-pointer">
+        <label className={`font-extrabold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 text-xs transition-all border shadow-xs cursor-pointer ${
+          isLight
+            ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+            : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+        }`}>
           <Upload size={14} /> Import
           <input type="file" accept=".json" onChange={onImportData} className="hidden" />
         </label>
@@ -67,7 +87,11 @@ export default function CountdownHeader({
         <button
           type="button"
           onClick={toggleTheme}
-          className="bg-amber-600 hover:bg-amber-700 text-white font-extrabold px-3 py-1.5 rounded-lg flex items-center gap-1 text-xs transition-all shadow-sm"
+          className={`font-extrabold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 text-xs transition-all shadow-sm ${
+            isLight
+              ? 'bg-slate-900 hover:bg-slate-800 text-white'
+              : 'bg-amber-600 hover:bg-amber-700 text-white'
+          }`}
         >
           {isLight ? <Moon size={14} /> : <Sun size={14} />}
           <span>{isLight ? 'Dark Mode' : 'Light Mode'}</span>

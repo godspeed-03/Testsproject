@@ -202,15 +202,17 @@ export default function SpacedRevisionModule({
       {revisionSubTab === 'today' && (
         <div className="space-y-4">
           {todayNotDone.length === 0 && todayDone.length === 0 ? (
-            <div className="text-center py-10 text-slate-500 font-bold space-y-2">
-              <CalendarDays size={36} className="text-amber-500" />
+            <div className={`${cardInnerBg} rounded-xl p-10 text-center space-y-3 border border-slate-300 dark:border-slate-800`}>
+              <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto border border-amber-500/20">
+                <CalendarDays size={24} />
+              </div>
               <h4 className={`font-extrabold ${textTitle} text-base sm:text-lg`}>No Revisions Scheduled For Selected Date!</h4>
-              <p className={`text-xs sm:text-sm ${textMuted}`}>All study items for this date are up to date.</p>
+              <p className={`text-xs sm:text-sm ${textMuted} max-w-md mx-auto`}>All study items for this date are completely up to date.</p>
               {overdueRevisions.length > 0 && (
                 <button
                   type="button"
                   onClick={() => setRevisionSubTab('overdue')}
-                  className="mt-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold px-4 py-2 rounded-lg shadow"
+                  className="mt-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold px-4 py-2 rounded-lg shadow-sm transition-all"
                 >
                   Check {overdueRevisions.length} Overdue Topics From Previous Days
                 </button>
@@ -318,10 +320,12 @@ export default function SpacedRevisionModule({
       {revisionSubTab === 'overdue' && (
         <div className="space-y-3">
           {overdueRevisions.length === 0 ? (
-            <div className="text-center py-10 text-slate-500 font-bold space-y-2">
-              <CheckCircle size={36} className="text-emerald-500" />
+            <div className={`${cardInnerBg} rounded-xl p-10 text-center space-y-3 border border-slate-300 dark:border-slate-800`}>
+              <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto border border-emerald-500/20">
+                <CheckCircle size={24} />
+              </div>
               <h4 className={`font-extrabold ${textTitle} text-base sm:text-lg`}>Zero Overdue Debt!</h4>
-              <p className={`text-xs sm:text-sm ${textMuted}`}>You have no pending topics from previous days.</p>
+              <p className={`text-xs sm:text-sm ${textMuted} max-w-md mx-auto`}>You have no pending topics from previous days. Excellent consistency!</p>
             </div>
           ) : (
             overdueRevisions.map((s) => {

@@ -89,12 +89,12 @@ export default function ShadcnDatePicker({
 
   return (
     <div className="relative inline-block" ref={popoverRef}>
-      <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900/90 p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 shadow-sm">
+      <div className="flex items-center gap-1.5 bg-white dark:bg-slate-900/90 p-1.5 rounded-xl border border-slate-300 dark:border-slate-700 shadow-xs">
         <button
           type="button"
           onClick={() => changeDateByDays(-1)}
           disabled={disablePastDates && selectedDate <= todayStr}
-          className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
           title="Previous Day"
         >
           <ChevronLeft size={16} />
@@ -103,7 +103,7 @@ export default function ShadcnDatePicker({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-amber-400 font-extrabold text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 shadow-inner transition-all"
+          className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-amber-400 font-extrabold text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 shadow-2xs transition-all"
         >
           <CalendarDays size={16} className="text-amber-500" />
           <span>{formattedDisplay}</span>
@@ -113,7 +113,7 @@ export default function ShadcnDatePicker({
         <button
           type="button"
           onClick={() => changeDateByDays(1)}
-          className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg transition-colors"
           title="Next Day"
         >
           <ChevronRight size={16} />
@@ -126,7 +126,7 @@ export default function ShadcnDatePicker({
               onSelectDate(todayStr);
               setIsOpen(false);
             }}
-            className="ml-1 px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold rounded-lg shadow transition-colors shrink-0"
+            className="ml-1 px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold rounded-lg shadow-xs transition-colors shrink-0"
           >
             Today
           </button>
@@ -134,8 +134,8 @@ export default function ShadcnDatePicker({
       </div>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 z-50 w-72 bg-slate-900 text-slate-100 border border-slate-700 rounded-2xl shadow-2xl p-4 space-y-3 animate-scale-up">
-          <div className="flex items-center justify-between gap-1 border-b border-slate-800 pb-2">
+        <div className="absolute right-0 mt-2 z-50 w-72 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-4 space-y-3 animate-scale-up">
+          <div className="flex items-center justify-between gap-1 border-b border-slate-200 dark:border-slate-800 pb-2">
             <button
               type="button"
               onClick={() => {
@@ -144,8 +144,8 @@ export default function ShadcnDatePicker({
               }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold transition-colors ${
                 selectedDate === todayStr
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-amber-500 text-white shadow-xs'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               Today
@@ -157,7 +157,7 @@ export default function ShadcnDatePicker({
                   changeDateByDays(-1);
                   setIsOpen(false);
                 }}
-                className="px-2.5 py-1 rounded-md text-[11px] font-extrabold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
+                className="px-2.5 py-1 rounded-md text-[11px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
                 Yesterday
               </button>
@@ -168,7 +168,7 @@ export default function ShadcnDatePicker({
                 changeDateByDays(1);
                 setIsOpen(false);
               }}
-              className="px-2.5 py-1 rounded-md text-[11px] font-extrabold bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors"
+              className="px-2.5 py-1 rounded-md text-[11px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             >
               Tomorrow
             </button>
@@ -178,17 +178,17 @@ export default function ShadcnDatePicker({
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 transition-colors"
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="font-extrabold text-xs text-amber-400">
+            <span className="font-extrabold text-xs text-amber-600 dark:text-amber-400">
               {monthNames[viewMonth]} {viewYear}
             </span>
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1.5 hover:bg-slate-800 rounded-lg text-slate-300 transition-colors"
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 transition-colors"
             >
               <ChevronRight size={16} />
             </button>
@@ -229,12 +229,12 @@ export default function ShadcnDatePicker({
                   }}
                   className={`h-8 w-8 rounded-lg text-xs font-extrabold flex items-center justify-center transition-all ${
                     isSelected
-                      ? 'bg-amber-500 text-slate-950 font-black shadow-md scale-105'
+                      ? 'bg-amber-500 text-white font-black shadow-xs scale-105'
                       : isToday
-                      ? 'border border-amber-500/80 text-amber-400 font-bold hover:bg-amber-500/20'
+                      ? 'border border-amber-500/80 text-amber-600 dark:text-amber-400 font-bold hover:bg-amber-500/10'
                       : disablePastDates && isPast
-                      ? 'opacity-30 cursor-not-allowed text-slate-600'
-                      : 'hover:bg-slate-800 text-slate-200'
+                      ? 'opacity-30 cursor-not-allowed text-slate-400 dark:text-slate-600'
+                      : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                   }`}
                 >
                   {dayNum}

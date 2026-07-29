@@ -94,8 +94,21 @@ export default function SyllabusModule({
       {/* Subject Milestone Cards */}
       <div className="space-y-4">
         {filteredSubjects.length === 0 ? (
-          <div className="text-center py-10 text-slate-500 font-bold">
-            No subjects found matching your filter.
+          <div className={`${cardInnerBg} rounded-xl p-10 text-center space-y-3 border border-slate-300 dark:border-slate-800`}>
+            <div className="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 flex items-center justify-center mx-auto">
+              <Table size={24} />
+            </div>
+            <h4 className={`font-extrabold text-base ${textTitle}`}>No Subjects Found</h4>
+            <p className={`text-xs ${textMuted} max-w-sm mx-auto`}>
+              No syllabus items match your current filter or search criteria. Try adjusting your search term or add a new custom subject.
+            </p>
+            <button
+              type="button"
+              onClick={onOpenAddSubjectModal}
+              className="mt-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs px-4 py-2 rounded-lg inline-flex items-center gap-1.5 shadow transition-all"
+            >
+              <Plus size={15} /> Add Custom Subject
+            </button>
           </div>
         ) : (
           filteredSubjects.map((s) => {

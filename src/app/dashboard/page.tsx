@@ -630,14 +630,14 @@ export default function DashboardPage() {
 
   // UI Theme Utilities
   const isLight = theme === 'light';
-  const cardBg = isLight ? 'bg-white shadow-sm border border-slate-200' : 'bg-slate-900 border border-slate-800';
-  const cardInnerBg = isLight ? 'bg-slate-100/90' : 'bg-slate-950/60';
+  const cardBg = isLight ? 'bg-white shadow-sm border border-slate-200/90' : 'bg-slate-900 border border-slate-800 shadow-md';
+  const cardInnerBg = isLight ? 'bg-slate-50/90 border border-slate-200' : 'bg-slate-950/60 border border-slate-800/80';
   const inputBg = isLight
-    ? 'bg-slate-100 border border-slate-300 text-slate-900 focus:bg-white'
+    ? 'bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:border-amber-500'
     : 'bg-slate-800/80 border border-slate-700 text-slate-100 focus:bg-slate-800';
-  const tableHeaderBg = isLight ? 'bg-slate-200/80 text-slate-800' : 'bg-slate-800/80 text-slate-300';
+  const tableHeaderBg = isLight ? 'bg-slate-100 text-slate-800 border-b border-slate-200' : 'bg-slate-800/80 text-slate-300 border-b border-slate-700';
   const textTitle = isLight ? 'text-slate-900' : 'text-slate-100';
-  const textMuted = isLight ? 'text-slate-700' : 'text-slate-400';
+  const textMuted = isLight ? 'text-slate-600' : 'text-slate-400';
 
   const getCategoryBadge = (cat: string) => {
     if (isLight) {
@@ -679,7 +679,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-200">
+      <div className={`min-h-screen flex items-center justify-center transition-colors duration-200 ${isLight ? 'bg-slate-50 text-slate-800' : 'bg-slate-950 text-slate-200'}`}>
         <div className="flex flex-col items-center gap-3">
           <Loader2 size={36} className="animate-spin text-amber-500" />
           <p className="font-extrabold text-sm tracking-wide">Loading UPSC Engine Dashboard...</p>
@@ -689,32 +689,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className={`min-h-screen ${isLight ? 'bg-slate-100 text-slate-900' : 'bg-slate-950 text-slate-100'} p-3 sm:p-6 space-y-6 transition-colors duration-200 font-sans`}>
-      {/* Header Countdown & Sync Tools */}
-      <CountdownHeader
-        theme={theme}
-        toggleTheme={toggleTheme}
-        onExportData={handleExportData}
-        onImportData={handleImportData}
-      />
-
-      {/* Red Flags Alert Box */}
-      <RedFlagAlerts redFlags={redFlags} />
-
-      {/* Master Stats Metrics Overview */}
-      <MasterStatsOverview
-        syllabusPercent={syllabusPercent}
-        completedSubjects={completedSubjects}
-        totalSubjects={totalSubjects}
-        weeklyHours={weeklyHours}
-        weeklyAnsCount={weeklyAnsCount}
-        caStreak={caStreak}
-        cardBg={cardBg}
-        cardInnerBg={cardInnerBg}
-        textTitle={textTitle}
-        textMuted={textMuted}
-      />
-
+    <div className={`min-h-screen ${isLight ? 'bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100'} p-3 sm:p-6 space-y-6 transition-colors duration-200 font-sans`}>
       {/* Main Page Content Views */}
       {activeTab === 'syllabus' && (
         <SyllabusModule
@@ -802,7 +777,36 @@ export default function DashboardPage() {
         />
       )}
 
-      {activeTab === 'timetable' && <MasterRoutineTable />}
+      {activeTab === 'timetable' && (
+        <div className="space-y-6">
+          {/* Header Countdown & Sync Tools */}
+          <CountdownHeader
+            theme={theme}
+            toggleTheme={toggleTheme}
+            onExportData={handleExportData}
+            onImportData={handleImportData}
+          />
+
+          {/* Red Flags Alert Box */}
+          <RedFlagAlerts redFlags={redFlags} />
+
+          {/* Master Stats Metrics Overview */}
+          <MasterStatsOverview
+            syllabusPercent={syllabusPercent}
+            completedSubjects={completedSubjects}
+            totalSubjects={totalSubjects}
+            weeklyHours={weeklyHours}
+            weeklyAnsCount={weeklyAnsCount}
+            caStreak={caStreak}
+            cardBg={cardBg}
+            cardInnerBg={cardInnerBg}
+            textTitle={textTitle}
+            textMuted={textMuted}
+          />
+
+          <MasterRoutineTable />
+        </div>
+      )}
 
       {/* MODALS */}
       <AddSubjectModal

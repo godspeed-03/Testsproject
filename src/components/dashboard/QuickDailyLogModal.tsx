@@ -257,7 +257,7 @@ export default function QuickDailyLogModal({
 
               {/* Multi-Subject & Topic Tags Input */}
               <div className={`${cardInnerBg} p-3.5 rounded-xl space-y-3 border border-slate-300 dark:border-slate-800`}>
-                <div className="font-extrabold text-amber-700 dark:text-blue-300 text-xs sm:text-sm flex items-center gap-1.5">
+                <div className="font-extrabold text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm flex items-center gap-1.5">
                   <Tag size={16} /> Add Multiple Subjects & Topic Tags Studied Today
                 </div>
 
@@ -324,7 +324,7 @@ export default function QuickDailyLogModal({
                           handleAddSubjectTag();
                         }
                       }}
-                      className={`w-full ${inputBg} rounded-lg p-2.5 outline-none font-bold`}
+                      className={`w-full ${inputBg} rounded-xl p-2.5 outline-none font-bold`}
                     />
                   </div>
                 </div>
@@ -333,7 +333,7 @@ export default function QuickDailyLogModal({
                   <button
                     type="button"
                     onClick={handleAddSubjectTag}
-                    className="bg-amber-600 hover:bg-amber-700 text-white font-extrabold px-3.5 py-2 rounded-lg flex items-center gap-1.5 shadow text-xs transition-all"
+                    className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 font-extrabold px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow text-xs transition-all"
                   >
                     <Plus size={15} /> Add Topic Tag
                   </button>
@@ -345,10 +345,10 @@ export default function QuickDailyLogModal({
                     {logSubjectTags.map((t, idx) => (
                       <span
                         key={idx}
-                        className={`inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded-lg font-extrabold border ${
+                        className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-extrabold border shadow-2xs ${
                           t.isRevision
-                            ? 'bg-amber-600 text-white border-amber-700'
-                            : 'bg-blue-600 text-white border-blue-700'
+                            ? 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                            : 'bg-indigo-50 text-indigo-900 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800'
                         }`}
                       >
                         <span>
@@ -357,7 +357,7 @@ export default function QuickDailyLogModal({
                         <button
                           type="button"
                           onClick={() => handleRemoveSubjectTag(idx)}
-                          className="text-slate-200 hover:text-white"
+                          className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                         >
                           <X size={13} />
                         </button>

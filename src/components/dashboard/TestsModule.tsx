@@ -37,7 +37,7 @@ export default function TestsModule({
         <button
           type="button"
           onClick={onOpenAddTestModal}
-          className="bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs sm:text-sm px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow transition-all"
+          className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 font-extrabold text-xs sm:text-sm px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all"
         >
           <Plus size={16} /> Log New Test Score
         </button>
@@ -70,7 +70,7 @@ export default function TestsModule({
                     <button
                       type="button"
                       onClick={onOpenAddTestModal}
-                      className="mt-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs px-4 py-2 rounded-lg shadow-sm transition-all inline-flex items-center gap-1.5"
+                      className="mt-2 bg-slate-900 hover:bg-slate-800 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 font-extrabold text-xs px-4 py-2 rounded-xl shadow-xs transition-all inline-flex items-center gap-1.5"
                     >
                       <Plus size={15} /> Log New Test Score
                     </button>
@@ -83,11 +83,11 @@ export default function TestsModule({
                   <td className={`p-3.5 font-extrabold ${textTitle}`}>{t.code || t.testName}</td>
                   <td className={`p-3.5 font-bold ${textMuted}`}>{t.date}</td>
                   <td className={`p-3.5 font-extrabold ${textTitle}`}>
-                    <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/30 text-xs">
+                    <span className="px-2.5 py-1 rounded-lg bg-purple-50 text-purple-800 border border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800 text-xs font-extrabold">
                       {t.subject || t.category || t.type}
                     </span>
                   </td>
-                  <td className="p-3.5 font-extrabold text-amber-700 dark:text-amber-400">
+                  <td className="p-3.5 font-extrabold text-indigo-700 dark:text-indigo-300">
                     {t.score} {t.maxScore ? `/ ${t.maxScore}` : ''}
                   </td>
                   <td className="p-3.5 font-extrabold text-emerald-700 dark:text-emerald-400">

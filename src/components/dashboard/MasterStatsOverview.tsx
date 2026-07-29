@@ -28,7 +28,7 @@ export default function MasterStatsOverview({
   textMuted,
 }: MasterStatsOverviewProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 sm:gap-4 mb-6">
       <div className={`${cardBg} rounded-xl p-4.5 flex items-center gap-3.5 transition-all border border-slate-300 dark:border-slate-800`}>
         <div className="w-11 h-11 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-800/50 flex items-center justify-center shrink-0">
           <BookOpen size={20} />

@@ -55,9 +55,9 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={`px-3 py-1.5 rounded-md text-xs font-medium flex items-center gap-1.5 transition-colors ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                         isActive
-                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold'
+                          ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80 shadow-2xs'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                       }`}
                     >
@@ -74,10 +74,10 @@ export default function NavbarClient({ user }: NavbarClientProps) {
             {user && (
               <button
                 onClick={handleOpenDailyLog}
-                className="bg-amber-500 hover:bg-amber-600 text-white font-medium text-xs px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-xs"
+                className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm"
                 title="Quick 3-Min Daily Study Log"
               >
-                <Zap size={14} className="fill-current" />
+                <Zap size={14} className="fill-current text-amber-400" />
                 <span className="hidden sm:inline">Quick 3-Min Log</span>
               </button>
             )}

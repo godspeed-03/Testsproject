@@ -103,9 +103,9 @@ export default function ShadcnDatePicker({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-amber-400 font-extrabold text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 shadow-2xs transition-all"
+          className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 font-extrabold text-xs sm:text-sm rounded-lg border border-slate-300 dark:border-slate-700 shadow-2xs transition-all"
         >
-          <CalendarDays size={16} className="text-amber-500" />
+          <CalendarDays size={16} className="text-indigo-600 dark:text-indigo-400" />
           <span>{formattedDisplay}</span>
           <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
@@ -126,7 +126,7 @@ export default function ShadcnDatePicker({
               onSelectDate(todayStr);
               setIsOpen(false);
             }}
-            className="ml-1 px-2.5 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs font-extrabold rounded-lg shadow-xs transition-colors shrink-0"
+            className="ml-1 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold rounded-xl shadow-2xs transition-all shrink-0"
           >
             Today
           </button>
@@ -144,7 +144,7 @@ export default function ShadcnDatePicker({
               }}
               className={`px-2.5 py-1 rounded-md text-[11px] font-extrabold transition-colors ${
                 selectedDate === todayStr
-                  ? 'bg-amber-500 text-white shadow-xs'
+                  ? 'bg-indigo-600 text-white shadow-2xs'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -182,7 +182,7 @@ export default function ShadcnDatePicker({
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="font-extrabold text-xs text-amber-600 dark:text-amber-400">
+            <span className="font-extrabold text-xs text-indigo-700 dark:text-indigo-300">
               {monthNames[viewMonth]} {viewYear}
             </span>
             <button
@@ -229,9 +229,9 @@ export default function ShadcnDatePicker({
                   }}
                   className={`h-8 w-8 rounded-lg text-xs font-extrabold flex items-center justify-center transition-all ${
                     isSelected
-                      ? 'bg-amber-500 text-white font-black shadow-xs scale-105'
+                      ? 'bg-indigo-600 text-white font-black shadow-2xs scale-105'
                       : isToday
-                      ? 'border border-amber-500/80 text-amber-600 dark:text-amber-400 font-bold hover:bg-amber-500/10'
+                      ? 'border border-indigo-500 text-indigo-700 dark:text-indigo-300 font-bold hover:bg-indigo-500/10'
                       : disablePastDates && isPast
                       ? 'opacity-30 cursor-not-allowed text-slate-400 dark:text-slate-600'
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'

@@ -402,9 +402,6 @@ export default function DashboardPage() {
   };
 
   const handleDeleteTopic = async (topicId?: string, subject?: string, topicName?: string) => {
-    if (!confirm(`Are you sure you want to delete topic "${subject || ''} ${topicName ? '— ' + topicName : ''}" permanently?`)) {
-      return;
-    }
     setSaving(true);
     try {
       const res = await fetch('/api/tracker/daily', {
@@ -500,7 +497,6 @@ export default function DashboardPage() {
   };
 
   const handleDeleteTestLog = async (id: string) => {
-    if (!confirm('Delete this test log?')) return;
     setSaving(true);
     try {
       const res = await fetch('/api/tracker/test', {

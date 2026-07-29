@@ -50,7 +50,7 @@ export default function SyllabusModule({
 
   return (
     <div className={`${cardBg} rounded-xl p-4 sm:p-6 animate-fade-in space-y-6`}>
-      <div className={`flex justify-between items-center flex-wrap gap-3 border-b ${isLight ? 'border-slate-300' : 'border-slate-800'} pb-4`}>
+      <div className={`flex justify-between items-center flex-wrap gap-3 border-b ${isLight ? 'border-slate-200' : 'border-slate-800'} pb-4`}>
         <div>
           <h3 className={`font-extrabold text-lg sm:text-xl ${textTitle}`}>Subject Milestone Progress Matrix</h3>
           <p className={`text-xs sm:text-sm ${textMuted}`}>
@@ -60,7 +60,7 @@ export default function SyllabusModule({
         <button
           type="button"
           onClick={onOpenAddSubjectModal}
-          className="bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs sm:text-sm px-4 py-2 rounded-lg flex items-center gap-1.5 shadow transition-all"
+          className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 font-extrabold text-xs sm:text-sm px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all"
         >
           <Plus size={16} /> Add Custom Subject
         </button>
@@ -71,7 +71,7 @@ export default function SyllabusModule({
         <select
           value={syllabusCategoryFilter}
           onChange={(e) => setSyllabusCategoryFilter(e.target.value)}
-          className={`${inputBg} text-xs sm:text-sm px-3 py-2 rounded-lg outline-none font-bold`}
+          className={`${inputBg} text-xs sm:text-sm px-3.5 py-2.5 rounded-xl outline-none font-bold border border-slate-300 dark:border-slate-700`}
         >
           <option value="ALL">All Categories (GS1-4, Maths, CSAT)</option>
           <option value="GS1">GS Paper 1 (History, Geography, Society)</option>
@@ -87,7 +87,7 @@ export default function SyllabusModule({
           placeholder="🔍 Search subject (e.g. Modern History, Polity, Laxmikanth...)"
           value={syllabusSearch}
           onChange={(e) => setSyllabusSearch(e.target.value)}
-          className={`${inputBg} text-xs sm:text-sm px-3 py-2 rounded-lg flex-1 min-w-[220px] outline-none`}
+          className={`${inputBg} text-xs sm:text-sm px-3.5 py-2.5 rounded-xl flex-1 min-w-[220px] outline-none font-bold border border-slate-300 dark:border-slate-700`}
         />
       </div>
 
@@ -105,7 +105,7 @@ export default function SyllabusModule({
             <button
               type="button"
               onClick={onOpenAddSubjectModal}
-              className="mt-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs px-4 py-2 rounded-lg inline-flex items-center gap-1.5 shadow transition-all"
+              className="mt-2 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs px-4 py-2 rounded-xl inline-flex items-center gap-1.5 shadow transition-all"
             >
               <Plus size={15} /> Add Custom Subject
             </button>
@@ -119,12 +119,12 @@ export default function SyllabusModule({
             return (
               <div
                 key={s.id}
-                className={`${cardInnerBg} p-4 sm:p-5 rounded-xl space-y-3 transition-all border border-slate-300 dark:border-slate-800`}
+                className={`${cardInnerBg} p-4 sm:p-5 rounded-xl space-y-3 transition-all border border-slate-300 dark:border-slate-800 shadow-2xs`}
               >
                 <div className="flex justify-between items-start flex-wrap gap-2">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded border ${getCategoryBadge(s.category)}`}>
+                      <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-lg border ${getCategoryBadge(s.category)}`}>
                         {s.category}
                       </span>
                       <h4
@@ -132,7 +132,7 @@ export default function SyllabusModule({
                         className={`font-extrabold ${textTitle} text-base sm:text-lg cursor-pointer hover:underline flex items-center gap-1.5`}
                         title="Click to view revision topics table"
                       >
-                        {s.subject} {s.source ? <span className="text-amber-700 dark:text-amber-400 text-sm font-extrabold">— {s.source}</span> : ''}
+                        {s.subject} {s.source ? <span className="text-amber-700 dark:text-amber-400 text-xs sm:text-sm font-extrabold">— {s.source}</span> : ''}
                       </h4>
                     </div>
                     <p className={`text-xs sm:text-sm ${textMuted} mt-1`}>
@@ -144,7 +144,7 @@ export default function SyllabusModule({
                     <button
                       type="button"
                       onClick={() => onOpenSubjectTopicsModal(s)}
-                      className="px-3 py-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-700 dark:text-blue-300 border border-blue-400/40 text-xs rounded-lg font-extrabold flex items-center gap-1.5 transition-all shadow-sm"
+                      className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs rounded-xl font-extrabold flex items-center gap-1.5 transition-all shadow-2xs"
                       title={`View revision topics table for ${s.subject}`}
                     >
                       <Table size={14} /> View Topics ({subTopicsCount})
@@ -152,7 +152,7 @@ export default function SyllabusModule({
                     <button
                       type="button"
                       onClick={() => onDeleteSubject(s.id)}
-                      className="p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold transition-all shadow-sm"
+                      className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-400 rounded-xl border border-rose-200 dark:border-rose-800 font-bold transition-all shadow-2xs"
                       title="Delete Subject"
                     >
                       <Trash2 size={15} />
@@ -160,8 +160,8 @@ export default function SyllabusModule({
                   </div>
                 </div>
 
-                {/* Milestone Checkboxes / Pills */}
-                <div className="flex flex-wrap gap-2 text-xs">
+                {/* Responsive Milestone Grid: 2 cols on mobile, flex wrap on desktop */}
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 text-xs pt-1">
                   {[
                     { key: 'firstRead', label: 'Reading 1' },
                     { key: 'rev1', label: 'Rev 1' },
@@ -181,16 +181,16 @@ export default function SyllabusModule({
                         key={m.key}
                         type="button"
                         onClick={() => onToggleMilestone(s, m.key)}
-                        className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all flex items-center gap-1 border ${
+                        className={`px-3 py-1.5 rounded-lg text-xs transition-all flex items-center justify-center gap-1 border ${
                           isDone
-                            ? 'bg-emerald-600 text-white border-emerald-500 font-extrabold shadow-md'
+                            ? 'bg-emerald-600 text-white border-emerald-500 font-extrabold shadow-xs'
                             : isLight
-                            ? 'bg-white text-slate-800 border-slate-300 hover:border-amber-500 hover:text-amber-900 font-bold'
-                            : 'bg-slate-800 text-slate-100 border-slate-700 hover:border-amber-400 hover:text-amber-300 font-bold'
+                            ? 'bg-white text-slate-700 border-slate-300 hover:border-slate-400 hover:bg-slate-100 font-semibold'
+                            : 'bg-slate-800 text-slate-200 border-slate-700 hover:border-slate-600 hover:bg-slate-700 font-semibold'
                         }`}
                       >
-                        {isDone ? <Check size={14} className="text-white" /> : null}
-                        <span>{m.label}</span>
+                        {isDone ? <Check size={14} className="text-white shrink-0" /> : null}
+                        <span className="truncate">{m.label}</span>
                       </button>
                     );
                   })}

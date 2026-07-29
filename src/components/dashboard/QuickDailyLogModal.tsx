@@ -443,15 +443,14 @@ export default function QuickDailyLogModal({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className={`block ${textMuted} mb-1 font-bold`}>CA Read Done?</label>
-                  <ShadcnSelect
+                  <select
                     value={logCaDone}
-                    isLight={isLight}
-                    options={[
-                      { value: 'YES', label: 'Yes — Reading Completed' },
-                      { value: 'NO', label: 'No — Pending' },
-                    ]}
-                    onChange={(val) => setLogCaDone(val)}
-                  />
+                    onChange={(e) => setLogCaDone(e.target.value)}
+                    className={`w-full ${inputBg} rounded-lg p-2.5 outline-none`}
+                  >
+                    <option value="YES">Yes</option>
+                    <option value="NO">No</option>
+                  </select>
                 </div>
                 <div>
                   <label className={`block ${textMuted} mb-1 font-bold`}>Mains Answers Written</label>
@@ -460,25 +459,24 @@ export default function QuickDailyLogModal({
                     placeholder="e.g. 3"
                     value={logAnsCount}
                     onChange={(e) => setLogAnsCount(e.target.value)}
-                    className={`w-full ${inputBg} rounded-xl p-2.5 outline-none font-bold`}
+                    className={`w-full ${inputBg} rounded-lg p-2.5 outline-none`}
                   />
                 </div>
               </div>
 
               <div>
                 <label className={`block ${textMuted} mb-1 font-bold`}>Focus Quality Rating</label>
-                <ShadcnSelect
+                <select
                   value={logFocusQuality}
-                  isLight={isLight}
-                  options={[
-                    { value: '5', label: '⭐⭐⭐⭐⭐ (5/5 — Deep Focus)' },
-                    { value: '4', label: '⭐⭐⭐⭐ (4/5 — Good Focus)' },
-                    { value: '3', label: '⭐⭐⭐ (3/5 — Moderate)' },
-                    { value: '2', label: '⭐⭐ (2/5 — Distracted)' },
-                    { value: '1', label: '⭐ (1/5 — Poor Output)' },
-                  ]}
-                  onChange={(val) => setLogFocusQuality(val)}
-                />
+                  onChange={(e) => setLogFocusQuality(e.target.value)}
+                  className={`w-full ${inputBg} rounded-lg p-2.5 outline-none`}
+                >
+                  <option value="5">⭐⭐⭐⭐⭐ (5/5 — Deep Focus)</option>
+                  <option value="4">⭐⭐⭐⭐ (4/5 — Good Focus)</option>
+                  <option value="3">⭐⭐⭐ (3/5 — Moderate)</option>
+                  <option value="2">⭐⭐ (2/5 — Distracted)</option>
+                  <option value="1">⭐ (1/5 — Poor Output)</option>
+                </select>
               </div>
             </>
           )}

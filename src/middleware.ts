@@ -40,9 +40,9 @@ export async function middleware(request: NextRequest) {
   try {
     await jwtVerify(token, secret);
     
-    // Redirect authenticated users away from auth pages to dashboard
+    // Redirect authenticated users away from auth pages to revision
     if (isAuthPage) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(new URL('/revision', request.url));
     }
 
     return NextResponse.next();
@@ -57,6 +57,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/revision/:path*',
+    '/daily/:path*',
+    '/syllabus/:path*',
+    '/tests/:path*',
+    '/timetable/:path*',
     '/api/:path*',
     '/login',
     '/register'

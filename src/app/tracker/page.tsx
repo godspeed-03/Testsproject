@@ -1468,18 +1468,61 @@ export default function TrackerPage() {
                     </div>
                   )}
 
-                  {/* 3. Title / Name */}
+                  {/* 3. Icon & Title */}
                   <div>
                     <label className={`block mb-1.5 ${textMuted}`}>
-                      Title / Name <span className="text-slate-400 font-normal">{formFrequencyMode === 'once' ? '(Optional - Auto-filled from Subject/Topic)' : ''}</span>
+                      Icon & Title <span className="text-slate-400 font-normal">{formFrequencyMode === 'once' ? '(Optional - Auto-filled from Subject/Topic)' : ''}</span>
                     </label>
-                    <input
-                      type="text"
-                      placeholder={formFrequencyMode === 'once' ? 'Auto-filled from Subject & Topic...' : 'e.g. Daily GS Revision, Run 3 Miles...'}
-                      value={formTitle}
-                      onChange={(e) => setFormTitle(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 outline-none"
-                    />
+                    <div className="flex gap-2 items-start">
+                      {/* Emoji Picker Toggle */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const el = document.getElementById('emoji-picker-grid');
+                            if (el) el.classList.toggle('hidden');
+                          }}
+                          className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-xl hover:scale-110 transition-transform shrink-0"
+                          title="Pick an icon"
+                        >
+                          {formIcon}
+                        </button>
+                        <div
+                          id="emoji-picker-grid"
+                          className="hidden absolute top-12 left-0 z-50 w-[280px] p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl"
+                        >
+                          <p className={`text-[10px] font-bold ${textMuted} mb-1.5`}>Choose Icon</p>
+                          <div className="grid grid-cols-10 gap-1">
+                            {[
+                              '📚','📖','✏️','📝','🎯','🔥','⭐','💡','🧠','📊',
+                              '🏃','💪','🧘','🏋️','🚴','🏊','⚽','🎾','🥊','🧗',
+                              '💧','🍎','🥗','💊','😴','☀️','🌙','⏰','🔔','📅',
+                              '🎵','🎨','📸','🎬','🎮','🧩','♟️','🎲','🎤','🎸',
+                              '💻','📱','🔬','🔭','🌍','✈️','🚗','🏠','💼','🎓'
+                            ].map((emoji) => (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => {
+                                  setFormIcon(emoji);
+                                  document.getElementById('emoji-picker-grid')?.classList.add('hidden');
+                                }}
+                                className={`w-6 h-6 flex items-center justify-center text-base rounded-md hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors ${formIcon === emoji ? 'bg-indigo-100 dark:bg-indigo-900/60 ring-1 ring-indigo-400' : ''}`}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder={formFrequencyMode === 'once' ? 'Auto-filled from Subject & Topic...' : 'e.g. Daily GS Revision, Run 3 Miles...'}
+                        value={formTitle}
+                        onChange={(e) => setFormTitle(e.target.value)}
+                        className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 outline-none"
+                      />
+                    </div>
                   </div>
 
 

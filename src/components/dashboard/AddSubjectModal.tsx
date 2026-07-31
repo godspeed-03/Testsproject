@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Plus, X, Loader2 } from 'lucide-react';
+import ShadcnSelect from '@/components/ui/ShadcnSelect';
 
 interface AddSubjectModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface AddSubjectModalProps {
   inputBg: string;
   textTitle: string;
   textMuted: string;
+  categories?: string[];
 }
 
 export default function AddSubjectModal({
@@ -23,9 +25,10 @@ export default function AddSubjectModal({
   inputBg,
   textTitle,
   textMuted,
+  categories = [],
 }: AddSubjectModalProps) {
   const [subject, setSubject] = useState('');
-  const [category, setCategory] = useState('GS1');
+  const [category, setCategory] = useState(categories[0] || 'GS1');
   const [source, setSource] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -46,6 +49,12 @@ export default function AddSubjectModal({
       setLoading(false);
     }
   };
+
+  const defaultCategories = ['GS1', 'GS2', 'GS3', 'GS4', 'Maths', 'CSAT'];
+  const catOptions = (categories.length > 0 ? categories : defaultCategories).map((c) => ({
+    value: c,
+    label: c
+  }));
 
   return (
     <div className={`fixed inset-0 z-50 ${isLight ? 'bg-slate-900/40' : 'bg-slate-950/75'} backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in`}>
@@ -79,18 +88,11 @@ export default function AddSubjectModal({
 
           <div>
             <label className={`block ${textMuted} mb-1 font-extrabold`}>Category / Paper *</label>
-            <select
+            <ShadcnSelect
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className={`w-full ${inputBg} rounded-xl px-3.5 py-2.5 outline-none font-bold`}
-            >
-              <option value="GS1">GS1 (History, Geography, Society)</option>
-              <option value="GS2">GS2 (Polity, Governance, IR)</option>
-              <option value="GS3">GS3 (Economy, Env, Sci, Security)</option>
-              <option value="GS4">GS4 (Ethics, Integrity, Aptitude)</option>
-              <option value="MATHS">Maths Optional</option>
-              <option value="CSAT">CSAT Aptitude</option>
-            </select>
+              onChange={(val) => setCategory(val)}
+              options={catOptions}
+            />
           </div>
 
           <div>

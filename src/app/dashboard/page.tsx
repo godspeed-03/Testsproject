@@ -786,6 +786,7 @@ function DashboardContent() {
         inputBg={inputBg}
         textTitle={textTitle}
         textMuted={textMuted}
+        categories={Array.from(new Set(syllabusList.map((s: any) => s.category).filter(Boolean)))}
       />
 
       <AddTestModal

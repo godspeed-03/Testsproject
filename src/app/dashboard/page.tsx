@@ -19,6 +19,7 @@ import SkipRevisionModal from '@/components/dashboard/SkipRevisionModal';
 import EditTargetsModal from '@/components/dashboard/EditTargetsModal';
 import QuickDailyLogModal from '@/components/dashboard/QuickDailyLogModal';
 import ViewDailyLogModal from '@/components/dashboard/ViewDailyLogModal';
+import ImportDataModal from '@/components/dashboard/ImportDataModal';
 
 import { Loader2 } from 'lucide-react';
 
@@ -131,6 +132,7 @@ function DashboardContent() {
   const [showDailyModal, setShowDailyModal] = useState(false);
   const [showViewDailyModal, setShowViewDailyModal] = useState(false);
   const [showTopicsModal, setShowTopicsModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Selected Item States for Modals
   const [selectedSkipSubject, setSelectedSkipSubject] = useState<any>(null);
@@ -248,7 +250,6 @@ function DashboardContent() {
   };
 
   const handleDeleteSubject = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this subject?')) return;
     setSaving(true);
     try {
       const res = await fetch('/api/tracker/syllabus', {
@@ -417,7 +418,18 @@ function DashboardContent() {
       if (res.ok) {
         const data = await res.json();
         if (data.topicRevisions) setTopicRevisions(data.topicRevisions);
-        if (data.dailyLogs) setDailyLogs(data.dailyLogs);
+        if (data.dailyLogs) {
+          setDailyLogs(data.dailyLogs);
+          if (selectedViewLog) {
+            const updated = data.dailyLogs.find(
+              (l: any) =>
+                (l.id || l._id) === (selectedViewLog.id || selectedViewLog._id) || l.date === selectedViewLog.date
+            );
+            if (updated) {
+              setSelectedViewLog(updated);
+            }
+          }
+        }
         if (data.syllabusList) setSyllabusList(data.syllabusList);
       }
     } catch (e) {
@@ -550,37 +562,26 @@ function DashboardContent() {
     dlAnchor.remove();
   };
 
-  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      setSaving(true);
-      try {
-        const imported = JSON.parse(evt.target?.result as string);
-        const res = await fetch('/api/tracker/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(imported),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setSyllabusList(data.syllabusList);
-          setDailyLogs(data.dailyLogs);
-          setTestLogs(data.testLogs);
-          if (imported.weeklyTargetsList || imported.weeklyTargets) {
-            setWeeklyTargetsList(imported.weeklyTargetsList || imported.weeklyTargets);
-          }
-          alert('System data successfully imported into database!');
-        }
-      } catch (err) {
-        alert('Invalid JSON backup file.');
-      } finally {
-        setSaving(false);
+  const handleImportJsonPayload = async (jsonData: any) => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/tracker/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonData),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to import JSON payload.');
       }
-    };
-    reader.readAsText(file);
+      const data = await res.json();
+      if (data.syllabusList) setSyllabusList(data.syllabusList);
+      if (data.dailyLogs) setDailyLogs(data.dailyLogs);
+      if (data.topicRevisions) setTopicRevisions(data.topicRevisions);
+      if (data.testLogs) setTestLogs(data.testLogs);
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Calculated Stats & Flags for Headers
@@ -706,6 +707,14 @@ function DashboardContent() {
 
   return (
     <div className={`min-h-screen ${isLight ? 'bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100'} p-3 sm:p-6 space-y-6 transition-colors duration-200 font-sans`}>
+      {/* Header Countdown & Sync Tools */}
+      <CountdownHeader
+        theme={theme}
+        toggleTheme={toggleTheme}
+        onExportData={handleExportData}
+        onOpenImportModal={() => setShowImportModal(true)}
+      />
+
       {/* Main Page Content Views */}
       {activeTab === 'syllabus' && (
         <SyllabusModule
@@ -795,13 +804,6 @@ function DashboardContent() {
 
       {activeTab === 'timetable' && (
         <div className="space-y-6">
-          {/* Header Countdown & Sync Tools */}
-          <CountdownHeader
-            theme={theme}
-            toggleTheme={toggleTheme}
-            onExportData={handleExportData}
-            onImportData={handleImportData}
-          />
 
           {/* Red Flags Alert Box */}
           <RedFlagAlerts redFlags={redFlags} />
@@ -883,6 +885,7 @@ function DashboardContent() {
         setLogDate={setLogDate}
         syllabusList={syllabusList}
         dueRevisions={dueRevisions}
+        dailyLogs={dailyLogs}
         onSaveDailyLog={handleSaveDailyLog}
         isLight={isLight}
         cardBg={cardBg}
@@ -899,6 +902,13 @@ function DashboardContent() {
           setSelectedViewLog(null);
         }}
         selectedViewLog={selectedViewLog}
+        onDeleteTopic={handleDeleteTopic}
+        onOpenEditLog={(log) => {
+          setShowViewDailyModal(false);
+          setEditLogId(log.id || log._id);
+          setLogDate(log.date);
+          setShowDailyModal(true);
+        }}
         isLight={isLight}
         cardBg={cardBg}
         cardInnerBg={cardInnerBg}
@@ -921,6 +931,19 @@ function DashboardContent() {
         cardBg={cardBg}
         inputBg={inputBg}
         tableHeaderBg={tableHeaderBg}
+        textTitle={textTitle}
+        textMuted={textMuted}
+      />
+
+      <ImportDataModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportJson={handleImportJsonPayload}
+        onExportJson={handleExportData}
+        isLight={isLight}
+        cardBg={cardBg}
+        cardInnerBg={cardInnerBg}
+        inputBg={inputBg}
         textTitle={textTitle}
         textMuted={textMuted}
       />

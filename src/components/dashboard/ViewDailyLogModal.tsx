@@ -1,11 +1,14 @@
 'use client';
 
-import { Eye, X, Tag } from 'lucide-react';
+import { useState } from 'react';
+import { Eye, X, Tag, Pencil, Trash2, Loader2 } from 'lucide-react';
 
 interface ViewDailyLogModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedViewLog: any;
+  onDeleteTopic?: (topicId?: string, subject?: string, topic?: string) => Promise<void>;
+  onOpenEditLog?: (log: any) => void;
   isLight: boolean;
   cardBg: string;
   cardInnerBg: string;
@@ -18,12 +21,16 @@ export default function ViewDailyLogModal({
   isOpen,
   onClose,
   selectedViewLog,
+  onDeleteTopic,
+  onOpenEditLog,
   isLight,
   cardBg,
   cardInnerBg,
   textTitle,
   textMuted,
 }: ViewDailyLogModalProps) {
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
+
   if (!isOpen || !selectedViewLog) return null;
 
   const l = selectedViewLog;
@@ -50,21 +57,51 @@ export default function ViewDailyLogModal({
         ) : (
           <div className="space-y-3 text-xs sm:text-sm font-bold">
             <div className={`${cardInnerBg} p-3 rounded-xl border border-slate-300 dark:border-slate-800 space-y-2`}>
-              <span className={`text-xs font-extrabold ${textMuted} uppercase tracking-wider block`}>
-                Topics Read / Revised Today
-              </span>
+              <div className="flex justify-between items-center">
+                <span className={`text-xs font-extrabold ${textMuted} uppercase tracking-wider block`}>
+                  Topics Read / Revised Today
+                </span>
+                {onDeleteTopic && (
+                  <span className="text-[10px] text-rose-500 font-extrabold">
+                    Click ✕ on topic to delete
+                  </span>
+                )}
+              </div>
               {l.subjectTags && l.subjectTags.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {l.subjectTags.map((t: any, idx: number) => (
-                    <span
-                      key={idx}
-                      className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-bold border ${
-                        t.isRevision ? 'bg-amber-600 text-white border-amber-700' : 'bg-blue-600 text-white border-blue-700'
-                      }`}
-                    >
-                      <Tag size={12} /> [{t.category}] {t.subject}: {t.topic} ({t.isRevision ? 'Rev' : 'New'})
-                    </span>
-                  ))}
+                  {l.subjectTags.map((t: any, idx: number) => {
+                    const itemKey = `${t.subject}-${t.topic}`;
+                    const isDeleting = deletingKey === itemKey;
+                    return (
+                      <span
+                        key={idx}
+                        className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg font-bold border shadow-xs transition-all ${
+                          t.isRevision ? 'bg-amber-600 text-white border-amber-700' : 'bg-blue-600 text-white border-blue-700'
+                        }`}
+                      >
+                        <Tag size={12} /> [{t.category}] {t.subject}: {t.topic} ({t.isRevision ? 'Rev' : 'New'})
+                        {onDeleteTopic && (
+                          <button
+                            type="button"
+                            disabled={isDeleting}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setDeletingKey(itemKey);
+                              try {
+                                await onDeleteTopic(t.id || t._id || t.customId, t.subject, t.topic);
+                              } finally {
+                                setDeletingKey(null);
+                              }
+                            }}
+                            className="ml-1 p-0.5 rounded hover:bg-rose-700 text-white/80 hover:text-white transition-colors disabled:opacity-50"
+                            title="Delete topic from system and daily log"
+                          >
+                            {isDeleting ? <Loader2 size={13} className="animate-spin text-white" /> : <X size={13} />}
+                          </button>
+                        )}
+                      </span>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className={`${textTitle} text-sm`}>{l.topicsRead || 'General Study Session'}</p>
@@ -99,7 +136,16 @@ export default function ViewDailyLogModal({
           </div>
         )}
 
-        <div className={`flex justify-end border-t ${isLight ? 'border-slate-300' : 'border-slate-800'} pt-3`}>
+        <div className={`flex justify-between items-center border-t ${isLight ? 'border-slate-300' : 'border-slate-800'} pt-3`}>
+          {onOpenEditLog ? (
+            <button
+              type="button"
+              onClick={() => onOpenEditLog(l)}
+              className="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-extrabold rounded-lg flex items-center gap-1.5 shadow transition-all"
+            >
+              <Pencil size={14} /> Edit Daily Log
+            </button>
+          ) : <div />}
           <button
             type="button"
             onClick={onClose}
@@ -112,3 +158,4 @@ export default function ViewDailyLogModal({
     </div>
   );
 }
+

@@ -44,26 +44,52 @@ export async function GET() {
       mainsFinalRev: !!item.mainsFinalRev
     }));
 
-    const formattedDailyLogs = dailyLogs.map((item: any) => ({
-      id: item._id.toString(),
-      date: item.date,
-      isOff: item.isOff,
-      total: item.total,
-      gs: item.gs,
-      maths: item.maths,
-      ca: item.ca,
-      ans: item.ans,
-      newH: item.newH,
-      revH: item.revH,
-      caDone: item.caDone,
-      ansCount: item.ansCount,
-      focus: item.focus,
-      weakest: item.weakest,
-      topicsRead: item.topicsRead || '',
-      selectedSubject: item.selectedSubject || '',
-      subjectTags: item.subjectTags || [],
-      completedRevisions: item.completedRevisions || []
-    }));
+    const formattedDailyLogs = dailyLogs.map((item: any) => {
+      let resolvedTags: any[] = [];
+      if (item.topicRevisionIds && Array.isArray(item.topicRevisionIds) && item.topicRevisionIds.length > 0) {
+        resolvedTags = item.topicRevisionIds
+          .map((trId: any) => {
+            const strId = trId.toString();
+            const tr = topicRevisions.find((t: any) => t._id.toString() === strId || t.customId === strId);
+            if (tr) {
+              return {
+                id: tr._id.toString(),
+                subject: tr.subject,
+                category: tr.category,
+                topic: tr.topic,
+                isRevision: tr.firstReadDate !== item.date
+              };
+            }
+            return null;
+          })
+          .filter(Boolean);
+      }
+      if (resolvedTags.length === 0 && item.subjectTags && Array.isArray(item.subjectTags)) {
+        resolvedTags = item.subjectTags;
+      }
+
+      return {
+        id: item._id.toString(),
+        date: item.date,
+        isOff: item.isOff,
+        total: item.total,
+        gs: item.gs,
+        maths: item.maths,
+        ca: item.ca,
+        ans: item.ans,
+        newH: item.newH,
+        revH: item.revH,
+        caDone: item.caDone,
+        ansCount: item.ansCount,
+        focus: item.focus,
+        weakest: item.weakest,
+        topicsRead: item.topicsRead || '',
+        selectedSubject: item.selectedSubject || '',
+        topicRevisionIds: (item.topicRevisionIds || []).map((id: any) => id.toString()),
+        subjectTags: resolvedTags,
+        completedRevisions: item.completedRevisions || []
+      };
+    });
 
     const formattedTestLogs = testLogs.map((item: any) => ({
       id: item.customId || item._id.toString(),

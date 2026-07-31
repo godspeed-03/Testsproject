@@ -71,17 +71,6 @@ export default function NavbarClient({ user }: NavbarClientProps) {
           </div>
 
           <div className="flex items-center gap-3">
-            {user && (
-              <button
-                onClick={handleOpenDailyLog}
-                className="bg-slate-900 hover:bg-slate-800 text-white dark:bg-indigo-600 dark:hover:bg-indigo-500 font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-all shadow-sm"
-                title="Quick 3-Min Daily Study Log"
-              >
-                <Zap size={14} className="fill-current text-amber-400" />
-                <span className="hidden sm:inline">Quick 3-Min Log</span>
-              </button>
-            )}
-
             {user ? (
               <UserProfileMenu user={user} />
             ) : (

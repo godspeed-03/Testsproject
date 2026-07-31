@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { User, Download, Upload, LogOut, ChevronDown, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { PlusCircle, ChevronDown } from 'lucide-react';
 import LogoutButton from './LogoutButton';
 
 interface UserProfileMenuProps {
@@ -13,61 +13,10 @@ interface UserProfileMenuProps {
 
 export default function UserProfileMenu({ user }: UserProfileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleExport = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/tracker');
-      if (res.ok) {
-        const data = await res.json();
-        const backup = { ...data, exportedAt: new Date().toISOString() };
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backup, null, 2));
-        const dlAnchor = document.createElement('a');
-        dlAnchor.setAttribute('href', dataStr);
-        dlAnchor.setAttribute('download', `UPSC_2027_Backup_${new Date().toISOString().split('T')[0]}.json`);
-        document.body.appendChild(dlAnchor);
-        dlAnchor.click();
-        dlAnchor.remove();
-      }
-    } catch (e) {
-      console.error('Export failed', e);
-      alert('Failed to export data.');
-    } finally {
-      setLoading(false);
-      setIsOpen(false);
-    }
-  };
-
-  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setLoading(true);
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const imported = JSON.parse(evt.target?.result as string);
-        const res = await fetch('/api/tracker/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(imported)
-        });
-        if (res.ok) {
-          alert('Data successfully imported!');
-          window.location.reload();
-        } else {
-          alert('Failed to import data.');
-        }
-      } catch (err) {
-        alert('Invalid JSON file format.');
-      } finally {
-        setLoading(false);
-        setIsOpen(false);
-      }
-    };
-    reader.readAsText(file);
+  const handleOpenDailyLog = () => {
+    setIsOpen(false);
+    window.dispatchEvent(new CustomEvent('open-daily-log-modal'));
   };
 
   return (
@@ -97,29 +46,12 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
 
             <div className="py-1">
               <button
-                onClick={handleExport}
-                disabled={loading}
-                className="w-full px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-colors text-left disabled:opacity-50"
+                onClick={handleOpenDailyLog}
+                className="w-full px-3.5 py-2 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-center gap-2 transition-colors text-left"
               >
-                {loading ? <Loader2 size={14} className="animate-spin text-amber-500" /> : <Download size={14} className="text-slate-400" />}
-                <span>Export Data (JSON)</span>
+                <PlusCircle size={15} className="text-amber-500" />
+                <span>Log Today's Study</span>
               </button>
-
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={loading}
-                className="w-full px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center gap-2 transition-colors text-left disabled:opacity-50"
-              >
-                {loading ? <Loader2 size={14} className="animate-spin text-amber-500" /> : <Upload size={14} className="text-slate-400" />}
-                <span>Import Backup (JSON)</span>
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImport}
-                accept=".json"
-                style={{ display: 'none' }}
-              />
             </div>
 
             <div className="border-t border-slate-100 dark:border-slate-800 pt-1">

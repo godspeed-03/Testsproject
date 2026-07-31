@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Zap, CalendarDays, RotateCcw, Tag, Plus, X, Loader2 } from 'lucide-react';
 import ShadcnDatePicker from '@/components/ui/ShadcnDatePicker';
 import ShadcnSelect, { SelectOption } from '@/components/ui/ShadcnSelect';
@@ -13,6 +13,7 @@ interface QuickDailyLogModalProps {
   setLogDate: (date: string) => void;
   syllabusList: any[];
   dueRevisions: any[];
+  dailyLogs?: any[];
   onSaveDailyLog: (logData: any) => Promise<void>;
   isLight: boolean;
   cardBg: string;
@@ -30,6 +31,7 @@ export default function QuickDailyLogModal({
   setLogDate,
   syllabusList,
   dueRevisions,
+  dailyLogs,
   onSaveDailyLog,
   isLight,
   cardBg,
@@ -58,6 +60,43 @@ export default function QuickDailyLogModal({
   const [tagCategory, setTagCategory] = useState(initialCat);
   const [tagSubject, setTagSubject] = useState(initialSubj);
   const [tagTopic, setTagTopic] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (dailyLogs && dailyLogs.length > 0) {
+      const existing = dailyLogs.find((l) => (editLogId && (l.id || l._id) === editLogId) || l.date === logDate);
+      if (existing) {
+        setLogOffDay(!!existing.isOff);
+        setLogGsHours(existing.gs ? String(existing.gs) : '');
+        setLogMathsHours(existing.maths ? String(existing.maths) : '');
+        setLogCaHours(existing.ca ? String(existing.ca) : '');
+        setLogAnsHours(existing.ans ? String(existing.ans) : '');
+        setLogNewHours(existing.newH ? String(existing.newH) : '');
+        setLogRevHours(existing.revH ? String(existing.revH) : '');
+        setLogCaDone(existing.caDone || 'YES');
+        setLogAnsCount(existing.ansCount ? String(existing.ansCount) : '');
+        setLogFocusQuality(existing.focus ? String(existing.focus) : '4');
+        setLogWeakestTopic(existing.weakest || '');
+        setLogSubjectTags(existing.subjectTags ? [...existing.subjectTags] : []);
+        setCheckedRevisions(existing.completedRevisions ? [...existing.completedRevisions] : []);
+        return;
+      }
+    }
+    // Default fallback reset for new log
+    setLogOffDay(false);
+    setLogGsHours('');
+    setLogMathsHours('');
+    setLogCaHours('');
+    setLogAnsHours('');
+    setLogNewHours('');
+    setLogRevHours('');
+    setLogCaDone('YES');
+    setLogAnsCount('');
+    setLogFocusQuality('4');
+    setLogWeakestTopic('');
+    setLogSubjectTags([]);
+    setCheckedRevisions([]);
+  }, [isOpen, editLogId, logDate, dailyLogs]);
 
   if (!isOpen) return null;
 

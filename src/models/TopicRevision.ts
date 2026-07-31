@@ -87,15 +87,6 @@ const TopicRevisionSchema = new Schema<ITopicRevision>(
 
     subTopics: [{ type: String }],
 
-    extraRevisions: [
-      {
-        date: { type: String, required: true },
-        note: { type: String, default: '' },
-        clusterTitle: { type: String, default: '' },
-        subTopics: [{ type: String }]
-      }
-    ],
-
     revisionLogs: [
       {
         date: { type: String, required: true },

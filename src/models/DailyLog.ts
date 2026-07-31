@@ -17,15 +17,8 @@ export interface IDailyLog extends Document {
   weakest: string;
   topicsRead: string;
   selectedSubject: string;
-  subjectTags: {
-    subject: string;
-    category: string;
-    topic: string;
-    isRevision: boolean;
-    clusterTitle?: string;
-    subTopics?: string[];
-    note?: string;
-  }[];
+  topicRevisionIds: (mongoose.Types.ObjectId | string)[];
+  subjectTags?: any[];
   completedRevisions: string[];
   createdAt: Date;
   updatedAt: Date;
@@ -49,17 +42,8 @@ const DailyLogSchema: Schema<IDailyLog> = new Schema(
     weakest: { type: String, default: '' },
     topicsRead: { type: String, default: '' },
     selectedSubject: { type: String, default: '' },
-    subjectTags: [
-      {
-        subject: { type: String, default: '' },
-        category: { type: String, default: 'GS1' },
-        topic: { type: String, default: '' },
-        isRevision: { type: Boolean, default: false },
-        clusterTitle: { type: String, default: '' },
-        subTopics: [{ type: String }],
-        note: { type: String, default: '' }
-      }
-    ],
+    topicRevisionIds: [{ type: Schema.Types.ObjectId, ref: 'TopicRevision' }],
+    subjectTags: [{ type: Schema.Types.Mixed }],
     completedRevisions: [{ type: String }]
   },
   { timestamps: true }

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const doc = await WeeklyTarget.findOneAndUpdate(
       { userId: user.userId, startOfWeek },
       { userId: user.userId, startOfWeek, targets },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     return NextResponse.json({

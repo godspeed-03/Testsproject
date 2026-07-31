@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Search, BookOpen, Trash2 } from 'lucide-react';
+import { X, Search, BookOpen, Trash2, Loader2 } from 'lucide-react';
 
 interface SubjectTopicsModalProps {
   selectedSubjectTopics: any | null;
@@ -36,6 +36,7 @@ export default function SubjectTopicsModal({
   const [selectedTopicNames, setSelectedTopicNames] = useState<string[]>([]);
   const [clusterTitleInput, setClusterTitleInput] = useState('');
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
+  const [deletingTopicId, setDeletingTopicId] = useState<string | null>(null);
 
   if (!selectedSubjectTopics) return null;
 
@@ -323,11 +324,24 @@ export default function SubjectTopicsModal({
                           <div className="flex items-center justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => onDeleteTopic(t.id || t._id || t.customId, t.subject, t.topic)}
-                              className="p-1.5 hover:bg-rose-500/20 text-rose-500 rounded transition-all shrink-0"
+                              disabled={deletingTopicId === (t.id || t._id || t.customId)}
+                              onClick={async () => {
+                                const tid = t.id || t._id || t.customId;
+                                setDeletingTopicId(tid);
+                                try {
+                                  await onDeleteTopic(tid, t.subject, t.topic);
+                                } finally {
+                                  setDeletingTopicId(null);
+                                }
+                              }}
+                              className="p-1.5 hover:bg-rose-500/20 text-rose-500 rounded transition-all shrink-0 disabled:opacity-50"
                               title="Delete topic"
                             >
-                              <Trash2 size={15} />
+                              {deletingTopicId === (t.id || t._id || t.customId) ? (
+                                <Loader2 size={15} className="animate-spin text-rose-500" />
+                              ) : (
+                                <Trash2 size={15} />
+                              )}
                             </button>
                           </div>
                         </td>

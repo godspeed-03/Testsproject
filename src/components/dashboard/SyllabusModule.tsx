@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Plus, Table, Trash2, Check } from 'lucide-react';
+import { Plus, Table, Trash2, Check, Loader2 } from 'lucide-react';
 
 interface SyllabusModuleProps {
   syllabusList: any[];
@@ -36,6 +36,7 @@ export default function SyllabusModule({
 }: SyllabusModuleProps) {
   const [syllabusCategoryFilter, setSyllabusCategoryFilter] = useState('ALL');
   const [syllabusSearch, setSyllabusSearch] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filteredSubjects = useMemo(() => {
     return syllabusList.filter((s) => {
@@ -151,11 +152,19 @@ export default function SyllabusModule({
                     </button>
                     <button
                       type="button"
-                      onClick={() => onDeleteSubject(s.id)}
-                      className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-400 rounded-xl border border-rose-200 dark:border-rose-800 font-bold transition-all shadow-2xs"
+                      disabled={deletingId === s.id}
+                      onClick={async () => {
+                        setDeletingId(s.id);
+                        try {
+                          await onDeleteSubject(s.id);
+                        } finally {
+                          setDeletingId(null);
+                        }
+                      }}
+                      className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 dark:text-rose-400 rounded-xl border border-rose-200 dark:border-rose-800 font-bold transition-all shadow-2xs disabled:opacity-50"
                       title="Delete Subject"
                     >
-                      <Trash2 size={15} />
+                      {deletingId === s.id ? <Loader2 size={15} className="animate-spin text-rose-500" /> : <Trash2 size={15} />}
                     </button>
                   </div>
                 </div>

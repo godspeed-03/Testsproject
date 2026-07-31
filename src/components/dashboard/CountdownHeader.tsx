@@ -7,14 +7,14 @@ interface CountdownHeaderProps {
   theme: string;
   toggleTheme: () => void;
   onExportData: () => void;
-  onImportData: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onOpenImportModal: () => void;
 }
 
 export default function CountdownHeader({
   theme,
   toggleTheme,
   onExportData,
-  onImportData,
+  onOpenImportModal,
 }: CountdownHeaderProps) {
   const [cdPrelims, setCdPrelims] = useState('');
   const [cdMains, setCdMains] = useState('');
@@ -75,14 +75,18 @@ export default function CountdownHeader({
           <Download size={14} /> Export Backup
         </button>
 
-        <label className={`font-extrabold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 text-xs transition-all border shadow-xs cursor-pointer ${
-          isLight
-            ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
-            : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
-        }`}>
-          <Upload size={14} /> Import
-          <input type="file" accept=".json" onChange={onImportData} className="hidden" />
-        </label>
+        <button
+          type="button"
+          onClick={onOpenImportModal}
+          className={`font-extrabold px-3.5 py-1.5 rounded-xl flex items-center gap-1.5 text-xs transition-all border shadow-xs ${
+            isLight
+              ? 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300'
+              : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+          }`}
+          title="Import JSON data via file pick or copy-paste text"
+        >
+          <Upload size={14} /> Import Data (JSON)
+        </button>
 
         <button
           type="button"

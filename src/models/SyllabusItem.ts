@@ -21,6 +21,7 @@ export interface ISyllabusItem extends Document {
   ansWriting: boolean;
   preFinalRev: boolean;
   mainsFinalRev: boolean;
+  topicRevisionIds?: (mongoose.Types.ObjectId | string)[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,7 +46,8 @@ const SyllabusItemSchema: Schema<ISyllabusItem> = new Schema(
     mainsPyq: { type: Boolean, default: false },
     ansWriting: { type: Boolean, default: false },
     preFinalRev: { type: Boolean, default: false },
-    mainsFinalRev: { type: Boolean, default: false }
+    mainsFinalRev: { type: Boolean, default: false },
+    topicRevisionIds: [{ type: Schema.Types.ObjectId, ref: 'TopicRevision' }]
   },
   { timestamps: true }
 );

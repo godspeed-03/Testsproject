@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import mongoose from 'mongoose';
 import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import DailyLog from '@/models/DailyLog';
@@ -12,25 +13,51 @@ async function getFormattedResponse(userId: any) {
   const syllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
   const topicRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
 
-  const formattedDailyLogs = dailyLogs.map((item: any) => ({
-    id: item._id.toString(),
-    date: item.date,
-    isOff: item.isOff,
-    total: item.total,
-    gs: item.gs,
-    maths: item.maths,
-    ca: item.ca,
-    ans: item.ans,
-    newH: item.newH,
-    revH: item.revH,
-    caDone: item.caDone,
-    ansCount: item.ansCount,
-    focus: item.focus,
-    weakest: item.weakest,
-    topicsRead: item.topicsRead || '',
-    selectedSubject: item.selectedSubject || '',
-    subjectTags: item.subjectTags || []
-  }));
+  const formattedDailyLogs = dailyLogs.map((item: any) => {
+    let resolvedTags: any[] = [];
+    if (item.topicRevisionIds && Array.isArray(item.topicRevisionIds) && item.topicRevisionIds.length > 0) {
+      resolvedTags = item.topicRevisionIds
+        .map((trId: any) => {
+          const strId = trId.toString();
+          const tr = topicRevisions.find((t: any) => t._id.toString() === strId || t.customId === strId);
+          if (tr) {
+            return {
+              id: tr._id.toString(),
+              subject: tr.subject,
+              category: tr.category,
+              topic: tr.topic,
+              isRevision: tr.firstReadDate !== item.date
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
+    }
+    if (resolvedTags.length === 0 && item.subjectTags && Array.isArray(item.subjectTags)) {
+      resolvedTags = item.subjectTags;
+    }
+
+    return {
+      id: item._id.toString(),
+      date: item.date,
+      isOff: item.isOff,
+      total: item.total,
+      gs: item.gs,
+      maths: item.maths,
+      ca: item.ca,
+      ans: item.ans,
+      newH: item.newH,
+      revH: item.revH,
+      caDone: item.caDone,
+      ansCount: item.ansCount,
+      focus: item.focus,
+      weakest: item.weakest,
+      topicsRead: item.topicsRead || '',
+      selectedSubject: item.selectedSubject || '',
+      topicRevisionIds: (item.topicRevisionIds || []).map((id: any) => id.toString()),
+      subjectTags: resolvedTags
+    };
+  });
 
   const formattedSyllabus = syllabus.map((item: any) => ({
     id: item.customId || item._id.toString(),
@@ -399,18 +426,26 @@ export async function POST(req: Request) {
     }
 
     if (entry.action === 'deleteTopic') {
-      const { topicId, subject, topic: topicName } = entry;
+      let { topicId, subject, topic: topicName } = entry;
 
       if (topicId) {
-        let deleted = null;
-        if (topicId.match(/^[0-9a-fA-F]{24}$/)) {
+        let deleted: any = null;
+        if (typeof topicId === 'string' && topicId.match(/^[0-9a-fA-F]{24}$/)) {
           deleted = await TopicRevision.findOneAndDelete({ _id: topicId });
         }
-        if (!deleted) {
+        if (!deleted && topicId) {
           deleted = await TopicRevision.findOneAndDelete({ customId: topicId });
+        }
+        if (deleted && (!subject || !topicName)) {
+          subject = deleted.subject;
+          topicName = deleted.topic;
         }
       }
 
+      const pullConditions: any[] = [];
+      if (topicId) {
+        pullConditions.push({ topicRevisionId: topicId });
+      }
       if (subject && topicName) {
         const safeSubj = subject.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
         const safeTopic = topicName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -421,17 +456,53 @@ export async function POST(req: Request) {
           topic: { $regex: new RegExp(`^${safeTopic}$`, 'i') }
         });
 
-        // Clean up matching topic from dailyLogs subjectTags
-        const logsToClean = await DailyLog.find({
-          $or: [{ userId }, { userId: '000000000000000000000000' }],
-          'subjectTags.topic': { $regex: new RegExp(`^${safeTopic}$`, 'i') }
+        pullConditions.push({
+          subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') },
+          topic: { $regex: new RegExp(`^${safeTopic}$`, 'i') }
         });
-        for (const dl of logsToClean) {
-          dl.subjectTags = (dl.subjectTags || []).filter(
-            (st: any) => !(st.subject?.toLowerCase() === subject.toLowerCase() && st.topic?.toLowerCase() === topicName.toLowerCase())
-          );
-          await dl.save();
+      } else if (topicName) {
+        const safeTopic = topicName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        pullConditions.push({
+          topic: { $regex: new RegExp(`^${safeTopic}$`, 'i') }
+        });
+      }
+
+      if (topicId) {
+        const isValidOid = mongoose.Types.ObjectId.isValid(topicId);
+        const pullObjectIds: any[] = [];
+
+        if (isValidOid) {
+          pullObjectIds.push(new mongoose.Types.ObjectId(topicId));
         }
+
+        const foundTopic = await TopicRevision.findOne({
+          $or: [
+            ...(isValidOid ? [{ _id: topicId }] : []),
+            { customId: topicId }
+          ]
+        });
+
+        if (foundTopic) {
+          pullObjectIds.push(foundTopic._id);
+        }
+
+        if (pullObjectIds.length > 0) {
+          await DailyLog.updateMany(
+            { $or: [{ userId }, { userId: '000000000000000000000000' }] },
+            { $pull: { topicRevisionIds: { $in: pullObjectIds } } }
+          );
+          await SyllabusItem.updateMany(
+            { $or: [{ userId }, { userId: '000000000000000000000000' }] },
+            { $pull: { topicRevisionIds: { $in: pullObjectIds } } }
+          );
+        }
+      }
+
+      if (pullConditions.length > 0) {
+        await DailyLog.updateMany(
+          { $or: [{ userId }, { userId: '000000000000000000000000' }] },
+          { $pull: { subjectTags: { $or: pullConditions } } }
+        );
       }
 
       return getFormattedResponse(userId);
@@ -458,11 +529,29 @@ export async function POST(req: Request) {
       completedRevisions
     } = entry;
 
+    const today = date || new Date().toISOString().split('T')[0];
+    const processedSubjectTags: any[] = [];
+
+    // Process every topic tag through TopicRevision engine and attach topicRevisionId reference
+    if (subjectTags && Array.isArray(subjectTags) && subjectTags.length > 0) {
+      for (const tag of subjectTags) {
+        if (tag.subject && tag.topic) {
+          const revDoc = await processTopicTag(userId, tag, date || today);
+          processedSubjectTags.push({
+            ...tag,
+            topicRevisionId: revDoc?._id || tag.topicRevisionId
+          });
+        } else {
+          processedSubjectTags.push(tag);
+        }
+      }
+    }
+
     await DailyLog.findOneAndUpdate(
-      { userId, date: date || new Date().toISOString().split('T')[0] },
+      { userId, date: today },
       {
         userId,
-        date: date || new Date().toISOString().split('T')[0],
+        date: today,
         isOff: !!isOff,
         total: total || 0,
         gs: gs || 0,
@@ -477,22 +566,11 @@ export async function POST(req: Request) {
         weakest: weakest || '',
         topicsRead: topicsRead || '',
         selectedSubject: selectedSubject || '',
-        subjectTags: subjectTags || [],
+        subjectTags: processedSubjectTags,
         completedRevisions: completedRevisions || []
       },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
-
-    const today = date || new Date().toISOString().split('T')[0];
-
-    // Process every topic tag through TopicRevision engine
-    if (subjectTags && Array.isArray(subjectTags) && subjectTags.length > 0) {
-      for (const tag of subjectTags) {
-        if (tag.subject && tag.topic) {
-          await processTopicTag(userId, tag, date || today);
-        }
-      }
-    }
 
     // Process completedRevisions checkmarks
     if (completedRevisions && Array.isArray(completedRevisions) && completedRevisions.length > 0) {

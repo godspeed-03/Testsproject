@@ -1,6 +1,7 @@
 'use client';
 
-import { Plus, Trash2, Award } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Trash2, Award, Loader2 } from 'lucide-react';
 
 interface TestsModuleProps {
   testLogs: any[];
@@ -23,6 +24,7 @@ export default function TestsModule({
   textTitle,
   textMuted,
 }: TestsModuleProps) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   return (
     <div className={`${cardBg} rounded-xl p-4 sm:p-6 animate-fade-in border border-slate-300 dark:border-slate-800 space-y-6`}>
       <div className="flex justify-between items-center flex-wrap gap-3 border-b border-slate-300 dark:border-slate-800 pb-4">
@@ -100,11 +102,20 @@ export default function TestsModule({
                   <td className="p-3.5 text-right">
                     <button
                       type="button"
-                      onClick={() => onDeleteTestLog(t.id || t._id)}
-                      className="p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold transition-all shadow-sm"
+                      disabled={deletingId === (t.id || t._id)}
+                      onClick={async () => {
+                        const id = t.id || t._id;
+                        setDeletingId(id);
+                        try {
+                          await onDeleteTestLog(id);
+                        } finally {
+                          setDeletingId(null);
+                        }
+                      }}
+                      className="p-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded font-bold transition-all shadow-sm disabled:opacity-50"
                       title="Delete test log"
                     >
-                      <Trash2 size={14} />
+                      {deletingId === (t.id || t._id) ? <Loader2 size={14} className="animate-spin text-white" /> : <Trash2 size={14} />}
                     </button>
                   </td>
                 </tr>

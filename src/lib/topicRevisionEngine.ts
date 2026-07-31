@@ -206,6 +206,13 @@ export async function processTopicTag(
   if (sysItem) {
     sysItem.date = logDate;
     sysItem.nextRev = doc.nextScheduledDate;
+    if (doc && doc._id) {
+      if (!sysItem.topicRevisionIds) sysItem.topicRevisionIds = [];
+      const idStr = doc._id.toString();
+      if (!sysItem.topicRevisionIds.some((id: any) => id.toString() === idStr)) {
+        sysItem.topicRevisionIds.push(doc._id);
+      }
+    }
     await sysItem.save();
   }
 

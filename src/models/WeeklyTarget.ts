@@ -1,34 +1,29 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export interface IWeeklyTargetItem {
-  id: string;
-  name: string;
-  target: number;
-  isDefault: boolean;
-}
-
-export interface IWeeklyTargetDoc extends Document {
+export interface IWeeklyTarget extends Document {
   userId: string;
-  startOfWeek: string;
-  targets: IWeeklyTargetItem[];
+  title?: string;
+  target?: number;
+  completed?: number;
+  targets?: any;
+  startOfWeek?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const WeeklyTargetSchema: Schema = new Schema(
+const WeeklyTargetSchema = new Schema<IWeeklyTarget>(
   {
     userId: { type: String, required: true, index: true },
-    startOfWeek: { type: String, required: true },
-    targets: [
-      {
-        id: { type: String, required: true },
-        name: { type: String, required: true },
-        target: { type: Number, required: true, default: 0 },
-        isDefault: { type: Boolean, default: false }
-      }
-    ]
+    title: { type: String, default: '' },
+    target: { type: Number, default: 1 },
+    completed: { type: Number, default: 0 },
+    targets: { type: Schema.Types.Mixed },
+    startOfWeek: { type: String, default: '' }
   },
   { timestamps: true }
 );
 
-export default mongoose.models.WeeklyTarget || mongoose.model<IWeeklyTargetDoc>('WeeklyTarget', WeeklyTargetSchema);
+const WeeklyTarget: Model<IWeeklyTarget> =
+  mongoose.models.WeeklyTarget || mongoose.model<IWeeklyTarget>('WeeklyTarget', WeeklyTargetSchema);
+
+export default WeeklyTarget;

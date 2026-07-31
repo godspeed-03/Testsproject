@@ -1,37 +1,36 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ISyllabusItem extends Document {
-  userId: mongoose.Types.ObjectId;
-  customId: string;
+  userId: string;
+  customId?: string;
   subject: string;
-  category: string; // GS1, GS2, GS3, GS4, MATHS, CSAT
+  category: string;
   status: string;
-  source: string;
-  date: string;
-  nextRev: string;
-  // Milestone Checklists
-  firstRead: boolean;
-  rev1: boolean;
-  rev2: boolean;
-  preNotes: boolean;
-  mainsNotes: boolean;
-  questionBank: boolean;
-  prePyq: boolean;
-  mainsPyq: boolean;
-  ansWriting: boolean;
-  preFinalRev: boolean;
-  mainsFinalRev: boolean;
-  topicRevisionIds?: (mongoose.Types.ObjectId | string)[];
+  source?: string;
+  date?: string;
+  nextRev?: string;
+  firstRead?: boolean;
+  rev1?: boolean;
+  rev2?: boolean;
+  preNotes?: boolean;
+  mainsNotes?: boolean;
+  questionBank?: boolean;
+  prePyq?: boolean;
+  mainsPyq?: boolean;
+  ansWriting?: boolean;
+  preFinalRev?: boolean;
+  mainsFinalRev?: boolean;
+  topicRevisionIds?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
-const SyllabusItemSchema: Schema<ISyllabusItem> = new Schema(
+const SyllabusItemSchema = new Schema<ISyllabusItem>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    customId: { type: String, required: true },
+    userId: { type: String, required: true, index: true },
+    customId: { type: String },
     subject: { type: String, required: true },
-    category: { type: String, default: 'GS1' },
+    category: { type: String, required: true },
     status: { type: String, default: 'Not Started' },
     source: { type: String, default: '' },
     date: { type: String, default: '' },
@@ -47,7 +46,7 @@ const SyllabusItemSchema: Schema<ISyllabusItem> = new Schema(
     ansWriting: { type: Boolean, default: false },
     preFinalRev: { type: Boolean, default: false },
     mainsFinalRev: { type: Boolean, default: false },
-    topicRevisionIds: [{ type: Schema.Types.ObjectId, ref: 'TopicRevision' }]
+    topicRevisionIds: [{ type: String }]
   },
   { timestamps: true }
 );

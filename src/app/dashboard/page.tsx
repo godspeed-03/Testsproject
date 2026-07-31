@@ -737,57 +737,7 @@ function DashboardContent() {
         />
       )}
 
-      {activeTab === 'revision' && (
-        <SpacedRevisionModule
-          topicRevisions={topicRevisions}
-          syllabusList={syllabusList}
-          dailyLogs={dailyLogs}
-          selectedRevisionDate={selectedRevisionDate}
-          setSelectedRevisionDate={setSelectedRevisionDate}
-          onAdvanceSpacedRepetition={handleAdvanceSpacedRepetition}
-          onOpenSkipModal={(subject) => {
-            setSelectedSkipSubject(subject);
-            setShowSkipModal(true);
-          }}
-          getCategoryBadge={getCategoryBadge}
-          isLight={isLight}
-          cardBg={cardBg}
-          cardInnerBg={cardInnerBg}
-          textTitle={textTitle}
-          textMuted={textMuted}
-        />
-      )}
 
-      {activeTab === 'daily' && (
-        <DailyModule
-          dailyLogs={dailyLogs}
-          weeklyTargetsList={weeklyTargetsList}
-          currentWeekLogs={currentWeekLogs}
-          startOfWeek={startOfWeek}
-          endOfWeek={endOfWeek}
-          onOpenAddDailyLogModal={() => {
-            setEditLogId(null);
-            setLogDate(getTodayStr());
-            setShowDailyModal(true);
-          }}
-          onOpenViewDailyLogModal={(log) => {
-            setSelectedViewLog(log);
-            setShowViewDailyModal(true);
-          }}
-          onOpenEditDailyLogModal={(log) => {
-            setEditLogId(log.id || log._id);
-            setLogDate(log.date);
-            setShowDailyModal(true);
-          }}
-          onOpenEditTargetsModal={() => setShowTargetModal(true)}
-          isLight={isLight}
-          cardBg={cardBg}
-          cardInnerBg={cardInnerBg}
-          tableHeaderBg={tableHeaderBg}
-          textTitle={textTitle}
-          textMuted={textMuted}
-        />
-      )}
 
       {activeTab === 'tests' && (
         <TestsModule

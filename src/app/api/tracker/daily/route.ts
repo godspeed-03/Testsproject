@@ -5,6 +5,7 @@ import { getUserFromCookies } from '@/lib/auth';
 import DailyLog from '@/models/DailyLog';
 import SyllabusItem from '@/models/SyllabusItem';
 import TopicRevision from '@/models/TopicRevision';
+import HabitItem from '@/models/HabitItem';
 import { processTopicTag, addDaysStr } from '@/lib/topicRevisionEngine';
 import { format } from 'date-fns';
 
@@ -451,6 +452,12 @@ export async function POST(req: Request) {
         const safeTopic = topicName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
 
         await TopicRevision.deleteMany({
+          $or: [{ userId }, { userId: '000000000000000000000000' }],
+          subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') },
+          topic: { $regex: new RegExp(`^${safeTopic}$`, 'i') }
+        });
+
+        await HabitItem.deleteMany({
           $or: [{ userId }, { userId: '000000000000000000000000' }],
           subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') },
           topic: { $regex: new RegExp(`^${safeTopic}$`, 'i') }

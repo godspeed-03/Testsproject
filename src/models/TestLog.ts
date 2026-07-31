@@ -1,34 +1,36 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface ITestLog extends Document {
-  userId: mongoose.Types.ObjectId;
-  customId: string;
-  code: string;
-  date: string;
-  subject: string;
-  score: string;
-  accuracy: string;
-  concept: number;
-  silly: number;
-  timeP: number;
-  takeaway: string;
+  userId: string;
+  customId?: string;
+  testName?: string;
+  code?: string;
+  subject?: string;
+  accuracy?: string;
+  score?: any;
+  concept?: any;
+  silly?: any;
+  timeP?: any;
+  takeaway?: string;
+  date?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const TestLogSchema: Schema<ITestLog> = new Schema(
+const TestLogSchema = new Schema<ITestLog>(
   {
-    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    customId: { type: String, required: true },
-    code: { type: String, required: true },
-    date: { type: String, default: '' },
+    userId: { type: String, required: true, index: true },
+    customId: { type: String },
+    testName: { type: String, default: '' },
+    code: { type: String, default: '' },
     subject: { type: String, default: '' },
-    score: { type: String, default: '' },
     accuracy: { type: String, default: '' },
-    concept: { type: Number, default: 0 },
-    silly: { type: Number, default: 0 },
-    timeP: { type: Number, default: 0 },
-    takeaway: { type: String, default: '' }
+    score: { type: Schema.Types.Mixed, default: '' },
+    concept: { type: Schema.Types.Mixed, default: 0 },
+    silly: { type: Schema.Types.Mixed, default: 0 },
+    timeP: { type: Schema.Types.Mixed, default: 0 },
+    takeaway: { type: String, default: '' },
+    date: { type: String, default: '' }
   },
   { timestamps: true }
 );

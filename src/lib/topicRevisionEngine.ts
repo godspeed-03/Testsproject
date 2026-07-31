@@ -1,6 +1,6 @@
-import { addDays, parseISO, format, differenceInCalendarDays, isValid } from 'date-fns';
-import TopicRevision from '@/models/TopicRevision';
 import SyllabusItem from '@/models/SyllabusItem';
+import TopicRevision from '@/models/TopicRevision';
+import { addDays, parseISO, format, differenceInCalendarDays, isValid } from 'date-fns';
 
 export function addDaysStr(dateStr: string, days: number): string {
   if (!dateStr) return '';
@@ -210,7 +210,7 @@ export async function processTopicTag(
       if (!sysItem.topicRevisionIds) sysItem.topicRevisionIds = [];
       const idStr = doc._id.toString();
       if (!sysItem.topicRevisionIds.some((id: any) => id.toString() === idStr)) {
-        sysItem.topicRevisionIds.push(doc._id);
+        sysItem.topicRevisionIds.push(doc._id.toString());
       }
     }
     await sysItem.save();

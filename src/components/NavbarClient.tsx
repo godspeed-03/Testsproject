@@ -19,25 +19,18 @@ export default function NavbarClient({ user }: NavbarClientProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navLinks = [
-    { name: 'Revision Engine', href: '/revision', icon: RotateCcw },
-    { name: 'Daily Output', href: '/daily', icon: Calendar },
+    { name: 'Habits & Tasks', href: '/tracker', icon: Target },
     { name: 'Syllabus Matrix', href: '/syllabus', icon: BookOpen },
     { name: 'Tests & PYQs', href: '/tests', icon: FileText },
     { name: 'Master Routine', href: '/timetable', icon: Clock }
   ];
-
-  const handleOpenDailyLog = () => {
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('open-daily-log-modal'));
-    }
-  };
 
   return (
     <nav className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-800/80">
       <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-6">
-            <Link href="/revision" className="flex items-center gap-2.5 group">
+            <Link href="/tracker" className="flex items-center gap-2.5 group">
               <div className="w-8 h-8 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-bold shadow-sm group-hover:scale-105 transition-transform">
                 <Target size={18} />
               </div>

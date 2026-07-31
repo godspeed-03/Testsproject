@@ -37,6 +37,7 @@ export default function TrackerPage() {
   const [lists, setLists] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Selected date for Today / Calendar view (default: today 'YYYY-MM-DD')
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
@@ -261,6 +262,7 @@ export default function TrackerPage() {
   // Delete Habit
   const handleDeleteHabit = async (id: string) => {
     setSaving(true);
+    setDeletingId(id);
     try {
       const res = await fetch('/api/tracker/habits', {
         method: 'POST',
@@ -278,6 +280,7 @@ export default function TrackerPage() {
       console.error('Failed to delete item', e);
     } finally {
       setSaving(false);
+      setDeletingId(null);
     }
   };
 
@@ -391,6 +394,7 @@ export default function TrackerPage() {
 
   // Delete Checklist
   const handleDeleteList = async (listId: string) => {
+    setDeletingId(listId);
     try {
       const res = await fetch('/api/tracker/habits', {
         method: 'POST',
@@ -403,11 +407,14 @@ export default function TrackerPage() {
       }
     } catch (e) {
       console.error('Failed to delete list', e);
+    } finally {
+      setDeletingId(null);
     }
   };
 
   // Delete Item from Checklist
   const handleDeleteListItem = async (listId: string, itemId: string) => {
+    setDeletingId(itemId);
     try {
       const res = await fetch('/api/tracker/habits', {
         method: 'POST',
@@ -420,6 +427,8 @@ export default function TrackerPage() {
       }
     } catch (e) {
       console.error('Failed to delete list item', e);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -805,16 +814,16 @@ export default function TrackerPage() {
                                 {h.type !== 'habit' && (
                                   <button
                                     type="button"
-                                    disabled={saving}
+                                    disabled={saving || deletingId === h._id}
                                     onClick={() => {
                                       if (confirm(`Delete task "${h.title}"? This will also remove associated syllabus & revision records.`)) {
                                         handleDeleteHabit(h._id);
                                       }
                                     }}
-                                    className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                    className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                                     title="Delete Task & Topic Data"
                                   >
-                                    <Trash2 size={16} />
+                                    {deletingId === h._id ? <Loader2 size={16} className="animate-spin text-rose-500" /> : <Trash2 size={16} />}
                                   </button>
                                 )}
 
@@ -919,12 +928,12 @@ export default function TrackerPage() {
                               </button>
                               <button
                                 type="button"
-                                disabled={saving}
+                                disabled={saving || deletingId === h._id}
                                 onClick={() => handleDeleteHabit(h._id)}
-                                className="p-2 hover:bg-rose-500/20 text-rose-500 rounded-xl transition-all"
+                                className="p-2 hover:bg-rose-500/20 text-rose-500 rounded-xl transition-all disabled:opacity-50"
                                 title="Delete Habit"
                               >
-                                <Trash2 size={16} />
+                                {deletingId === h._id ? <Loader2 size={16} className="animate-spin text-rose-500" /> : <Trash2 size={16} />}
                               </button>
                             </div>
                           </div>
@@ -1115,11 +1124,12 @@ export default function TrackerPage() {
                               </div>
                               <button
                                 type="button"
+                                disabled={deletingId === list._id}
                                 onClick={() => handleDeleteList(list._id)}
-                                className="p-2 hover:bg-rose-500/20 text-rose-500 rounded-xl transition-all"
+                                className="p-2 hover:bg-rose-500/20 text-rose-500 rounded-xl transition-all disabled:opacity-50"
                                 title="Delete Checklist"
                               >
-                                <Trash2 size={16} />
+                                {deletingId === list._id ? <Loader2 size={16} className="animate-spin text-rose-500" /> : <Trash2 size={16} />}
                               </button>
                             </div>
                           </div>
@@ -1143,11 +1153,12 @@ export default function TrackerPage() {
                                 </div>
                                 <button
                                   type="button"
+                                  disabled={deletingId === item.id}
                                   onClick={() => handleDeleteListItem(list._id, item.id)}
-                                  className="p-1 text-slate-400 hover:text-rose-500 rounded-lg transition-colors"
+                                  className="p-1 text-slate-400 hover:text-rose-500 rounded-lg transition-colors disabled:opacity-50"
                                   title="Delete Item"
                                 >
-                                  <X size={14} />
+                                  {deletingId === item.id ? <Loader2 size={14} className="animate-spin text-rose-500" /> : <X size={14} />}
                                 </button>
                               </div>
                             ))}

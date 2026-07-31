@@ -9,7 +9,7 @@ export default async function Home() {
   const user = await getUserFromCookies();
 
   if (user) {
-    redirect('/revision');
+    redirect('/tracker');
   }
 
   return (

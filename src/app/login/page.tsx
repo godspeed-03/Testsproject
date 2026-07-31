@@ -29,7 +29,7 @@ export default function LoginPage() {
         throw new Error(data.error || 'Authentication failed');
       }
 
-      router.push('/revision');
+      router.push('/tracker');
       router.refresh();
     } catch (err: any) {
       setError(err.message);

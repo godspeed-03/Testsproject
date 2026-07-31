@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
     
     // Redirect authenticated users away from auth pages to revision
     if (isAuthPage) {
-      return NextResponse.redirect(new URL('/revision', request.url));
+      return NextResponse.redirect(new URL('/tracker', request.url));
     }
 
     return NextResponse.next();

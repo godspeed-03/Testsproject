@@ -67,8 +67,10 @@ export default function TrackerPage() {
   const [formIcon, setFormIcon] = useState('🏃');
   const [formColor, setFormColor] = useState('#6366F1');
 
-  // Study Task Sync State
+  // Study Task Sync State (100% Database Driven)
+  const [categories, setCategories] = useState<string[]>([]);
   const [syllabusSubjects, setSyllabusSubjects] = useState<string[]>([]);
+  const [syllabusItems, setSyllabusItems] = useState<any[]>([]);
   const [formIsStudyTask, setFormIsStudyTask] = useState(true);
   const [formSubject, setFormSubject] = useState('');
   const [formTopic, setFormTopic] = useState('');
@@ -122,7 +124,7 @@ export default function TrackerPage() {
     setFormTopic('');
     setFormSubject(syllabusSubjects.length > 0 ? syllabusSubjects[0] : '');
     setFormPriority('medium');
-    setFormCategory({ id: 'study', label: 'Study & UPSC', icon: '📚', color: '#6366F1' });
+    setFormCategory({ id: 'study', label: categories[0] || 'GS1', icon: '📚', color: '#6366F1' });
     setFormFrequencyMode(type === 'task' ? 'once' : 'daily');
     setFormFrequencyDays(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
     setFormMonthlyDay(1);
@@ -134,6 +136,28 @@ export default function TrackerPage() {
     setFormStartDate(new Date().toISOString().split('T')[0]);
     setFormEndDate('');
     setFormIsStudyTask(type === 'task');
+  };
+
+  const getFilteredCategorySubjects = () => {
+    const selectedCat = typeof formCategory === 'string' ? formCategory : (formCategory?.label || '');
+    if (!selectedCat) return syllabusSubjects;
+
+    // Filter DB items matching this category from Syllabus Matrix
+    const matched = syllabusItems
+      .filter((item: any) => {
+        const itemCat = String(item.category || '').trim();
+        return itemCat.toLowerCase() === selectedCat.toLowerCase() ||
+               itemCat.toLowerCase().includes(selectedCat.toLowerCase()) ||
+               selectedCat.toLowerCase().includes(itemCat.toLowerCase());
+      })
+      .map((item: any) => item.subject)
+      .filter(Boolean);
+
+    if (matched.length > 0) {
+      return Array.from(new Set(matched));
+    }
+
+    return syllabusSubjects;
   };
 
   const handleOpenCreateModal = (type: 'habit' | 'task' | 'list' = 'task') => {
@@ -162,6 +186,12 @@ export default function TrackerPage() {
         const data = await res.json();
         setHabits(data.habits || []);
         setLists(data.lists || []);
+        if (data.categories) {
+          setCategories(data.categories);
+        }
+        if (data.syllabusItems) {
+          setSyllabusItems(data.syllabusItems);
+        }
         if (data.syllabusSubjects) {
           setSyllabusSubjects(data.syllabusSubjects);
           if (data.syllabusSubjects.length > 0 && !formSubject) {
@@ -240,6 +270,9 @@ export default function TrackerPage() {
       if (res.ok) {
         const data = await res.json();
         setHabits(data.habits);
+        if (data.syllabusSubjects) {
+          setSyllabusSubjects(data.syllabusSubjects);
+        }
       }
     } catch (e) {
       console.error('Failed to delete item', e);
@@ -558,12 +591,12 @@ export default function TrackerPage() {
         </div>
 
         {/* Sidebar / Top Navigation Toolbar */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <aside className="lg:col-span-3 space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6">
+          <aside className="md:col-span-4 lg:col-span-3 space-y-4">
             <div className={`p-3 rounded-2xl border ${cardBg} space-y-1.5 shadow-xs`}>
               {[
                 { id: 'today', label: 'Today Agenda', icon: CheckSquare, badge: todayItems.length },
-                { id: 'habits', label: 'Habits & Streaks', icon: Flame, badge: habits.length },
+                { id: 'habits', label: 'Habits & Streaks', icon: Flame, badge: habits.filter((h) => h.type === 'habit').length },
                 { id: 'calendar', label: 'Month Calendar', icon: CalendarIcon },
                 { id: 'stats', label: 'Analytics & Scores', icon: BarChart3 },
                 { id: 'lists', label: 'Checklists', icon: ListTodo, badge: lists.length },
@@ -576,13 +609,13 @@ export default function TrackerPage() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
+                    className={`w-full flex items-center justify-between px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
                       active
                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2.5 sm:gap-3">
                       <Icon size={18} />
                       <span>{tab.label}</span>
                     </div>
@@ -605,14 +638,14 @@ export default function TrackerPage() {
                 <div className="flex justify-between text-xs font-bold">
                   <span className={textMuted}>Today's Completion</span>
                   <span className="text-emerald-600 dark:text-emerald-400 font-black">
-                    {habits.filter((h) => (h.history || []).some((hist: any) => hist.date === selectedDate && hist.status === 'done')).length} / {habits.length} Done
+                    {todayItems.filter((h) => (h.history || []).some((hist: any) => hist.date === selectedDate && hist.status === 'done')).length} / {todayItems.length} Done
                   </span>
                 </div>
                 <div className="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-emerald-500 to-indigo-500 transition-all duration-500"
                     style={{
-                      width: `${habits.length > 0 ? (habits.filter((h) => (h.history || []).some((hist: any) => hist.date === selectedDate && hist.status === 'done')).length / habits.length) * 100 : 0}%`
+                      width: `${todayItems.length > 0 ? (todayItems.filter((h) => (h.history || []).some((hist: any) => hist.date === selectedDate && hist.status === 'done')).length / todayItems.length) * 100 : 0}%`
                     }}
                   />
                 </div>
@@ -621,7 +654,7 @@ export default function TrackerPage() {
           </aside>
 
           {/* Main Work Area */}
-          <section className="lg:col-span-9 space-y-6">
+          <section className="md:col-span-8 lg:col-span-9 space-y-6">
             {loading ? (
               <div className={`p-12 rounded-2xl border ${cardBg} text-center space-y-3`}>
                 <Loader2 size={32} className="animate-spin text-indigo-500 mx-auto" />
@@ -729,13 +762,21 @@ export default function TrackerPage() {
                                     <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                                       {h.type}
                                     </span>
-                                    {h.title?.startsWith('[R1') || h.title?.startsWith('[R2') || h.title?.startsWith('[R3') ? (
-                                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-purple-600 text-white shadow-xs flex items-center gap-1">
-                                        ⚡ SRS Scheduled Revision
+                                    {h.title?.startsWith('[R1') ? (
+                                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-500 text-white shadow-xs flex items-center gap-1">
+                                        ⚡ 1st Revision (R1)
                                       </span>
-                                    ) : h.isStudyTask ? (
-                                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 flex items-center gap-1">
-                                        🔄 SRS Revision Topic
+                                    ) : h.title?.startsWith('[R2') ? (
+                                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-purple-600 text-white shadow-xs flex items-center gap-1">
+                                        ⚡ 2nd Revision (R2)
+                                      </span>
+                                    ) : h.title?.startsWith('[R3') ? (
+                                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-600 text-white shadow-xs flex items-center gap-1">
+                                        ⚡ 3rd Revision (R3)
+                                      </span>
+                                    ) : h.isStudyTask && h.frequency?.mode === 'once' ? (
+                                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                                        📖 1st Read
                                       </span>
                                     ) : null}
                                     <h4 className={`font-black text-sm sm:text-base ${isDone ? 'line-through opacity-60' : textTitle}`}>
@@ -744,15 +785,7 @@ export default function TrackerPage() {
                                   </div>
 
                                   <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1 font-bold flex-wrap">
-                                    {h.isStudyTask && h.subject && (
-                                      <span className="flex items-center gap-1 text-[11px] font-black text-indigo-700 dark:text-indigo-300 bg-indigo-100/70 dark:bg-indigo-950/80 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800">
-                                        📖 {h.subject}{h.topic ? `: ${h.topic}` : ''}
-                                      </span>
-                                    )}
                                     <span>Goal: {h.target?.value || 1} {h.target?.unit || 'times'}</span>
-                                    <span className="text-slate-400 dark:text-slate-500">
-                                      Start: {h.startDate || 'Today'}{h.endDate ? ` • End: ${h.endDate}` : ''}
-                                    </span>
                                     {h.reminders && h.reminders[0] && h.reminders[0].enabled !== false && h.reminders[0].time && (
                                       <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400">
                                         <Clock size={12} /> {h.reminders[0].time}
@@ -767,8 +800,24 @@ export default function TrackerPage() {
                                 </div>
                               </div>
 
-                              {/* Toggle Checkbox Button */}
-                              <div className="flex items-center gap-2">
+                              {/* Toggle Checkbox & Delete Buttons */}
+                              <div className="flex items-center gap-1 sm:gap-2">
+                                {h.type !== 'habit' && (
+                                  <button
+                                    type="button"
+                                    disabled={saving}
+                                    onClick={() => {
+                                      if (confirm(`Delete task "${h.title}"? This will also remove associated syllabus & revision records.`)) {
+                                        handleDeleteHabit(h._id);
+                                      }
+                                    }}
+                                    className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                    title="Delete Task & Topic Data"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                )}
+
                                 {selectedDate < new Date().toISOString().split('T')[0] && (
                                   <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 italic pr-1">
                                     Past date (read-only)
@@ -1210,8 +1259,8 @@ export default function TrackerPage() {
 
       {/* Unified Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className={`${cardBg} rounded-2xl w-full max-w-md p-6 shadow-2xl border space-y-5`}>
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-fade-in">
+          <div className={`${cardBg} rounded-2xl w-full max-w-lg p-4 sm:p-6 max-h-[90vh] overflow-y-auto shadow-2xl border space-y-4 sm:space-y-5`}>
             <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
               <h3 className={`font-black text-lg ${textTitle}`}>Create New {createType.toUpperCase()}</h3>
               <button
@@ -1289,8 +1338,49 @@ export default function TrackerPage() {
                 </div>
               ) : (
                 <>
-                  {/* Study Task & Syllabus Matrix Integration Panel (Placed first for Tasks) */}
-                  {createType === 'task' && (
+                  {/* 1. Frequency & Priority — always shown first for task/event */}
+                  <div className={formFrequencyMode === 'once' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-1 gap-3'}>
+                    <div>
+                      <label className={`block mb-1.5 ${textMuted}`}>Frequency</label>
+                      <ShadcnSelect
+                        value={formFrequencyMode}
+                        onChange={(val) => setFormFrequencyMode(val as any)}
+                        options={
+                          createType === 'task'
+                            ? [
+                                { value: 'once', label: '🎯 One-Time Task' },
+                                { value: 'daily', label: '🔁 Every Day' },
+                                { value: 'specific_days', label: '📅 Specific Days of Week' },
+                                { value: 'monthly', label: '📆 Monthly (Date of Month)' }
+                              ]
+                            : [
+                                { value: 'once', label: '🎯 One-Time Event' },
+                                { value: 'daily', label: '🔁 Every Day' },
+                                { value: 'specific_days', label: '📅 Specific Days of Week' },
+                                { value: 'monthly', label: '📆 Monthly (Date of Month)' }
+                              ]
+                        }
+                      />
+                    </div>
+
+                    {formFrequencyMode === 'once' && (
+                      <div>
+                        <label className={`block mb-1.5 ${textMuted}`}>Priority</label>
+                        <ShadcnSelect
+                          value={formPriority}
+                          onChange={(val) => setFormPriority(val as any)}
+                          options={[
+                            { value: 'low', label: '🟢 Low' },
+                            { value: 'medium', label: '🟡 Medium' },
+                            { value: 'high', label: '🔴 High' }
+                          ]}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. Syllabus Matrix — only for one-time tasks */}
+                  {formFrequencyMode === 'once' && (
                     <div className="p-3.5 bg-indigo-50/80 dark:bg-indigo-950/40 rounded-xl border border-indigo-200 dark:border-indigo-800 space-y-3">
                       <div className="flex items-center justify-between">
                         <label className="flex items-center gap-2 cursor-pointer text-indigo-950 dark:text-indigo-200 font-extrabold text-xs">
@@ -1308,17 +1398,40 @@ export default function TrackerPage() {
                       </div>
 
                       {formIsStudyTask && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                          <div>
+                            <label className={`block mb-1 text-[11px] ${textMuted}`}>Category / Paper</label>
+                            <ShadcnSelect
+                              value={typeof formCategory === 'string' ? formCategory : (formCategory?.label || (categories[0] || 'GS1'))}
+                              onChange={(val) => {
+                                setFormCategory({ id: val.toLowerCase().replace(/\s+/g, '_'), label: val, icon: '📚', color: '#6366F1' });
+                                const matched = syllabusItems
+                                  .filter((item: any) => String(item.category || '').toLowerCase().includes(val.toLowerCase()) || val.toLowerCase().includes(String(item.category || '').toLowerCase()))
+                                  .map((item: any) => item.subject)
+                                  .filter(Boolean);
+                                const firstSubj = matched[0] || syllabusSubjects[0] || '';
+                                if (firstSubj) {
+                                  setFormSubject(firstSubj);
+                                  setFormTitle(formTopic ? `${firstSubj}: ${formTopic}` : firstSubj);
+                                }
+                              }}
+                              options={(categories.length > 0 ? categories : ['GS1', 'GS2', 'GS3', 'GS4', 'Maths Optional', 'CSAT Aptitude']).map((c) => ({
+                                value: c,
+                                label: c
+                              }))}
+                            />
+                          </div>
+
                           <div>
                             <label className={`block mb-1 text-[11px] ${textMuted}`}>Syllabus Subject</label>
-                            {syllabusSubjects.length > 0 ? (
+                            {getFilteredCategorySubjects().length > 0 ? (
                               <ShadcnSelect
                                 value={formSubject}
                                 onChange={(val) => {
                                   setFormSubject(val);
                                   setFormTitle(formTopic ? `${val}: ${formTopic}` : val);
                                 }}
-                                options={syllabusSubjects.map((s) => ({ value: s, label: `📖 ${s}` }))}
+                                options={getFilteredCategorySubjects().map((s) => ({ value: s, label: `📖 ${s}` }))}
                               />
                             ) : (
                               <input
@@ -1334,6 +1447,7 @@ export default function TrackerPage() {
                               />
                             )}
                           </div>
+
                           <div>
                             <label className={`block mb-1 text-[11px] ${textMuted}`}>Topic / Sub-topic Name</label>
                             <input
@@ -1354,57 +1468,20 @@ export default function TrackerPage() {
                     </div>
                   )}
 
+                  {/* 3. Title / Name */}
                   <div>
                     <label className={`block mb-1.5 ${textMuted}`}>
-                      Title / Name <span className="text-slate-400 font-normal">(Optional - Auto-filled from Subject/Topic)</span>
+                      Title / Name <span className="text-slate-400 font-normal">{formFrequencyMode === 'once' ? '(Optional - Auto-filled from Subject/Topic)' : ''}</span>
                     </label>
                     <input
                       type="text"
-                      placeholder={createType === 'task' ? 'Auto-filled from Subject & Topic...' : 'e.g. Daily GS Revision, Run 3 Miles...'}
+                      placeholder={formFrequencyMode === 'once' ? 'Auto-filled from Subject & Topic...' : 'e.g. Daily GS Revision, Run 3 Miles...'}
                       value={formTitle}
                       onChange={(e) => setFormTitle(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 outline-none"
                     />
                   </div>
 
-                  <div className={createType === 'task' && formFrequencyMode === 'once' ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-1 gap-3'}>
-                    <div>
-                      <label className={`block mb-1.5 ${textMuted}`}>Frequency</label>
-                      <ShadcnSelect
-                        value={formFrequencyMode}
-                        onChange={(val) => setFormFrequencyMode(val as any)}
-                        options={
-                          createType === 'task'
-                            ? [
-                                { value: 'once', label: '🎯 One-Time Task' },
-                                { value: 'daily', label: '🔁 Every Day' },
-                                { value: 'specific_days', label: '📅 Specific Days of Week' },
-                                { value: 'monthly', label: '📆 Monthly (Date of Month)' }
-                              ]
-                            : [
-                                { value: 'daily', label: '🔁 Every Day' },
-                                { value: 'specific_days', label: '📅 Specific Days of Week' },
-                                { value: 'monthly', label: '📆 Monthly (Date of Month)' }
-                              ]
-                        }
-                      />
-                    </div>
-
-                    {createType === 'task' && formFrequencyMode === 'once' && (
-                      <div>
-                        <label className={`block mb-1.5 ${textMuted}`}>Priority</label>
-                        <ShadcnSelect
-                          value={formPriority}
-                          onChange={(val) => setFormPriority(val as any)}
-                          options={[
-                            { value: 'low', label: '🟢 Low' },
-                            { value: 'medium', label: '🟡 Medium' },
-                            { value: 'high', label: '🔴 High' }
-                          ]}
-                        />
-                      </div>
-                    )}
-                  </div>
 
                   {formFrequencyMode === 'specific_days' && (
                     <div className="p-3 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1.5">

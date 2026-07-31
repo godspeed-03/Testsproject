@@ -14,8 +14,13 @@ function addDaysStr(dateStr: string, days: number): string {
   return d.toISOString().split('T')[0];
 }
 
-async function createSrsTasksForTopic(userId: string, subject: string, topic: string, startDateStr: string) {
+async function createSrsTasksForTopic(userId: string, subject: string, topic: string, startDateStr: string, category?: any) {
   if (!subject || !topic || !startDateStr) return;
+  
+  const catLabel = typeof category === 'string' ? category : (category?.label || category?.id || '');
+  // Guard: CSAT and Maths topics/categories are practice-based — exempt from SRS recurring revision scheduling
+  if (/csat|maths|mathematics|math/i.test(subject) || /csat|maths|mathematics|math/i.test(catLabel)) return;
+
   const revisions = [
     { stage: 'R1 Revision (+7 Days)', days: 7, tag: '[R1 Revision]' },
     { stage: 'R2 Revision (+21 Days)', days: 21, tag: '[R2 Revision]' },
@@ -65,11 +70,12 @@ export async function GET(req: Request) {
 
     await connectToDatabase();
 
-    // Clear legacy default seed items if present
+    // Clear legacy default seed items and any existing CSAT/Maths automated SRS revision tasks
     await HabitItem.deleteMany({
       $or: [
         { userId: '000000000000000000000000' },
-        { title: { $in: ['Daily GS Revision & Answer Practice', 'Hydration Goal: 3 Liters Water', 'Submit Weekly PYQ Analysis Test', 'PW Online Mentorship Meeting'] } }
+        { title: { $in: ['Daily GS Revision & Answer Practice', 'Hydration Goal: 3 Liters Water', 'Submit Weekly PYQ Analysis Test', 'PW Online Mentorship Meeting'] } },
+        { userId, title: { $regex: /^\[R[123] Revision\].*(csat|maths|mathematics|math)/i } }
       ]
     });
 
@@ -80,7 +86,10 @@ export async function GET(req: Request) {
 
     for (const tr of topicRevisions) {
       if (tr.subject && tr.topic && tr.firstReadDate) {
-        await createSrsTasksForTopic(userId, tr.subject, tr.topic, tr.firstReadDate);
+        const isExcludedSubject = /csat|maths|mathematics|math/i.test(tr.subject.trim()) || /csat|maths|mathematics|math/i.test(tr.category || '');
+        if (!isExcludedSubject) {
+          await createSrsTasksForTopic(userId, tr.subject, tr.topic, tr.firstReadDate, tr.category);
+        }
       }
     }
 
@@ -102,7 +111,11 @@ export async function GET(req: Request) {
       ])
     );
 
-    return NextResponse.json({ habits, lists, syllabusSubjects });
+    const categories = Array.from(
+      new Set(syllabusItems.map((s: any) => s.category).filter(Boolean))
+    );
+
+    return NextResponse.json({ habits, lists, syllabusSubjects, syllabusItems, categories });
   } catch (error: any) {
     console.error('Failed to fetch habit tracker data:', error);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
@@ -180,85 +193,93 @@ export async function POST(req: Request) {
 
       await habit.save();
 
-      // Auto-generate 3 Spaced Repetition Tasks (+7d, +21d, +45d) when a study task is completed
-      if (habit.isStudyTask && habit.topic && habit.subject) {
+      // Synchronize TopicRevision & SyllabusItem status when tasks are toggled
+      if (habit.isStudyTask || habit.subject || habit.topic || habit.title.includes(':')) {
         try {
-          const logIdx = habit.history.findIndex((h: any) => h.date === date);
-          if (logIdx >= 0 && habit.history[logIdx].status === 'done') {
-            // Sync status with SyllabusItem
-            const trimmedSubj = habit.subject.trim();
-            const trimmedTopic = habit.topic.trim();
+          const isDone = habit.history.some((h: any) => h.date === date && h.status === 'done');
+          let cleanSubj = habit.subject?.trim() || '';
+          let cleanTop = habit.topic?.trim() || '';
 
-            let sysItem = await SyllabusItem.findOne({
-              $or: [{ userId }, { userId: '000000000000000000000000' }],
-              subject: trimmedSubj,
-              category: trimmedTopic
-            });
-
-            if (sysItem) {
-              sysItem.firstRead = true;
-              sysItem.status = 'In Progress';
-              sysItem.date = date;
-              sysItem.nextRev = addDaysStr(date, 7);
-              await sysItem.save();
-            } else {
-              await SyllabusItem.create({
-                userId,
-                subject: trimmedSubj,
-                category: trimmedTopic,
-                status: 'In Progress',
-                firstRead: true,
-                date: date,
-                nextRev: addDaysStr(date, 7)
-              });
-            }
-
-            const isSrsTask = habit.title.startsWith('[R1 Revision]') || habit.title.startsWith('[R2 Revision]') || habit.title.startsWith('[R3 Revision]');
-            if (!isSrsTask) {
-              const revisions = [
-                { stage: 'R1 Revision (+7 Days)', days: 7, tag: '[R1 Revision]' },
-                { stage: 'R2 Revision (+21 Days)', days: 21, tag: '[R2 Revision]' },
-                { stage: 'R3 Revision (+45 Days)', days: 45, tag: '[R3 Revision]' }
-              ];
-
-              for (const r of revisions) {
-                const revDate = addDaysStr(date, r.days);
-                const revTitle = `${r.tag} ${habit.subject}: ${habit.topic}`;
-
-                const existingRevTask = await HabitItem.findOne({
-                  userId,
-                  title: revTitle,
-                  startDate: revDate
-                });
-
-                if (!existingRevTask) {
-                  await HabitItem.create({
-                    userId,
-                    type: 'task',
-                    title: revTitle,
-                    category: { id: 'study', label: 'Study & UPSC', icon: '📚', color: '#8B5CF6' },
-                    description: `Automated Spaced Repetition (${r.stage}) for topic read on ${date}`,
-                    priority: 'high',
-                    frequency: { mode: 'once', days: [] },
-                    target: { value: 1, unit: 'times' },
-                    reminders: [{ time: '09:00', enabled: true }],
-                    startDate: revDate,
-                    endDate: null,
-                    isStudyTask: true,
-                    subject: habit.subject,
-                    topic: habit.topic,
-                    color: '#8B5CF6',
-                    icon: '🔄',
-                    streakCurrent: 0,
-                    streakBest: 0,
-                    history: []
-                  });
-                }
+          if (!cleanSubj || !cleanTop) {
+            const cleanTitle = habit.title.replace(/^\[R[123]\s+Revision\]\s*/i, '').trim();
+            if (cleanTitle.includes(':')) {
+              const parts = cleanTitle.split(':');
+              if (parts.length >= 2) {
+                cleanSubj = parts[0].trim();
+                cleanTop = parts.slice(1).join(':').trim();
               }
             }
           }
+
+          if (cleanSubj && cleanTop) {
+            const safeSubj = cleanSubj.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const safeTop = cleanTop.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+            // 1. Sync with TopicRevision (SRS Engine)
+            const topicDoc = await TopicRevision.findOne({
+              $or: [{ userId }, { userId: '000000000000000000000000' }],
+              subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') },
+              topic: { $regex: new RegExp(`^${safeTop}$`, 'i') }
+            });
+
+            if (topicDoc) {
+              if (habit.title.startsWith('[R1 Revision]')) {
+                topicDoc.r1Status = isDone ? 'Completed' : 'Pending';
+                topicDoc.r1CompletedDate = isDone ? date : '';
+                if (isDone) topicDoc.lastRevisedDate = date;
+              } else if (habit.title.startsWith('[R2 Revision]')) {
+                topicDoc.r2Status = isDone ? 'Completed' : 'Pending';
+                topicDoc.r2CompletedDate = isDone ? date : '';
+                if (isDone) topicDoc.lastRevisedDate = date;
+              } else if (habit.title.startsWith('[R3 Revision]')) {
+                topicDoc.r3Status = isDone ? 'Completed' : 'Pending';
+                topicDoc.r3CompletedDate = isDone ? date : '';
+                if (isDone) topicDoc.lastRevisedDate = date;
+              } else {
+                // Base Study Task completion
+                if (isDone && !topicDoc.firstReadDate) {
+                  topicDoc.firstReadDate = date;
+                }
+                if (isDone) topicDoc.lastRevisedDate = date;
+              }
+
+              // Update next scheduled date and overdue status
+              if (topicDoc.r1Status !== 'Completed') {
+                topicDoc.nextScheduledDate = topicDoc.r1ScheduledDate;
+              } else if (topicDoc.r2Status !== 'Completed') {
+                topicDoc.nextScheduledDate = topicDoc.r2ScheduledDate;
+              } else if (topicDoc.r3Status !== 'Completed') {
+                topicDoc.nextScheduledDate = topicDoc.r3ScheduledDate;
+              } else {
+                topicDoc.nextScheduledDate = '';
+              }
+              topicDoc.isOverdue = false;
+
+              await topicDoc.save();
+            }
+
+            // 2. Sync with SyllabusItem
+            let sysItem = await SyllabusItem.findOne({
+              $or: [{ userId }, { userId: '000000000000000000000000' }],
+              subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') },
+              category: { $regex: new RegExp(`^${safeTop}$`, 'i') }
+            });
+
+            if (sysItem) {
+              if (habit.title.startsWith('[R1 Revision]')) {
+                sysItem.rev1 = isDone;
+              } else if (habit.title.startsWith('[R2 Revision]')) {
+                sysItem.rev2 = isDone;
+              } else {
+                sysItem.firstRead = isDone;
+              }
+              sysItem.status = isDone ? 'In Progress' : 'Not Started';
+              sysItem.date = date;
+              await sysItem.save();
+            }
+          }
         } catch (err) {
-          console.error('Failed to generate automated Spaced Repetition tasks:', err);
+          console.error('Failed to sync completion status with TopicRevision / SyllabusItem:', err);
         }
       }
 
@@ -301,16 +322,43 @@ export async function POST(req: Request) {
       if (isStudyTask && frequency?.mode === 'once' && subject && topic) {
         try {
           const taskStartDate = startDate || new Date().toISOString().split('T')[0];
-          await processTopicTag(
-            userId,
-            {
-              subject: subject.trim(),
-              topic: topic.trim(),
-              category: 'GS1'
-            },
-            taskStartDate
-          );
-          await createSrsTasksForTopic(userId, subject, topic, taskStartDate);
+          const cleanSubject = subject.trim();
+          const cleanTopic = topic.trim();
+
+          // 1. Always save in Syllabus Matrix (SyllabusItem)
+          const safeSubj = cleanSubject.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+          const safeTopic = cleanTopic.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+          let sysItem = await SyllabusItem.findOne({
+            $or: [{ userId }, { userId: '000000000000000000000000' }],
+            subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') },
+            category: { $regex: new RegExp(`^${safeTopic}$`, 'i') }
+          });
+
+          if (!sysItem) {
+            await SyllabusItem.create({
+              userId,
+              subject: cleanSubject,
+              category: cleanTopic,
+              status: 'in-progress'
+            });
+          }
+
+          // 2. CSAT Aptitude and Maths Optional are practice categories/subjects — exempt from SRS memory revisions
+          const categoryLabel = typeof category === 'string' ? category : (category?.label || category?.id || '');
+          const isExcludedSubjectOrCategory = /csat|maths|mathematics|math/i.test(cleanSubject) || /csat|maths|mathematics|math/i.test(categoryLabel);
+
+          if (!isExcludedSubjectOrCategory) {
+            await processTopicTag(
+              userId,
+              {
+                subject: cleanSubject,
+                topic: cleanTopic,
+                category: typeof category === 'string' ? category : (category?.id || 'GS1')
+              },
+              taskStartDate
+            );
+            await createSrsTasksForTopic(userId, cleanSubject, cleanTopic, taskStartDate, category);
+          }
         } catch (err) {
           console.error('Failed to sync study task with TopicRevision & Syllabus Matrix:', err);
         }
@@ -377,34 +425,101 @@ export async function POST(req: Request) {
     // Action: delete
     if (action === 'delete') {
       const { id } = body;
-      const targetHabit = await HabitItem.findOne({
-        _id: id,
-        $or: [{ userId }, { userId: '000000000000000000000000' }]
-      });
+      let targetHabit = null;
+
+      if (id && mongoose.Types.ObjectId.isValid(id)) {
+        targetHabit = await HabitItem.findById(id);
+      }
+      if (!targetHabit && id) {
+        targetHabit = await HabitItem.findOne({ $or: [{ _id: id }, { customId: id }] });
+      }
 
       if (targetHabit) {
-        if (targetHabit.isStudyTask || (targetHabit.subject && targetHabit.topic)) {
-          const { subject, topic } = targetHabit;
-          if (subject && topic) {
-            const safeSubj = subject.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-            const safeTopic = topic.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        let subject = targetHabit.subject?.trim() || '';
+        let topic = targetHabit.topic?.trim() || '';
 
+        // If subject/topic missing from fields, extract from title if formatted as "Subject: Topic" or "[R1 Revision] Subject: Topic"
+        if (!subject || !topic) {
+          const cleanTitle = targetHabit.title.replace(/^\[R[123]\s+Revision\]\s*/i, '').trim();
+          if (cleanTitle.includes(':')) {
+            const parts = cleanTitle.split(':');
+            if (parts.length >= 2) {
+              subject = parts[0].trim();
+              topic = parts.slice(1).join(':').trim();
+            }
+          }
+        }
+
+        // Perform multi-schema cascading deletion if topic is present
+        if (topic) {
+          const safeTopic = topic.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+          const topicRegex = new RegExp(`^${safeTopic}$`, 'i');
+
+          if (subject) {
+            const safeSubj = subject.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const subjRegex = new RegExp(`^${safeSubj}$`, 'i');
+
+            // 1. Delete all HabitItem entries matching subject & topic
             await HabitItem.deleteMany({
-              $or: [{ userId }, { userId: '000000000000000000000000' }],
-              subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') },
-              topic: { $regex: new RegExp(`^${safeTopic}$`, 'i') }
+              $or: [
+                { subject: subjRegex, topic: topicRegex },
+                { title: new RegExp(`${safeSubj}:\\s*${safeTopic}`, 'i') }
+              ]
+            });
+
+            // 2. Delete from SyllabusItem model
+            await SyllabusItem.deleteMany({
+              subject: subjRegex,
+              category: topicRegex
+            });
+
+            // 3. Delete from TopicRevision model (Spaced Repetition engine)
+            await TopicRevision.deleteMany({
+              subject: subjRegex,
+              topic: topicRegex
+            });
+          } else {
+            // Delete by topic only if subject was not specified
+            await HabitItem.deleteMany({
+              $or: [{ topic: topicRegex }, { title: topicRegex }]
+            });
+
+            await TopicRevision.deleteMany({
+              topic: topicRegex
             });
           }
         }
 
-        await HabitItem.deleteOne({ _id: id });
+        await HabitItem.deleteMany({
+          $or: [{ _id: targetHabit._id }, { customId: id }]
+        });
+      } else if (id) {
+        if (mongoose.Types.ObjectId.isValid(id)) {
+          await HabitItem.findByIdAndDelete(id);
+        }
+        await HabitItem.deleteMany({ customId: id });
       }
 
       const habits = await HabitItem.find({
         $or: [{ userId }, { userId: '000000000000000000000000' }]
       }).lean();
 
-      return NextResponse.json({ message: 'Item deleted', habits });
+      const syllabusItems = await SyllabusItem.find({
+        $or: [{ userId }, { userId: '000000000000000000000000' }]
+      }).lean();
+
+      const studyTaskSubjects = habits
+        .filter((h: any) => h.isStudyTask && h.subject)
+        .map((h: any) => h.subject.trim());
+
+      const syllabusSubjects = Array.from(
+        new Set([
+          ...syllabusItems.map((s: any) => s.subject).filter(Boolean),
+          ...studyTaskSubjects
+        ])
+      );
+
+      return NextResponse.json({ message: 'Item deleted', habits, syllabusSubjects });
     }
 
     // Action: create_list / toggle_list_item

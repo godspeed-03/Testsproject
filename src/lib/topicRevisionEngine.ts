@@ -45,6 +45,10 @@ export async function processTopicTag(
   const topicName = tag.topic.trim();
   const catName = tag.category || 'GS1';
 
+  // Guard: CSAT and Maths categories/subjects are practice-based — exempt from SRS TopicRevision tracking
+  const isExcluded = /csat|maths|mathematics|math/i.test(subjName) || /csat|maths|mathematics|math/i.test(catName);
+  if (isExcluded) return null;
+
   // Find existing TopicRevision document
   let doc = await TopicRevision.findOne({
     userId,

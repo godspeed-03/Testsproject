@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import SyllabusItem from '@/models/SyllabusItem';
-import DailyLog from '@/models/DailyLog';
 import TestLog from '@/models/TestLog';
-import WeeklyTarget from '@/models/WeeklyTarget';
 import TopicRevision from '@/models/TopicRevision';
 import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
 
@@ -17,9 +15,7 @@ export async function GET() {
 
     const todayStr = new Date().toISOString().split('T')[0];
     const syllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const dailyLogs = await DailyLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ date: -1 }).lean();
     const testLogs = await TestLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
-    const weeklyDoc = await WeeklyTarget.findOne({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
     const topicRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
 
     // Format for frontend
@@ -43,53 +39,6 @@ export async function GET() {
       preFinalRev: !!item.preFinalRev,
       mainsFinalRev: !!item.mainsFinalRev
     }));
-
-    const formattedDailyLogs = dailyLogs.map((item: any) => {
-      let resolvedTags: any[] = [];
-      if (item.topicRevisionIds && Array.isArray(item.topicRevisionIds) && item.topicRevisionIds.length > 0) {
-        resolvedTags = item.topicRevisionIds
-          .map((trId: any) => {
-            const strId = trId.toString();
-            const tr = topicRevisions.find((t: any) => t._id.toString() === strId || t.customId === strId);
-            if (tr) {
-              return {
-                id: tr._id.toString(),
-                subject: tr.subject,
-                category: tr.category,
-                topic: tr.topic,
-                isRevision: tr.firstReadDate !== item.date
-              };
-            }
-            return null;
-          })
-          .filter(Boolean);
-      }
-      if (resolvedTags.length === 0 && item.subjectTags && Array.isArray(item.subjectTags)) {
-        resolvedTags = item.subjectTags;
-      }
-
-      return {
-        id: item._id.toString(),
-        date: item.date,
-        isOff: item.isOff,
-        total: item.total,
-        gs: item.gs,
-        maths: item.maths,
-        ca: item.ca,
-        ans: item.ans,
-        newH: item.newH,
-        revH: item.revH,
-        caDone: item.caDone,
-        ansCount: item.ansCount,
-        focus: item.focus,
-        weakest: item.weakest,
-        topicsRead: item.topicsRead || '',
-        selectedSubject: item.selectedSubject || '',
-        topicRevisionIds: (item.topicRevisionIds || []).map((id: any) => id.toString()),
-        subjectTags: resolvedTags,
-        completedRevisions: item.completedRevisions || []
-      };
-    });
 
     const formattedTestLogs = testLogs.map((item: any) => ({
       id: item.customId || item._id.toString(),
@@ -134,10 +83,7 @@ export async function GET() {
 
     return NextResponse.json({
       syllabusList: formattedSyllabus,
-      dailyLogs: formattedDailyLogs,
       testLogs: formattedTestLogs,
-      weeklyTargetsList: weeklyDoc?.targets || null,
-      savedTargetWeek: weeklyDoc?.startOfWeek || null,
       topicRevisions: formattedTopicRevisions
     });
   } catch (error: any) {
@@ -157,24 +103,18 @@ export async function DELETE() {
 
     // Wipe all user records in MongoDB for a completely blank sheet!
     await SyllabusItem.deleteMany({ userId: user.userId });
-    await DailyLog.deleteMany({ userId: user.userId });
     await TestLog.deleteMany({ userId: user.userId });
-    await WeeklyTarget.deleteMany({ userId: user.userId });
     await TopicRevision.deleteMany({ userId: user.userId });
 
     // Also wipe all records in general if unauthenticated/global
     await SyllabusItem.deleteMany({});
-    await DailyLog.deleteMany({});
     await TestLog.deleteMany({});
-    await WeeklyTarget.deleteMany({});
     await TopicRevision.deleteMany({});
 
     return NextResponse.json({
       message: 'All dummy data wiped successfully. Blank sheet initialized!',
       syllabusList: [],
-      dailyLogs: [],
       testLogs: [],
-      weeklyTargetsList: [],
       topicRevisions: []
     });
   } catch (error: any) {

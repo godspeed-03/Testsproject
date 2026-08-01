@@ -2,10 +2,8 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import SyllabusItem from '@/models/SyllabusItem';
-import DailyLog from '@/models/DailyLog';
 import TopicRevision from '@/models/TopicRevision';
 import TestLog from '@/models/TestLog';
-import WeeklyTarget from '@/models/WeeklyTarget';
 import HabitItem from '@/models/HabitItem';
 import CheckList from '@/models/CheckList';
 
@@ -37,7 +35,6 @@ export async function POST(req: Request) {
     const listsInput = data.lists || data.checkLists || [];
     const topicRevisionsInput = data.topicrevisions || data.topicRevisions || [];
     const syllabusInput = data.syllabusitems || data.syllabusList || data.syllabus || [];
-    const dailyLogsInput = data.dailylogs || data.dailyLogs || [];
     const testLogsInput = data.testlogs || data.testLogs || [];
 
     // 1. Process Habits & Agenda Items
@@ -138,34 +135,7 @@ export async function POST(req: Request) {
       await SyllabusItem.insertMany(docs);
     }
 
-    // 5. Process Daily Logs
-    if (Array.isArray(dailyLogsInput) && dailyLogsInput.length > 0) {
-      await DailyLog.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
-      const docs = dailyLogsInput.map((l: any) => ({
-        userId,
-        date: l.date,
-        isOff: !!l.isOff,
-        total: l.total || 0,
-        gs: l.gs || 0,
-        maths: l.maths || 0,
-        ca: l.ca || 0,
-        ans: l.ans || 0,
-        newH: l.newH || 0,
-        revH: l.revH || 0,
-        caDone: l.caDone || 'NO',
-        ansCount: l.ansCount || 0,
-        focus: l.focus || 3,
-        weakest: l.weakest || '',
-        topicsRead: l.topicsRead || '',
-        selectedSubject: l.selectedSubject || '',
-        topicRevisionIds: l.topicRevisionIds || [],
-        subjectTags: l.subjectTags || [],
-        completedRevisions: l.completedRevisions || []
-      }));
-      await DailyLog.insertMany(docs);
-    }
-
-    // 6. Process Test Logs
+    // 5. Process Test Logs
     if (Array.isArray(testLogsInput) && testLogsInput.length > 0) {
       await TestLog.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
       const docs = testLogsInput.map((t: any) => ({
@@ -184,36 +154,23 @@ export async function POST(req: Request) {
       await TestLog.insertMany(docs);
     }
 
-    // 7. Process Weekly Targets
-    const weeklyTargetsInput = data.weeklytargets || data.weeklyTargets || data.weeklyTargetsList || null;
-    if (weeklyTargetsInput && Array.isArray(weeklyTargetsInput) && weeklyTargetsInput.length > 0) {
-      await WeeklyTarget.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
-      await WeeklyTarget.create({
-        userId,
-        startOfWeek: data.startOfWeek || data.savedTargetWeek || '',
-        targets: weeklyTargetsInput
-      });
-    }
-
     // Fetch updated dataset
     const updatedHabits = await HabitItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
     const updatedLists = await CheckList.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
     const updatedSyllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const updatedDaily = await DailyLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ date: -1 }).lean();
-    const updatedRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const updatedTest = await TestLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
+    const updatedTestLogs = await TestLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
+    const updatedTopicRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
 
     return NextResponse.json({
-      success: true,
+      message: 'Data imported successfully!',
       habits: updatedHabits,
       lists: updatedLists,
-      syllabusList: updatedSyllabus.map((i: any) => ({ ...i, id: i.customId || i._id.toString() })),
-      dailyLogs: updatedDaily.map((i: any) => ({ ...i, id: i._id.toString() })),
-      topicRevisions: updatedRevisions.map((i: any) => ({ ...i, id: i.customId || i._id.toString() })),
-      testLogs: updatedTest.map((i: any) => ({ ...i, id: i.customId || i._id.toString() }))
+      syllabusList: updatedSyllabus,
+      testLogs: updatedTestLogs,
+      topicRevisions: updatedTopicRevisions
     });
   } catch (error: any) {
-    console.error('Import JSON database error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to import JSON data' }, { status: 500 });
+    console.error('Import data error:', error);
+    return NextResponse.json({ error: 'Failed to import JSON data' }, { status: 500 });
   }
 }

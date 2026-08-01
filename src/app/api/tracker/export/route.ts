@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import SyllabusItem from '@/models/SyllabusItem';
-import DailyLog from '@/models/DailyLog';
 import TestLog from '@/models/TestLog';
-import WeeklyTarget from '@/models/WeeklyTarget';
 import TopicRevision from '@/models/TopicRevision';
 import HabitItem from '@/models/HabitItem';
 import CheckList from '@/models/CheckList';
@@ -21,9 +19,7 @@ export async function GET() {
     const habits = await HabitItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
     const lists = await CheckList.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
     const syllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const dailyLogs = await DailyLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ date: -1 }).lean();
     const testLogs = await TestLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
-    const weeklyDoc = await WeeklyTarget.findOne({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
     const topicRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
 
     const formattedHabits = habits.map((h: any) => ({
@@ -58,28 +54,6 @@ export async function GET() {
       ansWriting: !!item.ansWriting,
       preFinalRev: !!item.preFinalRev,
       mainsFinalRev: !!item.mainsFinalRev
-    }));
-
-    const formattedDailyLogs = dailyLogs.map((item: any) => ({
-      id: item._id.toString(),
-      date: item.date,
-      isOff: !!item.isOff,
-      total: item.total || 0,
-      gs: item.gs || 0,
-      maths: item.maths || 0,
-      ca: item.ca || 0,
-      ans: item.ans || 0,
-      newH: item.newH || 0,
-      revH: item.revH || 0,
-      caDone: item.caDone || 'NO',
-      ansCount: item.ansCount || 0,
-      focus: item.focus || 3,
-      weakest: item.weakest || '',
-      topicsRead: item.topicsRead || '',
-      selectedSubject: item.selectedSubject || '',
-      topicRevisionIds: (item.topicRevisionIds || []).map((id: any) => id.toString()),
-      subjectTags: item.subjectTags || [],
-      completedRevisions: item.completedRevisions || []
     }));
 
     const formattedTestLogs = testLogs.map((item: any) => ({
@@ -130,14 +104,11 @@ export async function GET() {
       lists: formattedLists,
       topicRevisions: formattedTopicRevisions,
       syllabusList: formattedSyllabus,
-      dailyLogs: formattedDailyLogs,
       testLogs: formattedTestLogs,
-      weeklyTargetsList: weeklyDoc?.targets || [],
-      startOfWeek: weeklyDoc?.startOfWeek || '',
       exportedAt: new Date().toISOString()
     });
   } catch (error: any) {
     console.error('Export tracker data error:', error);
-    return NextResponse.json({ error: 'Failed to export backup data' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to export data' }, { status: 500 });
   }
 }

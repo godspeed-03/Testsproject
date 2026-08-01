@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Target, Menu, X, RotateCcw, Calendar, BookOpen, FileText, Clock, Zap } from 'lucide-react';
+import { Target, Menu, X, RotateCcw, Calendar, BookOpen, FileText, Clock, Zap, Plus } from 'lucide-react';
 import UserProfileMenu from './UserProfileMenu';
 
 interface NavbarClientProps {
@@ -18,11 +18,20 @@ export default function NavbarClient({ user }: NavbarClientProps) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const handleOpenCreateModal = () => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-create-modal'));
+    }
+    if (pathname !== '/tracker' && !pathname.startsWith('/tracker')) {
+      router.push('/tracker?create=true');
+    }
+  };
+
   const navLinks = [
     { name: 'Habits & Tasks', href: '/tracker', icon: Target },
     { name: 'Syllabus Matrix', href: '/syllabus', icon: BookOpen },
     { name: 'Tests & PYQs', href: '/tests', icon: FileText },
-    { name: 'Master Routine', href: '/timetable', icon: Clock }
+    { name: 'Master Routine', href: '/routine', icon: Clock }
   ];
 
   return (
@@ -65,7 +74,17 @@ export default function NavbarClient({ user }: NavbarClientProps) {
 
           <div className="flex items-center gap-3">
             {user ? (
-              <UserProfileMenu user={user} />
+              <>
+                <button
+                  type="button"
+                  onClick={handleOpenCreateModal}
+                  className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-md shadow-indigo-600/30 active:scale-95 transition-all"
+                >
+                  <Plus size={15} />
+                  <span>Log Task / Habit</span>
+                </button>
+                <UserProfileMenu user={user} />
+              </>
             ) : (
               <Link
                 href="/login"

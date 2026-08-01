@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { PlusCircle, ChevronDown } from 'lucide-react';
+import { ChevronDown, PlusCircle } from 'lucide-react';
 import LogoutButton from './LogoutButton';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface UserProfileMenuProps {
   user: {
@@ -13,10 +14,17 @@ interface UserProfileMenuProps {
 
 export default function UserProfileMenu({ user }: UserProfileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const handleOpenDailyLog = () => {
+  const handleOpenCreate = () => {
     setIsOpen(false);
-    window.dispatchEvent(new CustomEvent('open-daily-log-modal'));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('open-create-modal'));
+    }
+    if (pathname !== '/tracker' && !pathname.startsWith('/tracker')) {
+      router.push('/tracker?create=true');
+    }
   };
 
   return (
@@ -44,20 +52,19 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
               <p className="text-[10px] text-slate-500">Connected to Database</p>
             </div>
 
-            <div className="py-1">
+            <div className="py-1 px-1 border-b border-slate-100 dark:border-slate-800">
               <button
-                onClick={handleOpenDailyLog}
-                className="w-full px-3.5 py-2 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40 flex items-center gap-2 transition-colors text-left"
+                type="button"
+                onClick={handleOpenCreate}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors"
               >
-                <PlusCircle size={15} className="text-amber-500" />
-                <span>Log Today's Study</span>
+                <PlusCircle size={15} />
+                <span>Log Task / Habit</span>
               </button>
             </div>
 
-            <div className="border-t border-slate-100 dark:border-slate-800 pt-1">
-              <div className="px-1">
-                <LogoutButton />
-              </div>
+            <div className="py-1 px-1">
+              <LogoutButton />
             </div>
           </div>
         </>

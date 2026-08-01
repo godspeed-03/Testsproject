@@ -7,7 +7,7 @@ import ShadcnSelect from '@/components/ui/ShadcnSelect';
 interface AddSubjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddSubject: (subject: string, category: string, source: string) => Promise<void>;
+  onAddSubject: (subject: any, category?: string, source?: string) => Promise<void>;
   isLight: boolean;
   cardBg: string;
   inputBg: string;
@@ -39,7 +39,7 @@ export default function AddSubjectModal({
     if (!subject.trim()) return;
     setLoading(true);
     try {
-      await onAddSubject(subject.trim(), category, source.trim());
+      await onAddSubject({ subject: subject.trim(), category, source: source.trim() });
       setSubject('');
       setSource('');
       onClose();

@@ -40,7 +40,9 @@ export default function SyllabusModule({
 
   const filteredSubjects = useMemo(() => {
     return syllabusList.filter((s) => {
-      const matchCat = syllabusCategoryFilter === 'ALL' || s.category === syllabusCategoryFilter;
+      const itemCat = String(s.category || '').toLowerCase();
+      const filterCat = syllabusCategoryFilter.toLowerCase();
+      const matchCat = syllabusCategoryFilter === 'ALL' || itemCat === filterCat || itemCat.includes(filterCat) || filterCat.includes(itemCat);
       const matchSearch =
         !syllabusSearch ||
         s.subject?.toLowerCase().includes(syllabusSearch.toLowerCase()) ||

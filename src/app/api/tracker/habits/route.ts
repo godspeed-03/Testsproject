@@ -63,6 +63,152 @@ async function createSrsTasksForTopic(userId: string, subject: string, topic: st
   }
 }
 
+function recalculateHabitStreak(habit: any) {
+  if (habit.history && Array.isArray(habit.history)) {
+    const targetVal = habit.target?.value;
+    const unit = habit.target?.unit;
+    const isNumericGoal = typeof targetVal === 'number' && targetVal > 0 && unit !== 'yes_no' && unit !== 'boolean';
+    if (isNumericGoal) {
+      habit.history.forEach((h: any) => {
+        const val = h.value || 0;
+        if (val < targetVal && h.status === 'done') {
+          h.status = 'pending';
+        }
+      });
+    }
+  }
+
+  const doneDatesArr: string[] = Array.from(
+    new Set<string>(
+      (habit.history || [])
+        .filter((h: any) => h.status === 'done')
+        .map((h: any) => String(h.date))
+    )
+  ).sort();
+
+  if (doneDatesArr.length === 0) {
+    habit.streakCurrent = 0;
+    habit.streakBest = 0;
+    return habit;
+  }
+
+  const doneDatesSet = new Set(doneDatesArr);
+
+  const formatDateStr = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const isScheduledForIso = (dateIso: string): boolean => {
+    if (habit.startDate && habit.startDate > dateIso) return false;
+    if (habit.endDate && habit.endDate < dateIso) return false;
+
+    const mode = habit.frequency?.mode || habit.recurrence || 'daily';
+    if (mode === 'daily') return true;
+
+    if (mode === 'once') {
+      return habit.startDate === dateIso;
+    }
+
+    if (mode === 'specific_days' || mode === 'weekly') {
+      const dateObj = new Date(dateIso + 'T00:00:00');
+      const dayShortNames = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const dayFullNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const dayIdx = dateObj.getDay();
+
+      const shortName = dayShortNames[dayIdx];
+      const fullName = dayFullNames[dayIdx];
+
+      const activeDays: string[] = (habit.frequency?.days || habit.selectedDays || []).map((d: any) =>
+        String(d).toLowerCase().trim()
+      );
+
+      if (activeDays.length > 0) {
+        return activeDays.some(
+          (d) => d === shortName || d === fullName || d.startsWith(shortName) || shortName.startsWith(d)
+        );
+      }
+      return true;
+    }
+
+    if (mode === 'monthly') {
+      const dateObj = new Date(dateIso + 'T00:00:00');
+      const targetDay = habit.frequency?.monthlyDay || habit.monthlyDay || 1;
+      return dateObj.getDate() === targetDay;
+    }
+
+    return true;
+  };
+
+  // 1. Calculate Best Streak across all completed dates in history
+  let maxStreak = 0;
+  const evaluatedDates = new Set<string>();
+
+  for (let d = doneDatesArr.length - 1; d >= 0; d--) {
+    const startIso = doneDatesArr[d];
+    if (evaluatedDates.has(startIso)) continue;
+
+    let chain = 0;
+    const cursor = new Date(startIso + 'T00:00:00');
+
+    for (let i = 0; i < 365; i++) {
+      const currentIso = formatDateStr(cursor);
+      const scheduled = isScheduledForIso(currentIso);
+
+      if (scheduled) {
+        if (doneDatesSet.has(currentIso)) {
+          chain++;
+          evaluatedDates.add(currentIso);
+        } else {
+          break;
+        }
+      }
+      cursor.setDate(cursor.getDate() - 1);
+    }
+
+    if (chain > maxStreak) {
+      maxStreak = chain;
+    }
+  }
+
+  // 2. Calculate Current Streak from the most recent active/done period
+  const now = new Date();
+  const todayIso = formatDateStr(now);
+  const latestDoneIso = doneDatesArr[doneDatesArr.length - 1];
+  const startCheckIso = latestDoneIso > todayIso ? latestDoneIso : todayIso;
+
+  let currentStreak = 0;
+  const cursor = new Date(startCheckIso + 'T00:00:00');
+
+  const isStartDone = doneDatesSet.has(startCheckIso);
+  const isStartScheduled = isScheduledForIso(startCheckIso);
+
+  if (!isStartDone && isStartScheduled) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  for (let i = 0; i < 365; i++) {
+    const currentIso = formatDateStr(cursor);
+    const scheduled = isScheduledForIso(currentIso);
+
+    if (scheduled) {
+      if (doneDatesSet.has(currentIso)) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+    cursor.setDate(cursor.getDate() - 1);
+  }
+
+  habit.streakCurrent = currentStreak;
+  habit.streakBest = Math.max(maxStreak, currentStreak);
+
+  return habit;
+}
+
 export async function GET(req: Request) {
   try {
     const user = await getUserFromCookies();
@@ -94,6 +240,7 @@ export async function GET(req: Request) {
     }
 
     let habits = await HabitItem.find({ userId }).lean();
+    habits = habits.map((h: any) => recalculateHabitStreak(h));
     let lists = await CheckList.find({ userId }).lean();
 
     const syllabusItems = await SyllabusItem.find({
@@ -157,40 +304,45 @@ export async function POST(req: Request) {
           habit.history[existingIdx].value = habit.history[existingIdx].status === 'done' ? habit.target.value : 0;
         } else {
           habit.history[existingIdx].status = status;
-          if (value !== undefined) habit.history[existingIdx].value = value;
+          if (value !== undefined) {
+            if (body.increment || body.mode === 'increment') {
+              const prev = habit.history[existingIdx].value || 0;
+              habit.history[existingIdx].value = Number((prev + value).toFixed(2));
+            } else {
+              habit.history[existingIdx].value = value;
+            }
+          }
           if (note !== undefined) habit.history[existingIdx].note = note;
+
+          // Auto-adjust status based on numeric target goal progress
+          const targetVal = habit.target?.value;
+          const unit = habit.target?.unit;
+          const isNumericGoal = typeof targetVal === 'number' && targetVal > 0 && unit !== 'yes_no' && unit !== 'boolean';
+          if (isNumericGoal) {
+            const currentVal = habit.history[existingIdx].value || 0;
+            habit.history[existingIdx].status = currentVal >= targetVal ? 'done' : 'pending';
+          }
         }
       } else {
         const newStatus = status === 'toggle' ? 'done' : status;
         const newValue = value !== undefined ? value : (newStatus === 'done' ? habit.target.value : 0);
+        let finalStatus = newStatus;
+        const targetVal = habit.target?.value;
+        const unit = habit.target?.unit;
+        const isNumericGoal = typeof targetVal === 'number' && targetVal > 0 && unit !== 'yes_no' && unit !== 'boolean';
+        if (isNumericGoal && status !== 'toggle') {
+          finalStatus = newValue >= targetVal ? 'done' : 'pending';
+        }
         habit.history.push({
           date,
-          status: newStatus,
+          status: finalStatus,
           value: newValue,
           note: note || ''
         });
       }
 
-      // Recalculate streak
-      const doneDates = new Set(habit.history.filter((h: any) => h.status === 'done').map((h: any) => h.date));
-      let currentStreak = 0;
-      let checkDate = new Date();
-
-      for (let i = 0; i < 365; i++) {
-        const dStr = checkDate.toISOString().split('T')[0];
-        if (doneDates.has(dStr)) {
-          currentStreak++;
-        } else if (i > 0) {
-          break;
-        }
-        checkDate.setDate(checkDate.getDate() - 1);
-      }
-
-      habit.streakCurrent = currentStreak;
-      if (currentStreak > habit.streakBest) {
-        habit.streakBest = currentStreak;
-      }
-
+      // Recalculate current and best streaks dynamically from completed history & recurrence schedule
+      recalculateHabitStreak(habit);
       await habit.save();
 
       // Synchronize TopicRevision & SyllabusItem status when tasks are toggled
@@ -287,11 +439,11 @@ export async function POST(req: Request) {
         $or: [{ userId }, { userId: '000000000000000000000000' }]
       }).lean();
 
-      return NextResponse.json({ message: 'Log updated', habits });
+      return NextResponse.json({ message: 'Log updated', habits: habits.map((h: any) => recalculateHabitStreak(h)) });
     }
 
     // Action: create (add new habit / task / event)
-    if (action === 'create') {
+    if (action === 'create' || action === 'create_habit') {
       const { title, type, category, description, priority, frequency, target, reminders, startDate, endDate, isStudyTask, subject, topic, color, icon } = body;
 
       const newHabit = new HabitItem({
@@ -387,7 +539,7 @@ export async function POST(req: Request) {
     }
 
     // Action: update (edit habit / task / event)
-    if (action === 'update') {
+    if (action === 'update' || action === 'update_habit') {
       const { id, title, type, category, description, priority, frequency, target, reminders, startDate, endDate, isStudyTask, subject, topic, color, icon } = body;
 
       const habit = await HabitItem.findOne({

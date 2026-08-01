@@ -74,17 +74,7 @@ export default function NavbarClient({ user }: NavbarClientProps) {
 
           <div className="flex items-center gap-3">
             {user ? (
-              <>
-                <button
-                  type="button"
-                  onClick={handleOpenCreateModal}
-                  className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-md shadow-indigo-600/30 active:scale-95 transition-all"
-                >
-                  <Plus size={15} />
-                  <span>Log Task / Habit</span>
-                </button>
-                <UserProfileMenu user={user} />
-              </>
+              <UserProfileMenu user={user} />
             ) : (
               <Link
                 href="/login"

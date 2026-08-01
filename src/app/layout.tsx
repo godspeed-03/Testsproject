@@ -11,8 +11,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "UPSC CSE 2027 — Spaced Revision Engine & Study Tracker",
-  description: "Advanced UPSC automated subject tracking, spaced repetition engine, and daily study analytics",
+  title: "UPSC Study Tracker",
+  description: "Executive-level UPSC Civil Services preparation suite: automated syllabus tracking, spaced repetition revision engine, focus timer, and performance analytics.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg"
+  }
 };
 
 export default function RootLayout({

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import SyllabusItem from '@/models/SyllabusItem';
+import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
 import TopicRevision from '@/models/TopicRevision';
 import TestLog from '@/models/TestLog';
 import HabitItem from '@/models/HabitItem';

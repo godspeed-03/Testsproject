@@ -6,6 +6,8 @@ import DailyLog from '@/models/DailyLog';
 import TopicRevision from '@/models/TopicRevision';
 import TestLog from '@/models/TestLog';
 import WeeklyTarget from '@/models/WeeklyTarget';
+import HabitItem from '@/models/HabitItem';
+import CheckList from '@/models/CheckList';
 
 function sanitizeBson(obj: any): any {
   if (!obj || typeof obj !== 'object') return obj;
@@ -31,12 +33,53 @@ export async function POST(req: Request) {
     const data = sanitizeBson(rawData);
 
     // Flexible collection matching (handles mongo export names and app export names)
+    const habitsInput = data.habits || data.habitItems || [];
+    const listsInput = data.lists || data.checkLists || [];
     const topicRevisionsInput = data.topicrevisions || data.topicRevisions || [];
     const syllabusInput = data.syllabusitems || data.syllabusList || data.syllabus || [];
     const dailyLogsInput = data.dailylogs || data.dailyLogs || [];
     const testLogsInput = data.testlogs || data.testLogs || [];
 
-    // 1. Process Topic Revisions
+    // 1. Process Habits & Agenda Items
+    if (Array.isArray(habitsInput) && habitsInput.length > 0) {
+      await HabitItem.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      const docs = habitsInput.map((h: any) => ({
+        userId,
+        type: h.type || 'habit',
+        title: h.title || 'Untitled',
+        category: h.category || { id: 'general', label: 'General', icon: '📌', color: '#6366F1' },
+        description: h.description || '',
+        priority: h.priority || 'medium',
+        frequency: h.frequency || { mode: 'daily', days: [] },
+        target: h.target || { value: 1, unit: 'times' },
+        reminders: h.reminders || [{ time: '08:00', enabled: true }],
+        startDate: h.startDate || new Date().toISOString().split('T')[0],
+        endDate: h.endDate || null,
+        isStudyTask: !!h.isStudyTask,
+        subject: h.subject || '',
+        topic: h.topic || '',
+        color: h.color || '#6366F1',
+        icon: h.icon || '🏃',
+        streakCurrent: h.streakCurrent || 0,
+        streakBest: h.streakBest || 0,
+        history: h.history || []
+      }));
+      await HabitItem.insertMany(docs);
+    }
+
+    // 2. Process Checklists
+    if (Array.isArray(listsInput) && listsInput.length > 0) {
+      await CheckList.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      const docs = listsInput.map((l: any) => ({
+        userId,
+        title: l.title || 'Untitled List',
+        color: l.color || '#6366F1',
+        items: l.items || []
+      }));
+      await CheckList.insertMany(docs);
+    }
+
+    // 3. Process Topic Revisions
     if (Array.isArray(topicRevisionsInput) && topicRevisionsInput.length > 0) {
       await TopicRevision.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
       const docs = topicRevisionsInput.map((t: any) => ({
@@ -67,7 +110,7 @@ export async function POST(req: Request) {
       await TopicRevision.insertMany(docs);
     }
 
-    // 2. Process Syllabus Items
+    // 4. Process Syllabus Items
     if (Array.isArray(syllabusInput) && syllabusInput.length > 0) {
       await SyllabusItem.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
       const docs = syllabusInput.map((item: any) => ({
@@ -95,7 +138,7 @@ export async function POST(req: Request) {
       await SyllabusItem.insertMany(docs);
     }
 
-    // 3. Process Daily Logs
+    // 5. Process Daily Logs
     if (Array.isArray(dailyLogsInput) && dailyLogsInput.length > 0) {
       await DailyLog.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
       const docs = dailyLogsInput.map((l: any) => ({
@@ -122,7 +165,7 @@ export async function POST(req: Request) {
       await DailyLog.insertMany(docs);
     }
 
-    // 4. Process Test Logs
+    // 6. Process Test Logs
     if (Array.isArray(testLogsInput) && testLogsInput.length > 0) {
       await TestLog.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
       const docs = testLogsInput.map((t: any) => ({
@@ -141,7 +184,7 @@ export async function POST(req: Request) {
       await TestLog.insertMany(docs);
     }
 
-    // 5. Process Weekly Targets
+    // 7. Process Weekly Targets
     const weeklyTargetsInput = data.weeklytargets || data.weeklyTargets || data.weeklyTargetsList || null;
     if (weeklyTargetsInput && Array.isArray(weeklyTargetsInput) && weeklyTargetsInput.length > 0) {
       await WeeklyTarget.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
@@ -153,6 +196,8 @@ export async function POST(req: Request) {
     }
 
     // Fetch updated dataset
+    const updatedHabits = await HabitItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
+    const updatedLists = await CheckList.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
     const updatedSyllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
     const updatedDaily = await DailyLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ date: -1 }).lean();
     const updatedRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
@@ -160,6 +205,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
+      habits: updatedHabits,
+      lists: updatedLists,
       syllabusList: updatedSyllabus.map((i: any) => ({ ...i, id: i.customId || i._id.toString() })),
       dailyLogs: updatedDaily.map((i: any) => ({ ...i, id: i._id.toString() })),
       topicRevisions: updatedRevisions.map((i: any) => ({ ...i, id: i.customId || i._id.toString() })),

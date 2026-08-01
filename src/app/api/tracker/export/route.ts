@@ -6,6 +6,8 @@ import DailyLog from '@/models/DailyLog';
 import TestLog from '@/models/TestLog';
 import WeeklyTarget from '@/models/WeeklyTarget';
 import TopicRevision from '@/models/TopicRevision';
+import HabitItem from '@/models/HabitItem';
+import CheckList from '@/models/CheckList';
 import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
 
 export async function GET() {
@@ -16,11 +18,25 @@ export async function GET() {
     await connectToDatabase();
 
     const todayStr = new Date().toISOString().split('T')[0];
+    const habits = await HabitItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
+    const lists = await CheckList.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
     const syllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
     const dailyLogs = await DailyLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ date: -1 }).lean();
     const testLogs = await TestLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
     const weeklyDoc = await WeeklyTarget.findOne({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
     const topicRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
+
+    const formattedHabits = habits.map((h: any) => ({
+      ...h,
+      id: h.customId || h._id.toString(),
+      _id: undefined
+    }));
+
+    const formattedLists = lists.map((l: any) => ({
+      ...l,
+      id: l._id.toString(),
+      _id: undefined
+    }));
 
     const formattedSyllabus = syllabus.map((item: any) => ({
       id: item.customId || item._id.toString(),
@@ -110,6 +126,8 @@ export async function GET() {
     });
 
     return NextResponse.json({
+      habits: formattedHabits,
+      lists: formattedLists,
       topicRevisions: formattedTopicRevisions,
       syllabusList: formattedSyllabus,
       dailyLogs: formattedDailyLogs,

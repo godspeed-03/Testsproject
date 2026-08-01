@@ -110,17 +110,7 @@ export async function POST(req: Request) {
         source: item.source || '',
         date: item.date || '',
         nextRev: item.nextRev || '',
-        firstRead: !!item.firstRead,
-        rev1: !!item.rev1,
-        rev2: !!item.rev2,
-        preNotes: !!item.preNotes,
-        mainsNotes: !!item.mainsNotes,
-        questionBank: !!item.questionBank,
-        prePyq: !!item.prePyq,
-        mainsPyq: !!item.mainsPyq,
-        ansWriting: !!item.ansWriting,
-        preFinalRev: !!item.preFinalRev,
-        mainsFinalRev: !!item.mainsFinalRev,
+        rules: item.rules || buildDynamicRulesFromLegacy(item),
         topicRevisionIds: item.topicRevisionIds || []
       }));
       await SyllabusItem.insertMany(docs);

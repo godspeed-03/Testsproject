@@ -1,0 +1,125 @@
+import { NextResponse } from 'next/server';
+import connectToDatabase from '@/lib/mongodb';
+import { getUserFromCookies } from '@/lib/auth';
+import SyllabusItem from '@/models/SyllabusItem';
+import DailyLog from '@/models/DailyLog';
+import TestLog from '@/models/TestLog';
+import WeeklyTarget from '@/models/WeeklyTarget';
+import TopicRevision from '@/models/TopicRevision';
+import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
+
+export async function GET() {
+  try {
+    const user = await getUserFromCookies();
+    const userId = user?.userId || '000000000000000000000000';
+
+    await connectToDatabase();
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const syllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
+    const dailyLogs = await DailyLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ date: -1 }).lean();
+    const testLogs = await TestLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
+    const weeklyDoc = await WeeklyTarget.findOne({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
+    const topicRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
+
+    const formattedSyllabus = syllabus.map((item: any) => ({
+      id: item.customId || item._id.toString(),
+      customId: item.customId || item._id.toString(),
+      subject: item.subject,
+      category: item.category || 'GS1',
+      status: item.status || 'Not Started',
+      source: item.source || '',
+      date: item.date || '',
+      nextRev: item.nextRev || '',
+      firstRead: !!item.firstRead,
+      rev1: !!item.rev1,
+      rev2: !!item.rev2,
+      preNotes: !!item.preNotes,
+      mainsNotes: !!item.mainsNotes,
+      questionBank: !!item.questionBank,
+      prePyq: !!item.prePyq,
+      mainsPyq: !!item.mainsPyq,
+      ansWriting: !!item.ansWriting,
+      preFinalRev: !!item.preFinalRev,
+      mainsFinalRev: !!item.mainsFinalRev
+    }));
+
+    const formattedDailyLogs = dailyLogs.map((item: any) => ({
+      id: item._id.toString(),
+      date: item.date,
+      isOff: !!item.isOff,
+      total: item.total || 0,
+      gs: item.gs || 0,
+      maths: item.maths || 0,
+      ca: item.ca || 0,
+      ans: item.ans || 0,
+      newH: item.newH || 0,
+      revH: item.revH || 0,
+      caDone: item.caDone || 'NO',
+      ansCount: item.ansCount || 0,
+      focus: item.focus || 3,
+      weakest: item.weakest || '',
+      topicsRead: item.topicsRead || '',
+      selectedSubject: item.selectedSubject || '',
+      topicRevisionIds: (item.topicRevisionIds || []).map((id: any) => id.toString()),
+      subjectTags: item.subjectTags || [],
+      completedRevisions: item.completedRevisions || []
+    }));
+
+    const formattedTestLogs = testLogs.map((item: any) => ({
+      id: item.customId || item._id.toString(),
+      customId: item.customId || item._id.toString(),
+      code: item.code,
+      date: item.date,
+      subject: item.subject,
+      score: item.score,
+      accuracy: item.accuracy,
+      concept: item.concept,
+      silly: item.silly,
+      timeP: item.timeP,
+      takeaway: item.takeaway
+    }));
+
+    const formattedTopicRevisions = topicRevisions.map((t: any) => {
+      const overdueInfo = t.nextScheduledDate ? calcOverdueStatus(t.nextScheduledDate, todayStr) : { isOverdue: false, overdueDays: 0 };
+      return {
+        id: t.customId || t._id.toString(),
+        customId: t.customId || t._id.toString(),
+        subject: t.subject,
+        category: t.category,
+        topic: t.topic,
+        firstReadDate: t.firstReadDate,
+        lastRevisedDate: t.lastRevisedDate,
+        status: t.status,
+        r1ScheduledDate: t.r1ScheduledDate,
+        r1CompletedDate: t.r1CompletedDate,
+        r1Status: t.r1Status,
+        r2ScheduledDate: t.r2ScheduledDate,
+        r2CompletedDate: t.r2CompletedDate,
+        r2Status: t.r2Status,
+        r3ScheduledDate: t.r3ScheduledDate,
+        r3CompletedDate: t.r3CompletedDate,
+        r3Status: t.r3Status,
+        isOverdue: overdueInfo.isOverdue,
+        overdueDays: overdueInfo.overdueDays,
+        nextScheduledDate: t.nextScheduledDate,
+        subTopics: t.subTopics || [],
+        extraRevisions: t.extraRevisions || [],
+        revisionLogs: t.revisionLogs || []
+      };
+    });
+
+    return NextResponse.json({
+      topicRevisions: formattedTopicRevisions,
+      syllabusList: formattedSyllabus,
+      dailyLogs: formattedDailyLogs,
+      testLogs: formattedTestLogs,
+      weeklyTargetsList: weeklyDoc?.targets || [],
+      startOfWeek: weeklyDoc?.startOfWeek || '',
+      exportedAt: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('Export tracker data error:', error);
+    return NextResponse.json({ error: 'Failed to export backup data' }, { status: 500 });
+  }
+}

@@ -551,15 +551,50 @@ function DashboardContent() {
     }
   };
 
-  const handleExportData = () => {
-    const backup = { syllabusList, dailyLogs, testLogs, weeklyTargetsList, exportedAt: new Date().toISOString() };
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backup, null, 2));
-    const dlAnchor = document.createElement('a');
-    dlAnchor.setAttribute('href', dataStr);
-    dlAnchor.setAttribute('download', `UPSC_2027_System_Backup_${getTodayStr()}.json`);
-    document.body.appendChild(dlAnchor);
-    dlAnchor.click();
-    dlAnchor.remove();
+  const handleExportData = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/tracker/export');
+      let backup: any;
+      if (res.ok) {
+        backup = await res.json();
+      } else {
+        backup = {
+          topicRevisions,
+          syllabusList,
+          dailyLogs,
+          testLogs,
+          weeklyTargetsList,
+          exportedAt: new Date().toISOString(),
+        };
+      }
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backup, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute('href', dataStr);
+      dlAnchor.setAttribute('download', `UPSC_2027_System_Backup_${getTodayStr()}.json`);
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    } catch (e) {
+      console.error('Failed to export backup data', e);
+      const backup = {
+        topicRevisions,
+        syllabusList,
+        dailyLogs,
+        testLogs,
+        weeklyTargetsList,
+        exportedAt: new Date().toISOString(),
+      };
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backup, null, 2));
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute('href', dataStr);
+      dlAnchor.setAttribute('download', `UPSC_2027_System_Backup_${getTodayStr()}.json`);
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleImportJsonPayload = async (jsonData: any) => {

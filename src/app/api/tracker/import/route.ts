@@ -5,6 +5,7 @@ import SyllabusItem from '@/models/SyllabusItem';
 import DailyLog from '@/models/DailyLog';
 import TopicRevision from '@/models/TopicRevision';
 import TestLog from '@/models/TestLog';
+import WeeklyTarget from '@/models/WeeklyTarget';
 
 function sanitizeBson(obj: any): any {
   if (!obj || typeof obj !== 'object') return obj;
@@ -119,6 +120,36 @@ export async function POST(req: Request) {
         completedRevisions: l.completedRevisions || []
       }));
       await DailyLog.insertMany(docs);
+    }
+
+    // 4. Process Test Logs
+    if (Array.isArray(testLogsInput) && testLogsInput.length > 0) {
+      await TestLog.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      const docs = testLogsInput.map((t: any) => ({
+        userId,
+        customId: t.customId || t.id || 'test_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        code: t.code || 'TEST-01',
+        date: t.date || '',
+        subject: t.subject || 'General Studies',
+        score: t.score || 0,
+        accuracy: t.accuracy || 0,
+        concept: t.concept || 0,
+        silly: t.silly || 0,
+        timeP: t.timeP || 0,
+        takeaway: t.takeaway || ''
+      }));
+      await TestLog.insertMany(docs);
+    }
+
+    // 5. Process Weekly Targets
+    const weeklyTargetsInput = data.weeklytargets || data.weeklyTargets || data.weeklyTargetsList || null;
+    if (weeklyTargetsInput && Array.isArray(weeklyTargetsInput) && weeklyTargetsInput.length > 0) {
+      await WeeklyTarget.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await WeeklyTarget.create({
+        userId,
+        startOfWeek: data.startOfWeek || data.savedTargetWeek || '',
+        targets: weeklyTargetsInput
+      });
     }
 
     // Fetch updated dataset

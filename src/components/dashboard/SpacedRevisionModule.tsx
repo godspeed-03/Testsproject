@@ -44,7 +44,9 @@ export default function SpacedRevisionModule({
   const getNextRevDate = (s: any) => {
     if (s.nextRev) return s.nextRev;
     if (s.date) {
-      const days = s.rev2 || s.status === 'Mastered' ? 45 : s.rev1 || s.status === 'Revised Once' ? 21 : 7;
+      const isRev2Done = s.rules?.some((r: any) => r.key === 'rev2' && r.completed);
+      const isRev1Done = s.rules?.some((r: any) => r.key === 'rev1' && r.completed);
+      const days = isRev2Done || s.status === 'Mastered' ? 45 : isRev1Done || s.status === 'Revised Once' ? 21 : 7;
       const d = new Date(s.date);
       d.setDate(d.getDate() + days);
       return d.toISOString().split('T')[0];
@@ -150,9 +152,11 @@ export default function SpacedRevisionModule({
   });
 
   const getSpacedStageBadge = (s: any) => {
-    if (s.status === 'Revised Once' || s.rev1) {
+    const isRev1Done = s.rules?.some((r: any) => r.key === 'rev1' && r.completed);
+    const isRev2Done = s.rules?.some((r: any) => r.key === 'rev2' && r.completed);
+    if (s.status === 'Revised Once' || isRev1Done) {
       return { label: 'R2 (+21 Days)', color: 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 font-extrabold' };
-    } else if (s.status === 'Mastered' || s.rev2) {
+    } else if (s.status === 'Mastered' || isRev2Done) {
       return { label: 'R3 (+45 Days)', color: 'bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800 font-extrabold' };
     } else {
       return { label: 'R1 (+7 Days)', color: 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800 font-extrabold' };

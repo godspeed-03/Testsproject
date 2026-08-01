@@ -1,8 +1,25 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Edit2, Check, Loader2, Settings, ShieldCheck } from 'lucide-react';
-import ShadcnSelect from '@/components/ui/ShadcnSelect';
+import { useState, useEffect } from "react";
+import { X, Plus, Trash2, Edit2, Check, Loader2, Settings, ShieldCheck, GripVertical } from "lucide-react";
+import ShadcnSelect from "@/components/ui/ShadcnSelect";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface ManageRuleSetsModalProps {
   isOpen: boolean;
@@ -17,11 +34,11 @@ interface ManageRuleSetsModalProps {
 export default function ManageRuleSetsModal({
   isOpen,
   onClose,
-  isLight = false,
-  cardBg = 'bg-white dark:bg-slate-900',
-  inputBg = 'bg-slate-100 dark:bg-slate-950',
-  textTitle = 'text-slate-900 dark:text-slate-100',
-  textMuted = 'text-slate-500 dark:text-slate-400'
+  isLight = true,
+  cardBg = "bg-white dark:bg-slate-900",
+  inputBg = "bg-slate-100 dark:bg-slate-950",
+  textTitle = "text-slate-900 dark:text-slate-100",
+  textMuted = "text-slate-500 dark:text-slate-400",
 }: ManageRuleSetsModalProps) {
   const [ruleSets, setRuleSets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,10 +46,21 @@ export default function ManageRuleSetsModal({
 
   // Edit / Create state
   const [editingId, setEditingId] = useState<string | null>(null); // 'new' or mongoId
-  const [nameInput, setNameInput] = useState('');
-  const [categoryInput, setCategoryInput] = useState('GS');
+  const [nameInput, setNameInput] = useState("");
+  const [categoryInput, setCategoryInput] = useState("GS");
   const [ruleItems, setRuleItems] = useState<{ key: string; label: string; short: string }[]>([]);
-  const [newRuleLabel, setNewRuleLabel] = useState('');
+  const [newRuleLabel, setNewRuleLabel] = useState("");
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -43,13 +71,13 @@ export default function ManageRuleSetsModal({
   const fetchRuleSets = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/tracker/syllabus/rulesets');
+      const res = await fetch("/api/tracker/syllabus/rulesets");
       if (res.ok) {
         const data = await res.json();
         setRuleSets(data.ruleSets || []);
       }
     } catch (e) {
-      console.error('Failed to fetch rule sets', e);
+      console.error("Failed to fetch rule sets", e);
     } finally {
       setLoading(false);
     }
@@ -58,34 +86,45 @@ export default function ManageRuleSetsModal({
   if (!isOpen) return null;
 
   const startCreateNew = () => {
-    setEditingId('new');
-    setNameInput('');
-    setCategoryInput('GS');
+    setEditingId("new");
+    setNameInput("");
+    setCategoryInput("GS");
     setRuleItems([
-      { key: 'firstRead', label: 'Reading 1', short: 'R1' },
-      { key: 'rev1', label: 'Rev 1', short: 'Rv1' },
-      { key: 'rev2', label: 'Rev 2', short: 'Rv2' }
+      { key: "firstRead", label: "Reading 1", short: "R1" },
+      { key: "rev1", label: "Rev 1", short: "Rv1" },
+      { key: "rev2", label: "Rev 2", short: "Rv2" },
     ]);
   };
 
   const startEdit = (rs: any) => {
     setEditingId(rs.id);
     setNameInput(rs.name);
-    setCategoryInput(rs.category || 'GS');
+    setCategoryInput(rs.category || "GS");
     setRuleItems(rs.rules || []);
   };
 
   const handleAddRuleItem = () => {
     if (!newRuleLabel.trim()) return;
     const label = newRuleLabel.trim();
-    const key = label.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const key = label.toLowerCase().replace(/[^a-z0-9]/g, "_");
     const short = label.length > 6 ? label.slice(0, 4) : label;
     setRuleItems([...ruleItems, { key, label, short }]);
-    setNewRuleLabel('');
+    setNewRuleLabel("");
   };
 
   const handleRemoveRuleItem = (index: number) => {
     setRuleItems(ruleItems.filter((_, i) => i !== index));
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = ruleItems.findIndex((item, index) => getRuleItemId(item, index) === String(active.id));
+    const newIndex = ruleItems.findIndex((item, index) => getRuleItemId(item, index) === String(over.id));
+
+    if (oldIndex === -1 || newIndex === -1) return;
+    setRuleItems((current) => arrayMove(current, oldIndex, newIndex));
   };
 
   const handleSaveRuleSet = async () => {
@@ -93,16 +132,16 @@ export default function ManageRuleSetsModal({
     setSaving(true);
     try {
       const payload = {
-        action: editingId === 'new' ? 'create' : 'update',
-        id: editingId === 'new' ? undefined : editingId,
+        action: editingId === "new" ? "create" : "update",
+        id: editingId === "new" ? undefined : editingId,
         name: nameInput.trim(),
         category: categoryInput,
-        rules: ruleItems
+        rules: ruleItems,
       };
-      const res = await fetch('/api/tracker/syllabus/rulesets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      const res = await fetch("/api/tracker/syllabus/rulesets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         const data = await res.json();
@@ -110,7 +149,7 @@ export default function ManageRuleSetsModal({
         setEditingId(null);
       }
     } catch (e) {
-      console.error('Failed to save rule set', e);
+      console.error("Failed to save rule set", e);
     } finally {
       setSaving(false);
     }
@@ -119,31 +158,35 @@ export default function ManageRuleSetsModal({
   const handleDeleteRuleSet = async (id: string) => {
     setSaving(true);
     try {
-      const res = await fetch('/api/tracker/syllabus/rulesets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', id })
+      const res = await fetch("/api/tracker/syllabus/rulesets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", id }),
       });
       if (res.ok) {
         const data = await res.json();
         setRuleSets(data.ruleSets || []);
       }
     } catch (e) {
-      console.error('Failed to delete rule set', e);
+      console.error("Failed to delete rule set", e);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className={`fixed inset-0 z-50 ${isLight ? 'bg-slate-900/40' : 'bg-slate-950/75'} backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in`}>
-      <div className={`${cardBg} rounded-2xl w-full max-w-3xl p-5 sm:p-6 shadow-2xl space-y-5 border border-slate-300 dark:border-slate-800 max-h-[90vh] overflow-y-auto`}>
-        <div className={`flex justify-between items-center border-b ${isLight ? 'border-slate-300' : 'border-slate-800'} pb-3`}>
+    <div
+      className={`fixed inset-0 z-50 ${isLight ? "bg-slate-900/40" : "bg-slate-950/75"} backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in`}
+    >
+      <div
+        className={`${cardBg} rounded-2xl w-full max-w-3xl p-5 sm:p-6 shadow-2xl space-y-5 border border-slate-300 dark:border-slate-800 max-h-[90vh] overflow-y-auto`}
+      >
+        <div
+          className={`flex justify-between items-center border-b ${isLight ? "border-slate-300" : "border-slate-800"} pb-3`}
+        >
           <div className="flex items-center gap-2">
             <Settings className="text-amber-500" size={22} />
-            <h3 className={`font-black text-lg sm:text-xl ${textTitle}`}>
-              Manage Syllabus Milestone Rulesets
-            </h3>
+            <h3 className={`font-black text-lg sm:text-xl ${textTitle}`}>Manage Syllabus Milestone Rulesets</h3>
           </div>
           <button
             type="button"
@@ -158,7 +201,7 @@ export default function ManageRuleSetsModal({
           /* Editor Form */
           <div className="space-y-4 bg-slate-100/50 dark:bg-slate-950/50 p-4 rounded-xl border border-slate-300 dark:border-slate-800">
             <h4 className={`font-black text-sm sm:text-base ${textTitle} flex items-center justify-between`}>
-              <span>{editingId === 'new' ? 'Create New Ruleset Template' : 'Edit Ruleset Template'}</span>
+              <span>{editingId === "new" ? "Create New Ruleset Template" : "Edit Ruleset Template"}</span>
               <button
                 type="button"
                 onClick={() => setEditingId(null)}
@@ -185,10 +228,10 @@ export default function ManageRuleSetsModal({
                   value={categoryInput}
                   onChange={(val) => setCategoryInput(val)}
                   options={[
-                    { value: 'GS', label: 'General Studies (GS)' },
-                    { value: 'Maths', label: 'Maths Optional' },
-                    { value: 'CSAT', label: 'CSAT' },
-                    { value: 'Custom', label: 'Custom / Other' }
+                    { value: "GS", label: "General Studies (GS)" },
+                    { value: "Maths", label: "Maths Optional" },
+                    { value: "CSAT", label: "CSAT" },
+                    { value: "Custom", label: "Custom / Other" },
                   ]}
                 />
               </div>
@@ -200,24 +243,24 @@ export default function ManageRuleSetsModal({
                 Milestone Steps in Order ({ruleItems.length} steps)
               </label>
 
-              <div className="flex flex-wrap gap-2">
-                {ruleItems.map((r, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-indigo-600/10 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 font-extrabold text-xs px-3 py-1.5 rounded-xl flex items-center gap-2"
-                  >
-                    <span>{idx + 1}. {r.label}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveRuleItem(idx)}
-                      className="text-rose-500 hover:text-rose-700 ml-1"
-                      title="Remove step"
-                    >
-                      <X size={13} />
-                    </button>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext
+                  items={ruleItems.map((r, idx) => getRuleItemId(r, idx))}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {ruleItems.map((r, idx) => (
+                      <SortableRuleItem
+                        key={getRuleItemId(r, idx)}
+                        id={getRuleItemId(r, idx)}
+                        index={idx}
+                        item={r}
+                        onRemove={() => handleRemoveRuleItem(idx)}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
 
               {/* Add New Step Form */}
               <div className="flex items-center gap-2 pt-2">
@@ -227,7 +270,7 @@ export default function ManageRuleSetsModal({
                   value={newRuleLabel}
                   onChange={(e) => setNewRuleLabel(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       handleAddRuleItem();
                     }
@@ -256,7 +299,7 @@ export default function ManageRuleSetsModal({
                 type="button"
                 disabled={saving || !nameInput.trim() || ruleItems.length === 0}
                 onClick={handleSaveRuleSet}
-                className="px-4 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-black text-xs rounded-xl shadow flex items-center gap-1.5 disabled:opacity-50"
+                className="px-4 py-2 bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-black text-xs rounded-xl shadow flex items-center gap-1.5 disabled:opacity-50"
               >
                 {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
                 <span>Save Template to DB</span>
@@ -349,6 +392,56 @@ export default function ManageRuleSetsModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function getRuleItemId(item: { key: string; label: string; short: string }, index: number) {
+  return `${item.key || "rule"}-${item.label || "item"}-${index}`;
+}
+
+function SortableRuleItem({
+  id,
+  index,
+  item,
+  onRemove,
+}: {
+  id: string;
+  index: number;
+  item: { key: string; label: string; short: string };
+  onRemove: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`bg-indigo-600/10 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 font-extrabold text-xs px-3 py-1.5 rounded-xl flex items-center gap-2 ${
+        isDragging ? "ring-2 ring-indigo-500/50 opacity-70" : ""
+      }`}
+    >
+      <button
+        type="button"
+        className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-indigo-600 shrink-0 touch-none"
+        title="Drag to reorder"
+        aria-label="Drag to reorder"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical size={14} />
+      </button>
+      <span className="flex-1 min-w-0 truncate">
+        {index + 1}. {item.label}
+      </span>
+      <button
+        type="button"
+        onClick={onRemove}
+        className="text-rose-500 hover:text-rose-700 ml-1 shrink-0"
+        title="Remove step"
+      >
+        <X size={13} />
+      </button>
     </div>
   );
 }

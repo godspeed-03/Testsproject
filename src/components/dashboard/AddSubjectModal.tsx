@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Plus, X, Loader2, ListChecks } from 'lucide-react';
-import ShadcnSelect from '@/components/ui/ShadcnSelect';
-import { ISyllabusRuleState } from '@/models/SyllabusItem';
+import { useState, useEffect } from "react";
+import { Plus, X, Loader2, ListChecks } from "lucide-react";
+import ShadcnSelect from "@/components/ui/ShadcnSelect";
+import { ISyllabusRuleState } from "@/models/SyllabusItem";
 
 interface AddSubjectModalProps {
   isOpen: boolean;
@@ -28,14 +28,27 @@ export default function AddSubjectModal({
   textMuted,
   categories = [],
 }: AddSubjectModalProps) {
-  const [subject, setSubject] = useState('');
-  const [category, setCategory] = useState(categories[0] || 'GS1');
-  const [source, setSource] = useState('');
+  const [subject, setSubject] = useState("");
+  const [category, setCategory] = useState(categories[0] || "GS1");
+  const [source, setSource] = useState("");
   const [ruleTemplates, setRuleTemplates] = useState<any[]>([]);
-  const [selectedTemplateId, setSelectedTemplateId] = useState('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [customRules, setCustomRules] = useState<ISyllabusRuleState[]>([]);
-  const [newRuleName, setNewRuleName] = useState('');
+  const [newRuleName, setNewRuleName] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const getCategoryFamily = (value: string) => {
+    const normalized = (value || "").toLowerCase();
+    if (normalized.includes("gs")) return "gs";
+    if (normalized.includes("math")) return "maths";
+    if (normalized.includes("csat")) return "csat";
+    return normalized;
+  };
+
+  const findMatchingTemplate = (categoryValue: string, templates: any[]) => {
+    const family = getCategoryFamily(categoryValue);
+    return templates.find((t: any) => getCategoryFamily(t.category || t.name || "") === family) || null;
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -45,7 +58,7 @@ export default function AddSubjectModal({
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch('/api/tracker/syllabus/rulesets');
+      const res = await fetch("/api/tracker/syllabus/rulesets");
       if (res.ok) {
         const data = await res.json();
         const templates = data.ruleSets || [];
@@ -53,9 +66,14 @@ export default function AddSubjectModal({
 
         // Auto select template matching category if available
         if (templates.length > 0) {
-          const match = templates.find((t: any) => t.category?.toLowerCase() === category.toLowerCase()) || templates[0];
-          setSelectedTemplateId(match.id);
-          applyTemplate(match);
+          const match = findMatchingTemplate(category, templates);
+          if (match) {
+            setSelectedTemplateId(match.id);
+            applyTemplate(match);
+          } else {
+            setSelectedTemplateId("");
+            setCustomRules([]);
+          }
         }
       }
     } catch (e) {
@@ -67,21 +85,24 @@ export default function AddSubjectModal({
     if (t && Array.isArray(t.rules)) {
       setCustomRules(
         t.rules.map((r: any) => ({
-          key: r.key || r.label.toLowerCase().replace(/\s+/g, '_'),
+          key: r.key || r.label.toLowerCase().replace(/\s+/g, "_"),
           label: r.label,
           short: r.short || r.label,
-          completed: false
-        }))
+          completed: false,
+        })),
       );
     }
   };
 
   const handleCategoryChange = (cat: string) => {
     setCategory(cat);
-    const match = ruleTemplates.find((t: any) => t.category?.toLowerCase() === cat.toLowerCase()) || ruleTemplates[0];
+    const match = findMatchingTemplate(cat, ruleTemplates);
     if (match) {
       setSelectedTemplateId(match.id);
       applyTemplate(match);
+    } else {
+      setSelectedTemplateId("");
+      setCustomRules([]);
     }
   };
 
@@ -94,10 +115,10 @@ export default function AddSubjectModal({
   const handleAddCustomRule = () => {
     if (!newRuleName.trim()) return;
     const label = newRuleName.trim();
-    const key = label.toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Date.now();
+    const key = label.toLowerCase().replace(/[^a-z0-9]/g, "_") + "_" + Date.now();
     const short = label.length > 6 ? label.slice(0, 4) : label;
     setCustomRules([...customRules, { key, label, short, completed: false }]);
-    setNewRuleName('');
+    setNewRuleName("");
   };
 
   const handleRemoveCustomRule = (idx: number) => {
@@ -115,10 +136,10 @@ export default function AddSubjectModal({
         subject: subject.trim(),
         category,
         source: source.trim(),
-        rules: customRules
+        rules: customRules,
       });
-      setSubject('');
-      setSource('');
+      setSubject("");
+      setSource("");
       onClose();
     } catch (err) {
       console.error(err);
@@ -127,16 +148,22 @@ export default function AddSubjectModal({
     }
   };
 
-  const defaultCategories = ['GS1', 'GS2', 'GS3', 'GS4', 'Maths', 'CSAT'];
+  const defaultCategories = ["GS1", "GS2", "GS3", "GS4", "Maths", "CSAT"];
   const catOptions = (categories.length > 0 ? categories : defaultCategories).map((c) => ({
     value: c,
-    label: c
+    label: c,
   }));
 
   return (
-    <div className={`fixed inset-0 z-50 ${isLight ? 'bg-slate-900/40' : 'bg-slate-950/75'} backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in`}>
-      <div className={`${cardBg} rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-5 border border-slate-300 dark:border-slate-800 max-h-[90vh] overflow-y-auto`}>
-        <div className={`flex justify-between items-center border-b ${isLight ? 'border-slate-300' : 'border-slate-800'} pb-3`}>
+    <div
+      className={`fixed inset-0 z-50 ${isLight ? "bg-slate-900/40" : "bg-slate-950/75"} backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fade-in`}
+    >
+      <div
+        className={`${cardBg} rounded-2xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-5 border border-slate-300 dark:border-slate-800 max-h-[90vh] overflow-y-auto`}
+      >
+        <div
+          className={`flex justify-between items-center border-b ${isLight ? "border-slate-300" : "border-slate-800"} pb-3`}
+        >
           <h3 className={`font-black text-lg sm:text-xl ${textTitle} flex items-center gap-2`}>
             <Plus size={20} className="text-amber-500" /> Add Subject to Syllabus Matrix
           </h3>
@@ -166,18 +193,17 @@ export default function AddSubjectModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={`block ${textMuted} mb-1 font-extrabold`}>Category / Paper *</label>
-              <ShadcnSelect
-                value={category}
-                onChange={handleCategoryChange}
-                options={catOptions}
-              />
+              <ShadcnSelect value={category} onChange={handleCategoryChange} options={catOptions} />
             </div>
             <div>
               <label className={`block ${textMuted} mb-1 font-extrabold`}>Milestone Ruleset Template</label>
               <ShadcnSelect
                 value={selectedTemplateId}
                 onChange={handleTemplateSelect}
-                options={ruleTemplates.map((t) => ({ value: t.id, label: `${t.name} (${t.rules?.length || 0} steps)` }))}
+                options={ruleTemplates.map((t) => ({
+                  value: t.id,
+                  label: `${t.name} (${t.rules?.length || 0} steps)`,
+                }))}
               />
             </div>
           </div>
@@ -196,7 +222,9 @@ export default function AddSubjectModal({
           {/* Rules Preview & Customizer */}
           <div className="space-y-2 pt-2 border-t border-slate-300 dark:border-slate-800">
             <label className={`block ${textMuted} font-extrabold flex items-center justify-between`}>
-              <span className="flex items-center gap-1.5"><ListChecks size={15} className="text-amber-500" /> Subject Milestone Steps ({customRules.length})</span>
+              <span className="flex items-center gap-1.5">
+                <ListChecks size={15} className="text-amber-500" /> Subject Milestone Steps ({customRules.length})
+              </span>
               <span className="text-[10px] text-slate-400">Fetched from DB</span>
             </label>
 
@@ -225,7 +253,7 @@ export default function AddSubjectModal({
                 value={newRuleName}
                 onChange={(e) => setNewRuleName(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     handleAddCustomRule();
                   }
@@ -254,7 +282,7 @@ export default function AddSubjectModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2.5 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 disabled:opacity-50 text-white rounded-xl font-extrabold shadow-lg transition-all flex items-center gap-2 text-xs"
+              className="px-5 py-2.5 bg-linear-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 disabled:opacity-50 text-white rounded-xl font-extrabold shadow-lg transition-all flex items-center gap-2 text-xs"
             >
               {loading ? (
                 <>

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import AddSubjectModal from '@/components/dashboard/AddSubjectModal';
-import SubjectTopicsModal from '@/components/dashboard/SubjectTopicsModal';
-import ManageRuleSetsModal from '@/components/dashboard/ManageRuleSetsModal';
-import EditSubjectRulesModal from '@/components/dashboard/EditSubjectRulesModal';
-import { Loader2, Plus, Table, Trash2, Check, Search, BookOpen, Filter, Settings, Edit3 } from 'lucide-react';
-import { ISyllabusRuleState } from '@/models/SyllabusItem';
+import React, { useState, useEffect } from "react";
+import AddSubjectModal from "@/components/dashboard/AddSubjectModal";
+import SubjectTopicsModal from "@/components/dashboard/SubjectTopicsModal";
+import ManageRuleSetsModal from "@/components/dashboard/ManageRuleSetsModal";
+import EditSubjectRulesModal from "@/components/dashboard/EditSubjectRulesModal";
+import { Loader2, Plus, Table, Trash2, Check, Search, BookOpen, Filter, Settings, Edit3 } from "lucide-react";
+import { ISyllabusRuleState } from "@/models/SyllabusItem";
 
 export default function SyllabusPage() {
   const [syllabusList, setSyllabusList] = useState<any[]>([]);
@@ -16,14 +16,14 @@ export default function SyllabusPage() {
   const [showRulesetsModal, setShowRulesetsModal] = useState(false);
   const [editingSubjectRules, setEditingSubjectRules] = useState<any | null>(null);
   const [selectedSubjectModal, setSelectedSubjectModal] = useState<any | null>(null);
-  const [categoryFilter, setCategoryFilter] = useState('ALL');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingKey, setTogglingKey] = useState<string | null>(null);
 
-  const cardBg = 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80';
-  const textTitle = 'text-slate-900 dark:text-slate-100';
-  const textMuted = 'text-slate-500 dark:text-slate-400';
+  const cardBg = "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80";
+  const textTitle = "text-slate-900 dark:text-slate-100";
+  const textMuted = "text-slate-500 dark:text-slate-400";
 
   useEffect(() => {
     fetchSyllabusData();
@@ -32,14 +32,14 @@ export default function SyllabusPage() {
   const fetchSyllabusData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/tracker');
+      const res = await fetch("/api/tracker");
       if (res.ok) {
         const data = await res.json();
         setSyllabusList(data.syllabusList || []);
         setTopicRevisions(data.topicRevisions || []);
       }
     } catch (e) {
-      console.error('Failed to load syllabus data', e);
+      console.error("Failed to load syllabus data", e);
     } finally {
       setLoading(false);
     }
@@ -49,21 +49,21 @@ export default function SyllabusPage() {
     const toggleId = `${subjectItem.id}_${ruleKey}`;
     setTogglingKey(toggleId);
     try {
-      const res = await fetch('/api/tracker/syllabus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/tracker/syllabus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: 'toggle_rule',
+          action: "toggle_rule",
           id: subjectItem.id,
-          ruleKey
-        })
+          ruleKey,
+        }),
       });
       if (res.ok) {
         const data = await res.json();
         setSyllabusList(data.syllabusList || []);
       }
     } catch (e) {
-      console.error('Failed to toggle rule', e);
+      console.error("Failed to toggle rule", e);
     } finally {
       setTogglingKey(null);
     }
@@ -71,38 +71,38 @@ export default function SyllabusPage() {
 
   const handleSaveSubjectRules = async (subjectId: string, updatedRules: ISyllabusRuleState[]) => {
     try {
-      const res = await fetch('/api/tracker/syllabus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/tracker/syllabus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: 'update_rules',
+          action: "update_rules",
           id: subjectId,
-          rules: updatedRules
-        })
+          rules: updatedRules,
+        }),
       });
       if (res.ok) {
         const data = await res.json();
         setSyllabusList(data.syllabusList || []);
       }
     } catch (e) {
-      console.error('Failed to save subject rules', e);
+      console.error("Failed to save subject rules", e);
     }
   };
 
   const handleDeleteSubject = async (id: string) => {
     setDeletingId(id);
     try {
-      const res = await fetch('/api/tracker/syllabus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', id })
+      const res = await fetch("/api/tracker/syllabus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", id }),
       });
       if (res.ok) {
         const data = await res.json();
         setSyllabusList(data.syllabusList || []);
       }
     } catch (e) {
-      console.error('Failed to delete subject', e);
+      console.error("Failed to delete subject", e);
     } finally {
       setDeletingId(null);
     }
@@ -110,10 +110,10 @@ export default function SyllabusPage() {
 
   const handleAddSubjectSubmit = async (payload: any) => {
     try {
-      const res = await fetch('/api/tracker/syllabus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'create', ...payload })
+      const res = await fetch("/api/tracker/syllabus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "create", ...payload }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -121,35 +121,37 @@ export default function SyllabusPage() {
         setShowAddModal(false);
       }
     } catch (e) {
-      console.error('Failed to add custom subject', e);
+      console.error("Failed to add custom subject", e);
     }
   };
 
   const getCategoryBadge = (category: string) => {
-    const c = category?.toUpperCase() || '';
-    if (c.includes('GS1')) return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
-    if (c.includes('GS2')) return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30';
-    if (c.includes('GS3')) return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
-    if (c.includes('GS4')) return 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30';
-    if (c.includes('MATHS')) return 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30';
-    return 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30';
+    const c = category?.toUpperCase() || "";
+    if (c.includes("GS1")) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30";
+    if (c.includes("GS2")) return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30";
+    if (c.includes("GS3")) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+    if (c.includes("GS4")) return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30";
+    if (c.includes("MATHS")) return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30";
+    return "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/30";
   };
 
   const categories = [
-    { value: 'ALL', label: 'All Categories' },
-    { value: 'GS1', label: 'GS Paper 1' },
-    { value: 'GS2', label: 'GS Paper 2' },
-    { value: 'GS3', label: 'GS Paper 3' },
-    { value: 'GS4', label: 'GS Paper 4' },
-    { value: 'MATHS', label: 'Maths Optional' },
-    { value: 'CSAT', label: 'CSAT' },
+    { value: "ALL", label: "All Categories" },
+    { value: "GS1", label: "GS Paper 1" },
+    { value: "GS2", label: "GS Paper 2" },
+    { value: "GS3", label: "GS Paper 3" },
+    { value: "GS4", label: "GS Paper 4" },
+    { value: "MATHS", label: "Maths Optional" },
+    { value: "CSAT", label: "CSAT" },
   ];
 
   const filteredSubjects = syllabusList.filter((s) => {
-    const itemCat = String(s.category || '').toLowerCase();
+    const itemCat = String(s.category || "").toLowerCase();
     const filterCat = categoryFilter.toLowerCase();
-    const matchCat = categoryFilter === 'ALL' || itemCat === filterCat || itemCat.includes(filterCat) || filterCat.includes(itemCat);
-    const matchSearch = !searchTerm ||
+    const matchCat =
+      categoryFilter === "ALL" || itemCat === filterCat || itemCat.includes(filterCat) || filterCat.includes(itemCat);
+    const matchSearch =
+      !searchTerm ||
       s.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       s.source?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchCat && matchSearch;
@@ -157,7 +159,7 @@ export default function SyllabusPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6">
+      <div className="max-w-370 mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
@@ -201,8 +203,8 @@ export default function SyllabusPage() {
                   onClick={() => setCategoryFilter(cat.value)}
                   className={`px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-black transition-all border whitespace-nowrap shrink-0 ${
                     categoryFilter === cat.value
-                      ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20'
-                      : 'bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-indigo-500/50'
+                      ? "bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/20"
+                      : "bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-indigo-500/50"
                   }`}
                 >
                   {cat.label}
@@ -251,7 +253,7 @@ export default function SyllabusPage() {
             {filteredSubjects.map((s) => {
               const rulesList: ISyllabusRuleState[] = s.rules || [];
               const subTopicsCount = topicRevisions.filter(
-                (tr: any) => tr.subject?.toLowerCase() === s.subject?.toLowerCase()
+                (tr: any) => tr.subject?.toLowerCase() === s.subject?.toLowerCase(),
               ).length;
               const completedCount = rulesList.filter((r) => r.completed).length;
 
@@ -260,7 +262,9 @@ export default function SyllabusPage() {
                   {/* Subject Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
                     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-                      <span className={`text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border uppercase tracking-wider shrink-0 ${getCategoryBadge(s.category)}`}>
+                      <span
+                        className={`text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border uppercase tracking-wider shrink-0 ${getCategoryBadge(s.category)}`}
+                      >
                         {s.category}
                       </span>
                       <div className="min-w-0">
@@ -280,13 +284,15 @@ export default function SyllabusPage() {
                     </div>
 
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 self-end sm:self-auto">
-                      <span className={`text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border ${
-                        rulesList.length > 0 && completedCount === rulesList.length
-                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                          : completedCount > 0
-                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                          : 'bg-slate-100 dark:bg-slate-950 text-slate-500 border-slate-200 dark:border-slate-800'
-                      }`}>
+                      <span
+                        className={`text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border ${
+                          rulesList.length > 0 && completedCount === rulesList.length
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                            : completedCount > 0
+                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                              : "bg-slate-100 dark:bg-slate-950 text-slate-500 border-slate-200 dark:border-slate-800"
+                        }`}
+                      >
                         {completedCount}/{rulesList.length}
                       </span>
 
@@ -315,7 +321,11 @@ export default function SyllabusPage() {
                         className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                         title="Delete Subject"
                       >
-                        {deletingId === s.id ? <Loader2 size={14} className="animate-spin text-rose-500" /> : <Trash2 size={14} />}
+                        {deletingId === s.id ? (
+                          <Loader2 size={14} className="animate-spin text-rose-500" />
+                        ) : (
+                          <Trash2 size={14} />
+                        )}
                       </button>
                     </div>
                   </div>
@@ -333,14 +343,14 @@ export default function SyllabusPage() {
                           onClick={() => handleToggleRule(s, m.key)}
                           className={`px-2 sm:px-3 py-1.5 rounded-lg sm:rounded-xl text-[9px] sm:text-xs transition-all flex items-center justify-center gap-0.5 sm:gap-1 border font-extrabold disabled:opacity-60 ${
                             isDone
-                              ? 'bg-emerald-500 text-white border-emerald-400 shadow-md shadow-emerald-500/20'
-                              : 'bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-indigo-500/50'
+                              ? "bg-emerald-500 text-white border-emerald-400 shadow-md shadow-emerald-500/20"
+                              : "bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-indigo-500/50"
                           }`}
                         >
                           {isToggling ? (
                             <Loader2 size={11} className="animate-spin" />
                           ) : isDone ? (
-                            <Check size={11} className="text-white shrink-0 stroke-[3]" />
+                            <Check size={11} className="text-white shrink-0 stroke-3" />
                           ) : null}
                           <span className="truncate sm:hidden">{m.short || m.label}</span>
                           <span className="truncate hidden sm:inline">{m.label}</span>
@@ -379,10 +389,7 @@ export default function SyllabusPage() {
       )}
 
       {showRulesetsModal && (
-        <ManageRuleSetsModal
-          isOpen={showRulesetsModal}
-          onClose={() => setShowRulesetsModal(false)}
-        />
+        <ManageRuleSetsModal isOpen={showRulesetsModal} onClose={() => setShowRulesetsModal(false)} isLight={true} />
       )}
 
       {editingSubjectRules && (
@@ -391,6 +398,7 @@ export default function SyllabusPage() {
           onClose={() => setEditingSubjectRules(null)}
           subjectItem={editingSubjectRules}
           onSaveRules={handleSaveSubjectRules}
+          isLight={true}
         />
       )}
 

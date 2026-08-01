@@ -6,7 +6,7 @@ import TestLog from '@/models/TestLog';
 import TopicRevision from '@/models/TopicRevision';
 import HabitItem from '@/models/HabitItem';
 import CheckList from '@/models/CheckList';
-import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
+import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
 
 export async function GET() {
   try {
@@ -43,17 +43,7 @@ export async function GET() {
       source: item.source || '',
       date: item.date || '',
       nextRev: item.nextRev || '',
-      firstRead: !!item.firstRead,
-      rev1: !!item.rev1,
-      rev2: !!item.rev2,
-      preNotes: !!item.preNotes,
-      mainsNotes: !!item.mainsNotes,
-      questionBank: !!item.questionBank,
-      prePyq: !!item.prePyq,
-      mainsPyq: !!item.mainsPyq,
-      ansWriting: !!item.ansWriting,
-      preFinalRev: !!item.preFinalRev,
-      mainsFinalRev: !!item.mainsFinalRev
+      rules: buildDynamicRulesFromLegacy(item)
     }));
 
     const formattedTestLogs = testLogs.map((item: any) => ({

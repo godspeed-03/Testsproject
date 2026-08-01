@@ -14,12 +14,9 @@ function addDaysStr(dateStr: string, days: number): string {
   return d.toISOString().split('T')[0];
 }
 
-async function createSrsTasksForTopic(userId: string, subject: string, topic: string, startDateStr: string, category?: any) {
+async function createSrsTasksForTopic(userId: string, subject: string, topic: string, startDateStr: string, category?: any, isAugmentedRevision?: boolean) {
   if (!subject || !topic || !startDateStr) return;
-  
-  const catLabel = typeof category === 'string' ? category : (category?.label || category?.id || '');
-  // Guard: CSAT and Maths topics/categories are practice-based — exempt from SRS recurring revision scheduling
-  if (/csat|maths|mathematics|math/i.test(subject) || /csat|maths|mathematics|math/i.test(catLabel)) return;
+  if (isAugmentedRevision === false) return;
 
   const revisions = [
     { stage: 'R1 Revision (+7 Days)', days: 7, tag: '[R1 Revision]' },
@@ -51,6 +48,7 @@ async function createSrsTasksForTopic(userId: string, subject: string, topic: st
         startDate: revDate,
         endDate: null,
         isStudyTask: true,
+        isAugmentedRevision: true,
         subject: subject.trim(),
         topic: topic.trim(),
         color: '#8B5CF6',
@@ -274,6 +272,37 @@ async function cleanupCorruptedSyllabusItems(userId: string) {
   }
 }
 
+async function backfillTopicRevisions(userId: string) {
+  try {
+    const studyTasks = await HabitItem.find({
+      $or: [{ userId }, { userId: '000000000000000000000000' }],
+      isStudyTask: true
+    }).lean();
+
+    for (const task of studyTasks) {
+      let subj = task.subject?.trim() || '';
+      let top = task.topic?.trim() || '';
+      if (!subj || !top) {
+        const cleanTitle = (task.title || '').replace(/^\[R[123]\s+Revision\]\s*/i, '').trim();
+        if (cleanTitle.includes(':')) {
+          const parts = cleanTitle.split(':');
+          if (parts.length >= 2) {
+            subj = parts[0].trim();
+            top = parts.slice(1).join(':').trim();
+          }
+        }
+      }
+      if (subj && top) {
+        const cat = typeof task.category === 'string' ? task.category : (task.category?.label || task.category?.id || 'GS1');
+        const startDate = task.startDate || new Date().toISOString().split('T')[0];
+        await processTopicTag(userId, { subject: subj, topic: top, category: cat }, startDate);
+      }
+    }
+  } catch (err) {
+    console.error('Failed to backfill TopicRevisions:', err);
+  }
+}
+
 export async function GET(req: Request) {
   try {
     const user = await getUserFromCookies();
@@ -281,17 +310,64 @@ export async function GET(req: Request) {
 
     await connectToDatabase();
 
-    // Clear legacy default seed items and any existing CSAT/Maths automated SRS revision tasks
+    // Backfill missing isAugmentedRevision field for existing MongoDB HabitItem documents
+    await HabitItem.updateMany(
+      { isAugmentedRevision: { $exists: false } },
+      { $set: { isAugmentedRevision: true } }
+    );
+
+    // Clear legacy default seed items
     await HabitItem.deleteMany({
       $or: [
         { userId: '000000000000000000000000' },
-        { title: { $in: ['Daily GS Revision & Answer Practice', 'Hydration Goal: 3 Liters Water', 'Submit Weekly PYQ Analysis Test', 'PW Online Mentorship Meeting'] } },
-        { userId, title: { $regex: /^\[R[123] Revision\].*(csat|maths|mathematics|math)/i } }
+        { title: { $in: ['Daily GS Revision & Answer Practice', 'Hydration Goal: 3 Liters Water', 'Submit Weekly PYQ Analysis Test', 'PW Online Mentorship Meeting'] } }
       ]
     });
 
     // Clean up any corrupted SyllabusItems created by topic-as-category bug
     await cleanupCorruptedSyllabusItems(userId);
+
+    // Unset legacy flat fields from existing MongoDB documents
+    await TopicRevision.updateMany(
+      {},
+      {
+        $unset: {
+          r1ScheduledDate: "",
+          r1CompletedDate: "",
+          r1Status: "",
+          r2ScheduledDate: "",
+          r2CompletedDate: "",
+          r2Status: "",
+          r3ScheduledDate: "",
+          r3CompletedDate: "",
+          r3Status: "",
+          isCluster: "",
+          subTopics: "",
+          extraRevisions: "",
+          revisionLogs: ""
+        }
+      }
+    );
+
+    // Purge any orphaned HabitItem revision tasks for topics where isAugmentedRevision is false
+    const nonAugTopicRevisions = await TopicRevision.find({
+      $or: [{ userId }, { userId: '000000000000000000000000' }],
+      isAugmentedRevision: false
+    }).lean();
+
+    for (const tr of nonAugTopicRevisions) {
+      if (tr.subject && tr.topic) {
+        const safeSubj = tr.subject.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const safeTop = tr.topic.trim().replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        await HabitItem.deleteMany({
+          userId,
+          title: { $regex: new RegExp(`^\\[R[123] Revision\\] ${safeSubj}: ${safeTop}$`, 'i') }
+        });
+      }
+    }
+
+    // Backfill TopicRevisions & populate topicRevisionIds for all subjects
+    await backfillTopicRevisions(userId);
 
     // Auto-sync TopicRevisions with HabitItem tasks for scheduled revisions
     const topicRevisions = await TopicRevision.find({
@@ -300,9 +376,10 @@ export async function GET(req: Request) {
 
     for (const tr of topicRevisions) {
       if (tr.subject && tr.topic && tr.firstReadDate) {
-        const isExcludedSubject = /csat|maths|mathematics|math/i.test(tr.subject.trim()) || /csat|maths|mathematics|math/i.test(tr.category || '');
-        if (!isExcludedSubject) {
-          await createSrsTasksForTopic(userId, tr.subject, tr.topic, tr.firstReadDate, tr.category);
+        const isAug = tr.isAugmentedRevision !== false;
+
+        if (isAug) {
+          await createSrsTasksForTopic(userId, tr.subject, tr.topic, tr.firstReadDate, tr.category, true);
         }
       }
     }
@@ -443,35 +520,42 @@ export async function POST(req: Request) {
             });
 
             if (topicDoc) {
-              if (habit.title.startsWith('[R1 Revision]')) {
-                topicDoc.r1Status = isDone ? 'Completed' : 'Pending';
-                topicDoc.r1CompletedDate = isDone ? date : '';
-                if (isDone) topicDoc.lastRevisedDate = date;
-              } else if (habit.title.startsWith('[R2 Revision]')) {
-                topicDoc.r2Status = isDone ? 'Completed' : 'Pending';
-                topicDoc.r2CompletedDate = isDone ? date : '';
-                if (isDone) topicDoc.lastRevisedDate = date;
-              } else if (habit.title.startsWith('[R3 Revision]')) {
-                topicDoc.r3Status = isDone ? 'Completed' : 'Pending';
-                topicDoc.r3CompletedDate = isDone ? date : '';
-                if (isDone) topicDoc.lastRevisedDate = date;
-              } else {
-                // Base Study Task completion
-                if (isDone && !topicDoc.firstReadDate) {
-                  topicDoc.firstReadDate = date;
-                }
-                if (isDone) topicDoc.lastRevisedDate = date;
+              if (!topicDoc.revisions) topicDoc.revisions = [];
+              let targetStage = 'First Read';
+              if (habit.title.startsWith('[R1 Revision]')) targetStage = 'R1';
+              else if (habit.title.startsWith('[R2 Revision]')) targetStage = 'R2';
+              else if (habit.title.startsWith('[R3 Revision]')) targetStage = 'R3';
+
+              let revEntry = topicDoc.revisions.find((r: any) => r.stage === targetStage);
+              if (!revEntry && targetStage !== 'First Read') {
+                revEntry = { stage: targetStage, scheduledDate: date, completedDate: '', status: 'Pending' };
+                topicDoc.revisions.push(revEntry);
               }
 
-              // Update next scheduled date and overdue status
-              if (topicDoc.r1Status !== 'Completed') {
-                topicDoc.nextScheduledDate = topicDoc.r1ScheduledDate;
-              } else if (topicDoc.r2Status !== 'Completed') {
-                topicDoc.nextScheduledDate = topicDoc.r2ScheduledDate;
-              } else if (topicDoc.r3Status !== 'Completed') {
-                topicDoc.nextScheduledDate = topicDoc.r3ScheduledDate;
-              } else {
-                topicDoc.nextScheduledDate = '';
+              if (revEntry) {
+                revEntry.status = isDone ? 'Completed' : 'Pending';
+                revEntry.completedDate = isDone ? date : '';
+              }
+              if (isDone) topicDoc.lastRevisedDate = date;
+              if (isDone && targetStage === 'First Read' && !topicDoc.firstReadDate) {
+                topicDoc.firstReadDate = date;
+              }
+
+              // Update next scheduled date and overdue status for GS
+              if (topicDoc.isAugmentedRevision !== false) {
+                const r1 = topicDoc.revisions.find((r: any) => r.stage === 'R1');
+                const r2 = topicDoc.revisions.find((r: any) => r.stage === 'R2');
+                const r3 = topicDoc.revisions.find((r: any) => r.stage === 'R3');
+
+                if (r1 && r1.status !== 'Completed') {
+                  topicDoc.nextScheduledDate = r1.scheduledDate || '';
+                } else if (r2 && r2.status !== 'Completed') {
+                  topicDoc.nextScheduledDate = r2.scheduledDate || '';
+                } else if (r3 && r3.status !== 'Completed') {
+                  topicDoc.nextScheduledDate = r3.scheduledDate || '';
+                } else {
+                  topicDoc.nextScheduledDate = '';
+                }
               }
               topicDoc.isOverdue = false;
 
@@ -511,7 +595,13 @@ export async function POST(req: Request) {
 
     // Action: create (add new habit / task / event)
     if (action === 'create' || action === 'create_habit') {
-      const { title, type, category, description, priority, frequency, target, reminders, startDate, endDate, isStudyTask, subject, topic, color, icon } = body;
+      const { title, type, category, description, priority, frequency, target, reminders, startDate, endDate, isStudyTask, subject, topic, color, icon, isAugmentedRevision } = body;
+
+      const cleanSubject = (subject || '').trim();
+      const categoryLabel = typeof category === 'string' ? category : (category?.label || category?.id || 'GS1');
+      const resolvedIsAugmented = isAugmentedRevision !== undefined
+        ? Boolean(isAugmentedRevision)
+        : !(/csat|maths|mathematics|math/i.test(cleanSubject) || /csat|maths|mathematics|math/i.test(categoryLabel));
 
       const newHabit = new HabitItem({
         userId,
@@ -526,8 +616,9 @@ export async function POST(req: Request) {
         startDate: startDate || new Date().toISOString().split('T')[0],
         endDate: endDate || null,
         isStudyTask: !!isStudyTask,
-        subject: subject || '',
-        topic: topic || '',
+        isAugmentedRevision: resolvedIsAugmented,
+        subject: cleanSubject,
+        topic: (topic || '').trim(),
         color: color || '#6366F1',
         icon: icon || '🏃',
         streakCurrent: 0,
@@ -537,7 +628,7 @@ export async function POST(req: Request) {
 
       await newHabit.save();
 
-      // Automatically link One-Time Study Tasks to Syllabus Matrix & TopicRevision (SRS)
+      // Automatically link One-Time Study Tasks to Syllabus Matrix & TopicRevision
       if (isStudyTask && frequency?.mode === 'once' && subject && topic) {
         try {
           const taskStartDate = startDate || new Date().toISOString().split('T')[0];
@@ -545,7 +636,7 @@ export async function POST(req: Request) {
           const cleanTopic = topic.trim();
           const categoryLabel = typeof category === 'string' ? category : (category?.label || category?.id || 'GS1');
 
-          // 1. Link to existing Subject in Syllabus Matrix if it exists (DO NOT create subject automatically)
+          // 1. Link to existing Subject in Syllabus Matrix if it exists
           const safeSubj = cleanSubject.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
           let sysItem = await SyllabusItem.findOne({
             $or: [{ userId }, { userId: '000000000000000000000000' }],
@@ -564,20 +655,33 @@ export async function POST(req: Request) {
             await sysItem.save();
           }
 
-          // 2. CSAT Aptitude and Maths Optional are practice categories/subjects — exempt from SRS memory revisions
-          const isExcludedSubjectOrCategory = /csat|maths|mathematics|math/i.test(cleanSubject) || /csat|maths|mathematics|math/i.test(categoryLabel);
+          const NON_AUGMENTED_REGEX = /csat|math|maths|mathematics|series|reasoning|aptitude|mental|comprehension|verbal/i;
+          const isAugmentedRevision = body.isAugmentedRevision !== undefined
+            ? Boolean(body.isAugmentedRevision)
+            : !(NON_AUGMENTED_REGEX.test(cleanSubject) || NON_AUGMENTED_REGEX.test(categoryLabel));
 
-          if (!isExcludedSubjectOrCategory) {
-            await processTopicTag(
+          // 2. ALWAYS create TopicRevision with explicit isAugmentedRevision flag
+          await processTopicTag(
+            userId,
+            {
+              subject: cleanSubject,
+              topic: cleanTopic,
+              category: categoryLabel,
+              isAugmentedRevision
+            },
+            taskStartDate
+          );
+
+          // 3. Schedule automated SRS revision tasks if isAugmentedRevision is true, otherwise purge any stray revision tasks
+          if (isAugmentedRevision) {
+            await createSrsTasksForTopic(userId, cleanSubject, cleanTopic, taskStartDate, category, true);
+          } else {
+            const safeSubj = cleanSubject.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const safeTop = cleanTopic.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            await HabitItem.deleteMany({
               userId,
-              {
-                subject: cleanSubject,
-                topic: cleanTopic,
-                category: categoryLabel
-              },
-              taskStartDate
-            );
-            await createSrsTasksForTopic(userId, cleanSubject, cleanTopic, taskStartDate, category);
+              title: { $regex: new RegExp(`^\\[R[123] Revision\\] ${safeSubj}: ${safeTop}$`, 'i') }
+            });
           }
         } catch (err) {
           console.error('Failed to sync study task with TopicRevision & Syllabus Matrix:', err);
@@ -608,7 +712,7 @@ export async function POST(req: Request) {
 
     // Action: update (edit habit / task / event)
     if (action === 'update' || action === 'update_habit') {
-      const { id, title, type, category, description, priority, frequency, target, reminders, startDate, endDate, isStudyTask, subject, topic, color, icon } = body;
+      const { id, title, type, category, description, priority, frequency, target, reminders, startDate, endDate, isStudyTask, subject, topic, color, icon, isAugmentedRevision } = body;
 
       const habit = await HabitItem.findOne({
         _id: id,
@@ -627,6 +731,7 @@ export async function POST(req: Request) {
         if (startDate !== undefined) habit.startDate = startDate;
         if (endDate !== undefined) habit.endDate = endDate;
         if (isStudyTask !== undefined) habit.isStudyTask = !!isStudyTask;
+        if (isAugmentedRevision !== undefined) habit.isAugmentedRevision = Boolean(isAugmentedRevision);
         if (subject !== undefined) habit.subject = subject;
         if (topic !== undefined) habit.topic = topic;
         if (color !== undefined) habit.color = color;

@@ -51,7 +51,6 @@ export default function TestsPage() {
   };
 
   const handleDeleteTestLog = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this test log?')) return;
     setDeletingId(id);
     try {
       const res = await fetch('/api/tracker/test', {

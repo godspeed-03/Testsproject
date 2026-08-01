@@ -36,6 +36,7 @@ export default function AgendaPage() {
     handleDeleteHabit,
     handleItemClick
   } = useTracker();
+    console.log("🚀 ~ AgendaPage ~ todayItems:", todayItems)
 
   const cardBg = 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80';
   const textTitle = 'text-slate-900 dark:text-slate-100';
@@ -186,23 +187,43 @@ export default function AgendaPage() {
                       <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                         {h.type}
                       </span>
-                      {h.title?.startsWith('[R1') ? (
-                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-500 text-white shadow-xs flex items-center gap-1">
-                          ⚡ 1st Revision (R1)
-                        </span>
-                      ) : h.title?.startsWith('[R2') ? (
-                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-purple-600 text-white shadow-xs flex items-center gap-1">
-                          ⚡ 2nd Revision (R2)
-                        </span>
-                      ) : h.title?.startsWith('[R3') ? (
-                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-600 text-white shadow-xs flex items-center gap-1">
-                          ⚡ 3rd Revision (R3)
-                        </span>
-                      ) : h.isStudyTask && h.frequency?.mode === 'once' ? (
-                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                          📖 1st Read
-                        </span>
-                      ) : null}
+                      {(() => {
+                        const isAugmentedTask = h.isAugmentedRevision;
+                        console.log("🚀 ~ AgendaPage ~ isAugmentedTask:", h.isAugmentedRevision)
+
+                        if (h.title?.startsWith('[R1')) {
+                          return (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-500 text-white shadow-xs flex items-center gap-1">
+                              ⚡ 1st Revision (R1)
+                            </span>
+                          );
+                        } else if (h.title?.startsWith('[R2')) {
+                          return (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-purple-600 text-white shadow-xs flex items-center gap-1">
+                              ⚡ 2nd Revision (R2)
+                            </span>
+                          );
+                        } else if (h.title?.startsWith('[R3')) {
+                          return (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-600 text-white shadow-xs flex items-center gap-1">
+                              ⚡ 3rd Revision (R3)
+                            </span>
+                          );
+                        } else if (h.isStudyTask && isAugmentedTask && h.frequency?.mode === 'once') {
+                          return (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                              📖 1st Read
+                            </span>
+                          );
+                        } else {
+                          return (
+                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 flex items-center gap-1">
+                              📚 Topic Task
+                            </span>
+                          );
+                        }
+                        return null;
+                      })()}
                       <h4 className={`font-black text-sm sm:text-base ${isDone ? 'line-through opacity-60' : textTitle}`}>
                         {h.title}
                       </h4>
@@ -244,9 +265,7 @@ export default function AgendaPage() {
                       type="button"
                       disabled={saving || deletingId === h._id}
                       onClick={() => {
-                        if (confirm(`Delete task "${h.title}"? This will also remove associated syllabus & revision records.`)) {
-                          handleDeleteHabit(h._id);
-                        }
+                        handleDeleteHabit(h._id);
                       }}
                       className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                       title="Delete Task & Topic Data"

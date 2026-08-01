@@ -53,6 +53,7 @@ export async function POST(req: Request) {
         startDate: h.startDate || new Date().toISOString().split('T')[0],
         endDate: h.endDate || null,
         isStudyTask: !!h.isStudyTask,
+        isAugmentedRevision: h.isAugmentedRevision !== undefined ? !!h.isAugmentedRevision : true,
         subject: h.subject || '',
         topic: h.topic || '',
         color: h.color || '#6366F1',
@@ -87,22 +88,11 @@ export async function POST(req: Request) {
         topic: t.topic || 'General Topic',
         firstReadDate: t.firstReadDate || t.date || '',
         lastRevisedDate: t.lastRevisedDate || '',
-        r1ScheduledDate: t.r1ScheduledDate || '',
-        r1CompletedDate: t.r1CompletedDate || '',
-        r1Status: t.r1Status || 'Pending',
-        r2ScheduledDate: t.r2ScheduledDate || '',
-        r2CompletedDate: t.r2CompletedDate || '',
-        r2Status: t.r2Status || 'Pending',
-        r3ScheduledDate: t.r3ScheduledDate || '',
-        r3CompletedDate: t.r3CompletedDate || '',
-        r3Status: t.r3Status || 'Pending',
+        isAugmentedRevision: t.isAugmentedRevision !== undefined ? t.isAugmentedRevision : true,
         isOverdue: !!t.isOverdue,
         overdueDays: t.overdueDays || 0,
         nextScheduledDate: t.nextScheduledDate || '',
-        isCluster: !!t.isCluster,
-        subTopics: t.subTopics || [],
-        extraRevisions: t.extraRevisions || [],
-        revisionLogs: t.revisionLogs || []
+        revisions: t.revisions || []
       }));
       await TopicRevision.insertMany(docs);
     }

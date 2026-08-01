@@ -83,6 +83,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     setFormSubject,
     formTopic,
     setFormTopic,
+    formIsAugmentedRevision,
+    setFormIsAugmentedRevision,
     showProgressModal,
     setShowProgressModal,
     progressModalHabit,
@@ -374,42 +376,63 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       </div>
 
                       {formIsStudyTask && (
-                        <div className="grid grid-cols-2 gap-3 pt-1">
-                          <div>
-                            <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Subject</label>
-                            <ShadcnSelect
-                              value={formSubject}
-                              onChange={(val: string) => {
-                                setFormSubject(val);
-                                const autoTitle = val && formTopic ? `${val}: ${formTopic}` : (val || formTopic);
-                                if (autoTitle) setFormTitle(autoTitle);
-                                const matchedItem = (syllabusItems || []).find((item: any) => item.subject?.toLowerCase() === val.toLowerCase());
-                                if (matchedItem?.category) {
-                                  setFormCategory({ id: matchedItem.category.toLowerCase(), label: matchedItem.category, icon: '📚', color: '#6366F1' });
+                        <div className="space-y-3 pt-1">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Subject</label>
+                              <ShadcnSelect
+                                value={formSubject}
+                                onChange={(val: string) => {
+                                  setFormSubject(val);
+                                  const autoTitle = val && formTopic ? `${val}: ${formTopic}` : (val || formTopic);
+                                  if (autoTitle) setFormTitle(autoTitle);
+                                  const matchedItem = (syllabusItems || []).find((item: any) => item.subject?.toLowerCase() === val.toLowerCase());
+                                  if (matchedItem?.category) {
+                                    setFormCategory({ id: matchedItem.category.toLowerCase(), label: matchedItem.category, icon: '📚', color: '#6366F1' });
+                                  }
+                                }}
+                                options={
+                                  getFilteredCategorySubjects().length > 0
+                                    ? getFilteredCategorySubjects().map((s: string) => ({ value: s, label: s }))
+                                    : syllabusSubjects.map((s: string) => ({ value: s, label: s }))
                                 }
-                              }}
-                              options={
-                                getFilteredCategorySubjects().length > 0
-                                  ? getFilteredCategorySubjects().map((s: string) => ({ value: s, label: s }))
-                                  : syllabusSubjects.map((s: string) => ({ value: s, label: s }))
-                              }
-                            />
+                              />
+                            </div>
+
+                            <div>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Topic Name</label>
+                              <input
+                                type="text"
+                                placeholder="e.g., Ocean Currents & Tides"
+                                value={formTopic}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setFormTopic(val);
+                                  const autoTitle = formSubject && val ? `${formSubject}: ${val}` : (val || formSubject);
+                                  if (autoTitle) setFormTitle(autoTitle);
+                                }}
+                                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold outline-none focus:border-indigo-500"
+                              />
+                            </div>
                           </div>
 
-                          <div>
-                            <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Topic Name</label>
-                            <input
-                              type="text"
-                              placeholder="e.g., Ocean Currents & Tides"
-                              value={formTopic}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                setFormTopic(val);
-                                const autoTitle = formSubject && val ? `${formSubject}: ${val}` : (val || formSubject);
-                                if (autoTitle) setFormTitle(autoTitle);
-                              }}
-                              className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold outline-none focus:border-indigo-500"
-                            />
+                          {/* Augmented Revision SRS Toggle */}
+                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-500/20">
+                            <div>
+                              <span className="font-extrabold text-slate-800 dark:text-slate-200 block text-xs">
+                                Spaced Repetition SRS (R1, R2, R3)?
+                              </span>
+
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
+                              <input
+                                type="checkbox"
+                                checked={formIsAugmentedRevision}
+                                onChange={(e) => setFormIsAugmentedRevision(e.target.checked)}
+                                className="sr-only peer"
+                              />
+                              <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
                           </div>
                         </div>
                       )}
@@ -434,7 +457,27 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Syllabus Category</label>
                         <ShadcnSelect
                           value={typeof formCategory === 'string' ? formCategory : formCategory?.label || 'Study'}
-                          onChange={(val: string) => setFormCategory({ id: val.toLowerCase(), label: val, icon: '📚', color: '#6366F1' })}
+                          onChange={(val: string) => {
+                            setFormCategory({ id: val.toLowerCase(), label: val, icon: '📚', color: '#6366F1' });
+                            
+                            // Find subjects belonging to this selected category
+                            const matchedSubjects = (syllabusItems || [])
+                              .filter((item: any) => {
+                                const itemCat = String(item.category || '').trim();
+                                return itemCat.toLowerCase() === val.toLowerCase() ||
+                                       itemCat.toLowerCase().includes(val.toLowerCase()) ||
+                                       val.toLowerCase().includes(itemCat.toLowerCase());
+                              })
+                              .map((item: any) => item.subject)
+                              .filter(Boolean);
+
+                            const newSubject = matchedSubjects.length > 0 ? Array.from(new Set(matchedSubjects))[0] : (syllabusSubjects[0] || '');
+                            if (newSubject) {
+                              setFormSubject(newSubject);
+                              const autoTitle = formTopic ? `${newSubject}: ${formTopic}` : newSubject;
+                              setFormTitle(autoTitle);
+                            }
+                          }}
                           options={categories.map((c: string) => ({ value: c, label: c }))}
                         />
                       </div>

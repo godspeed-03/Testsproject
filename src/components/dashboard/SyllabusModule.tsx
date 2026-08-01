@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { Plus, Table, Trash2, Check, Loader2 } from 'lucide-react';
+import { getMilestonesForCategory } from '@/lib/utils';
 
 interface SyllabusModuleProps {
   syllabusList: any[];
@@ -173,19 +174,7 @@ export default function SyllabusModule({
 
                 {/* Responsive Milestone Grid: 2 cols on mobile, flex wrap on desktop */}
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 text-xs pt-1">
-                  {[
-                    { key: 'firstRead', label: 'Reading 1' },
-                    { key: 'rev1', label: 'Rev 1' },
-                    { key: 'rev2', label: 'Rev 2' },
-                    { key: 'preNotes', label: 'Pre Notes' },
-                    { key: 'mainsNotes', label: 'Mains Notes' },
-                    { key: 'questionBank', label: 'Q-Bank' },
-                    { key: 'prePyq', label: 'Pre PYQ' },
-                    { key: 'mainsPyq', label: 'Mains PYQ' },
-                    { key: 'ansWriting', label: 'Ans Writing' },
-                    { key: 'preFinalRev', label: 'Pre Final Rev' },
-                    { key: 'mainsFinalRev', label: 'Mains Final Rev' }
-                  ].map((m) => {
+                  {getMilestonesForCategory(s.category).map((m) => {
                     const isDone = !!s[m.key];
                     return (
                       <button

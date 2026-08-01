@@ -224,6 +224,17 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [formIsStudyTask, setFormIsStudyTask] = useState(true);
   const [formSubject, setFormSubject] = useState('');
   const [formTopic, setFormTopic] = useState('');
+  const [formIsAugmentedRevision, setFormIsAugmentedRevision] = useState(true);
+
+  // Auto-default Spaced Repetition SRS toggle: OFF for CSAT/Maths/Series/Reasoning, ON for GS1-4
+  useEffect(() => {
+    if (formIsStudyTask) {
+      const catStr = typeof formCategory === 'string' ? formCategory : formCategory?.label || formCategory?.id || '';
+      const NON_AUGMENTED_REGEX = /csat|math|maths|mathematics|series|reasoning|aptitude|mental|comprehension|verbal/i;
+      const isNonAug = NON_AUGMENTED_REGEX.test(formSubject) || NON_AUGMENTED_REGEX.test(catStr);
+      setFormIsAugmentedRevision(!isNonAug);
+    }
+  }, [formSubject, formCategory, formIsStudyTask]);
 
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [progressModalHabit, setProgressModalHabit] = useState<any | null>(null);
@@ -428,6 +439,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormStartDate(new Date().toISOString().split('T')[0]);
     setFormEndDate('');
     setFormIsStudyTask(type === 'task');
+    setFormIsAugmentedRevision(true);
   };
 
   const getFilteredCategorySubjects = () => {
@@ -612,6 +624,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           isStudyTask: createType === 'task' ? formIsStudyTask : false,
           subject: createType === 'task' && formIsStudyTask ? formSubject : undefined,
           topic: createType === 'task' && formIsStudyTask ? formTopic : undefined,
+          isAugmentedRevision: createType === 'task' && formIsStudyTask ? formIsAugmentedRevision : undefined,
           icon: formIcon,
           color: formColor
         };
@@ -672,7 +685,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   };
 
   const handleDeleteList = async (listId: string) => {
-    if (!confirm('Are you sure you want to delete this checklist?')) return;
     try {
       const res = await fetch('/api/tracker/habits', {
         method: 'POST',
@@ -860,6 +872,8 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormSubject,
     formTopic,
     setFormTopic,
+    formIsAugmentedRevision,
+    setFormIsAugmentedRevision,
     showProgressModal,
     setShowProgressModal,
     progressModalHabit,

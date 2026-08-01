@@ -1,5 +1,13 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
+export interface IRevisionEntry {
+  stage: string;
+  scheduledDate?: string;
+  completedDate?: string;
+  status?: string;
+  note?: string;
+}
+
 export interface ITopicRevision extends Document {
   userId: string;
   customId?: string;
@@ -9,25 +17,25 @@ export interface ITopicRevision extends Document {
   firstReadDate: string;
   lastRevisedDate?: string;
   status?: string;
-  r1ScheduledDate?: string;
-  r1CompletedDate?: string;
-  r1Status?: string;
-  r2ScheduledDate?: string;
-  r2CompletedDate?: string;
-  r2Status?: string;
-  r3ScheduledDate?: string;
-  r3CompletedDate?: string;
-  r3Status?: string;
+  isAugmentedRevision?: boolean;
+  nextScheduledDate?: string;
   isOverdue?: boolean;
   overdueDays?: number;
-  nextScheduledDate?: string;
-  isCluster?: boolean;
-  subTopics?: string[];
-  extraRevisions?: any[];
-  revisionLogs?: any[];
+  revisions?: IRevisionEntry[];
   createdAt: Date;
   updatedAt: Date;
 }
+
+const RevisionEntrySchema = new Schema(
+  {
+    stage: { type: String, required: true },
+    scheduledDate: { type: String, default: '' },
+    completedDate: { type: String, default: '' },
+    status: { type: String, default: 'Pending' },
+    note: { type: String, default: '' }
+  },
+  { _id: false }
+);
 
 const TopicRevisionSchema = new Schema<ITopicRevision>(
   {
@@ -39,25 +47,18 @@ const TopicRevisionSchema = new Schema<ITopicRevision>(
     firstReadDate: { type: String, default: '' },
     lastRevisedDate: { type: String, default: '' },
     status: { type: String, default: 'Pending' },
-    r1ScheduledDate: { type: String, default: '' },
-    r1CompletedDate: { type: String, default: '' },
-    r1Status: { type: String, default: 'Pending' },
-    r2ScheduledDate: { type: String, default: '' },
-    r2CompletedDate: { type: String, default: '' },
-    r2Status: { type: String, default: 'Pending' },
-    r3ScheduledDate: { type: String, default: '' },
-    r3CompletedDate: { type: String, default: '' },
-    r3Status: { type: String, default: 'Pending' },
+    isAugmentedRevision: { type: Boolean, default: true },
+    nextScheduledDate: { type: String, default: '' },
     isOverdue: { type: Boolean, default: false },
     overdueDays: { type: Number, default: 0 },
-    nextScheduledDate: { type: String, default: '' },
-    isCluster: { type: Boolean, default: false },
-    subTopics: [{ type: String }],
-    extraRevisions: [Schema.Types.Mixed],
-    revisionLogs: [Schema.Types.Mixed]
+    revisions: [RevisionEntrySchema]
   },
   { timestamps: true }
 );
+
+if (mongoose.models && (mongoose.models as any).TopicRevision) {
+  delete (mongoose.models as any).TopicRevision;
+}
 
 const TopicRevision: Model<ITopicRevision> =
   mongoose.models.TopicRevision || mongoose.model<ITopicRevision>('TopicRevision', TopicRevisionSchema);

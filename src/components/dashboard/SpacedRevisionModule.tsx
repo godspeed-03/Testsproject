@@ -52,45 +52,53 @@ export default function SpacedRevisionModule({
     return '';
   };
 
-  const topicRevItems = topicRevisions.map((t: any) => ({
-    id: t.id || t._id || t.customId,
-    customId: t.customId,
-    subject: t.subject,
-    topic: t.topic,
-    source: t.topic,
-    category: t.category || 'GS1',
-    nextRev: t.nextScheduledDate,
-    date: t.firstReadDate,
-    r1Status: t.r1Status,
-    r2Status: t.r2Status,
-    r3Status: t.r3Status,
-    r1ScheduledDate: t.r1ScheduledDate,
-    r2ScheduledDate: t.r2ScheduledDate,
-    r3ScheduledDate: t.r3ScheduledDate,
-    r1CompletedDate: t.r1CompletedDate,
-    r2CompletedDate: t.r2CompletedDate,
-    r3CompletedDate: t.r3CompletedDate,
-    lastRevisedDate: t.lastRevisedDate,
-    isOverdue: t.isOverdue,
-    overdueDays: t.overdueDays || 0,
-    isCluster: t.isCluster,
-    subTopics: t.subTopics || [],
-    rev1: !!t.r1CompletedDate && t.r1Status !== 'Skipped',
-    rev2: !!t.r2CompletedDate && t.r2Status !== 'Skipped',
-    status:
-      t.r3CompletedDate && t.r3Status !== 'Skipped'
-        ? 'Mastered'
-        : t.r2CompletedDate && t.r2Status !== 'Skipped'
-        ? 'Revised Once'
-        : 'First Read Done',
-    extraRevisions: t.extraRevisions || [],
-    revisionLogs: t.revisionLogs || [],
-  }));
+  const topicRevItems = topicRevisions.map((t: any) => {
+    const revs = t.revisions || [];
+    const r1 = revs.find((r: any) => r.stage === 'R1');
+    const r2 = revs.find((r: any) => r.stage === 'R2');
+    const r3 = revs.find((r: any) => r.stage === 'R3');
+
+    return {
+      id: t.id || t._id || t.customId,
+      customId: t.customId,
+      subject: t.subject,
+      topic: t.topic,
+      source: t.topic,
+      category: t.category || 'GS1',
+      nextRev: t.nextScheduledDate,
+      date: t.firstReadDate,
+      r1Status: r1?.status || 'Pending',
+      r2Status: r2?.status || 'Pending',
+      r3Status: r3?.status || 'Pending',
+      r1ScheduledDate: r1?.scheduledDate || '',
+      r2ScheduledDate: r2?.scheduledDate || '',
+      r3ScheduledDate: r3?.scheduledDate || '',
+      r1CompletedDate: r1?.completedDate || '',
+      r2CompletedDate: r2?.completedDate || '',
+      r3CompletedDate: r3?.completedDate || '',
+      lastRevisedDate: t.lastRevisedDate,
+      isOverdue: t.isOverdue,
+      overdueDays: t.overdueDays || 0,
+      revisions: revs,
+      rev1: !!r1?.completedDate && r1?.status !== 'Skipped',
+      rev2: !!r2?.completedDate && r2?.status !== 'Skipped',
+      status:
+        r3?.completedDate && r3?.status !== 'Skipped'
+          ? 'Mastered'
+          : r2?.completedDate && r2?.status !== 'Skipped'
+          ? 'Revised Once'
+          : 'First Read Done',
+    };
+  });
 
   const rawActiveRevisionsSource = topicRevItems.length > 0 ? topicRevItems : syllabusList;
   const activeRevisionsSource = rawActiveRevisionsSource.filter((s: any) => {
+    if (s.isAugmentedRevision !== undefined) {
+      return !!s.isAugmentedRevision;
+    }
     const cat = (s.category || '').toUpperCase();
-    return cat === 'GS1' || cat === 'GS2' || cat === 'GS3' || cat === 'GS4' || cat.startsWith('GS');
+    const subj = (s.subject || '').toLowerCase();
+    return !(/csat|maths|mathematics|math/i.test(subj) || /csat|maths|mathematics|math/i.test(cat));
   });
 
   const overdueRevisions = activeRevisionsSource

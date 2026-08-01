@@ -35,6 +35,7 @@ export interface IHabitItem extends Document {
   startDate: string;
   endDate?: string | null;
   isStudyTask?: boolean;
+  isAugmentedRevision?: boolean;
   subject?: string;
   topic?: string;
   color?: string;
@@ -77,6 +78,7 @@ const HabitItemSchema = new Schema<IHabitItem>(
     startDate: { type: String, required: true },
     endDate: { type: String, default: null },
     isStudyTask: { type: Boolean, default: false },
+    isAugmentedRevision: { type: Boolean, default: true },
     subject: { type: String, default: '' },
     topic: { type: String, default: '' },
     color: { type: String, default: '#6366F1' },

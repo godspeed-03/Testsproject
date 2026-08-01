@@ -81,21 +81,11 @@ export async function GET() {
         firstReadDate: t.firstReadDate,
         lastRevisedDate: t.lastRevisedDate,
         status: t.status,
-        r1ScheduledDate: t.r1ScheduledDate,
-        r1CompletedDate: t.r1CompletedDate,
-        r1Status: t.r1Status,
-        r2ScheduledDate: t.r2ScheduledDate,
-        r2CompletedDate: t.r2CompletedDate,
-        r2Status: t.r2Status,
-        r3ScheduledDate: t.r3ScheduledDate,
-        r3CompletedDate: t.r3CompletedDate,
-        r3Status: t.r3Status,
+        isAugmentedRevision: t.isAugmentedRevision,
         isOverdue: overdueInfo.isOverdue,
         overdueDays: overdueInfo.overdueDays,
         nextScheduledDate: t.nextScheduledDate,
-        subTopics: t.subTopics || [],
-        extraRevisions: t.extraRevisions || [],
-        revisionLogs: t.revisionLogs || []
+        revisions: t.revisions || []
       };
     });
 

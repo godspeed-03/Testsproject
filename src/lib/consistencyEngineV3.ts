@@ -177,11 +177,9 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
     }
 
     // Check revision stages
-    const stages = [
-      { sched: tr.r1ScheduledDate, comp: tr.r1CompletedDate, stat: tr.r1Status },
-      { sched: tr.r2ScheduledDate, comp: tr.r2CompletedDate, stat: tr.r2Status },
-      { sched: tr.r3ScheduledDate, comp: tr.r3CompletedDate, stat: tr.r3Status }
-    ];
+    const stages = (tr.revisions && tr.revisions.length > 0)
+      ? tr.revisions.map((r: any) => ({ sched: r.scheduledDate, comp: r.completedDate, stat: r.status }))
+      : [];
 
     stages.forEach((st) => {
       if (st.sched && st.sched <= dayKey && tr.firstReadDate && tr.firstReadDate <= st.sched) {
@@ -191,7 +189,7 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
         if (st.comp && st.comp <= dayKey) {
           categoryMap[cat].done++;
           subjectMap[subj].done++;
-        } else if (st.stat === 'Done' || st.stat === 'done') {
+        } else if (st.stat === 'Done' || st.stat === 'done' || st.stat === 'Completed') {
           categoryMap[cat].done++;
           subjectMap[subj].done++;
         } else {

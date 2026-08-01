@@ -199,12 +199,19 @@ export default function SubjectTopicsModal({
                   {subjTopics.map((t: any) => {
                     const topicKey = t.id || t._id || t.customId;
                     const isSelected = selectedTopicNames.includes(t.topic);
-                    const isMastered = !!(t.r3Status === 'Completed' || t.r3CompletedDate);
-                    const stageLabel = isMastered
+                    const isAugmented = t.isAugmentedRevision;
+                    const revisions = t.revisions || [];
+                    const r1 = revisions.find((r: any) => r.stage === 'R1');
+                    const r2 = revisions.find((r: any) => r.stage === 'R2');
+                    const r3 = revisions.find((r: any) => r.stage === 'R3');
+                    const isMastered = isAugmented ? !!(r3?.status === 'Completed' || r3?.completedDate) : true;
+                    const stageLabel = !isAugmented
+                      ? 'Topic Logged'
+                      : isMastered
                       ? 'Mastered'
-                      : !t.r1CompletedDate
+                      : !r1?.completedDate
                       ? 'R1 Pending (+7d)'
-                      : !t.r2CompletedDate
+                      : !r2?.completedDate
                       ? 'R2 Pending (+21d)'
                       : 'R3 Pending (+45d)';
 
@@ -223,92 +230,99 @@ export default function SubjectTopicsModal({
                             <div className="flex items-center gap-2">
                               <span>{t.topic}</span>
                             </div>
-                            {t.isCluster && t.subTopics && t.subTopics.length > 0 && (
-                              <span className="text-[10px] text-amber-500 dark:text-amber-400 font-bold pl-0.5">
-                                🔗 Clustered Topics: {t.subTopics.join(', ')}
-                              </span>
-                            )}
                           </div>
                         </td>
                         <td className={`p-3.5 sm:p-4 ${textMuted} whitespace-nowrap`}>{t.firstReadDate || 'N/A'}</td>
 
                         {/* R1 */}
                         <td className="p-3.5 sm:p-4 whitespace-nowrap">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[11px] text-slate-400 font-extrabold">Target: {t.r1ScheduledDate || '—'}</span>
-                            {t.r1Status === 'Skipped' ? (
-                              <span className="text-[10px] bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-0.5 rounded font-extrabold w-fit">
-                                Skipped
-                              </span>
-                            ) : t.r1Status === 'Completed' || t.r1CompletedDate ? (
-                              <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit">
-                                Done: {t.r1CompletedDate}
-                              </span>
-                            ) : t.isOverdue && !t.r1CompletedDate ? (
-                              <span className="text-[10px] bg-rose-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit animate-pulse">
-                                Overdue (+{t.overdueDays}d)
-                              </span>
-                            ) : (
-                              <span className="text-[10px] bg-slate-700 text-slate-200 px-2.5 py-0.5 rounded font-bold w-fit">
-                                Pending
-                              </span>
-                            )}
-                          </div>
+                          {isAugmented ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[11px] text-slate-400 font-extrabold">Target: {r1?.scheduledDate || '—'}</span>
+                              {r1?.status === 'Skipped' ? (
+                                <span className="text-[10px] bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-0.5 rounded font-extrabold w-fit">
+                                  Skipped
+                                </span>
+                              ) : r1?.status === 'Completed' || r1?.completedDate ? (
+                                <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit">
+                                  Done: {r1?.completedDate}
+                                </span>
+                              ) : t.isOverdue && (!r1 || !r1.completedDate) ? (
+                                <span className="text-[10px] bg-rose-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit animate-pulse">
+                                  Overdue (+{t.overdueDays}d)
+                                </span>
+                              ) : (
+                                <span className="text-[10px] bg-slate-700 text-slate-200 px-2.5 py-0.5 rounded font-bold w-fit">
+                                  Pending
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400 font-extrabold">—</span>
+                          )}
                         </td>
 
                         {/* R2 */}
                         <td className="p-3.5 sm:p-4 whitespace-nowrap">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[11px] text-slate-400 font-extrabold">Target: {t.r2ScheduledDate || '—'}</span>
-                            {t.r2Status === 'Skipped' ? (
-                              <span className="text-[10px] bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-0.5 rounded font-extrabold w-fit">
-                                Skipped
-                              </span>
-                            ) : t.r2Status === 'Completed' || t.r2CompletedDate ? (
-                              <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit">
-                                Done: {t.r2CompletedDate}
-                              </span>
-                            ) : t.isOverdue && t.r1CompletedDate && !t.r2CompletedDate ? (
-                              <span className="text-[10px] bg-rose-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit animate-pulse">
-                                Overdue (+{t.overdueDays}d)
-                              </span>
-                            ) : (
-                              <span className="text-[10px] bg-slate-700 text-slate-200 px-2.5 py-0.5 rounded font-bold w-fit">
-                                Pending
-                              </span>
-                            )}
-                          </div>
+                          {isAugmented ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[11px] text-slate-400 font-extrabold">Target: {r2?.scheduledDate || '—'}</span>
+                              {r2?.status === 'Skipped' ? (
+                                <span className="text-[10px] bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-0.5 rounded font-extrabold w-fit">
+                                  Skipped
+                                </span>
+                              ) : r2?.status === 'Completed' || r2?.completedDate ? (
+                                <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit">
+                                  Done: {r2?.completedDate}
+                                </span>
+                              ) : t.isOverdue && r1?.completedDate && (!r2 || !r2.completedDate) ? (
+                                <span className="text-[10px] bg-rose-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit animate-pulse">
+                                  Overdue (+{t.overdueDays}d)
+                                </span>
+                              ) : (
+                                <span className="text-[10px] bg-slate-700 text-slate-200 px-2.5 py-0.5 rounded font-bold w-fit">
+                                  Pending
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400 font-extrabold">—</span>
+                          )}
                         </td>
 
                         {/* R3 */}
                         <td className="p-3.5 sm:p-4 whitespace-nowrap">
-                          <div className="flex flex-col gap-1">
-                            <span className="text-[11px] text-slate-400 font-extrabold">Target: {t.r3ScheduledDate || '—'}</span>
-                            {t.r3Status === 'Skipped' ? (
-                              <span className="text-[10px] bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-0.5 rounded font-extrabold w-fit">
-                                Skipped
-                              </span>
-                            ) : t.r3Status === 'Completed' || t.r3CompletedDate ? (
-                              <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit">
-                                Done: {t.r3CompletedDate}
-                              </span>
-                            ) : t.isOverdue && t.r2CompletedDate && !t.r3CompletedDate ? (
-                              <span className="text-[10px] bg-rose-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit animate-pulse">
-                                Overdue (+{t.overdueDays}d)
-                              </span>
-                            ) : (
-                              <span className="text-[10px] bg-slate-700 text-slate-200 px-2.5 py-0.5 rounded font-bold w-fit">
-                                Pending
-                              </span>
-                            )}
-                          </div>
+                          {isAugmented ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[11px] text-slate-400 font-extrabold">Target: {r3?.scheduledDate || '—'}</span>
+                              {r3?.status === 'Skipped' ? (
+                                <span className="text-[10px] bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-0.5 rounded font-extrabold w-fit">
+                                  Skipped
+                                </span>
+                              ) : r3?.status === 'Completed' || r3?.completedDate ? (
+                                <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit">
+                                  Done: {r3?.completedDate}
+                                </span>
+                              ) : t.isOverdue && r2?.completedDate && (!r3 || !r3.completedDate) ? (
+                                <span className="text-[10px] bg-rose-600 text-white px-2.5 py-0.5 rounded font-extrabold w-fit animate-pulse">
+                                  Overdue (+{t.overdueDays}d)
+                                </span>
+                              ) : (
+                                <span className="text-[10px] bg-slate-700 text-slate-200 px-2.5 py-0.5 rounded font-bold w-fit">
+                                  Pending
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-slate-400 font-extrabold">—</span>
+                          )}
                         </td>
 
                         {/* Stage Status */}
                         <td className="p-3.5 sm:p-4 whitespace-nowrap">
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-extrabold whitespace-nowrap inline-block ${
-                              isMastered
+                              !isAugmented || isMastered
                                 ? 'bg-emerald-600 text-white'
                                 : t.isOverdue
                                 ? 'bg-rose-600 text-white'

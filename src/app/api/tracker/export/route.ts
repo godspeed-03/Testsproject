@@ -15,6 +15,18 @@ import RoutineConfig from '@/models/RoutineConfig';
 import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
 import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
 
+function deepCleanMongo(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(deepCleanMongo);
+  const result: any = {};
+  for (const key of Object.keys(obj)) {
+    if (['_id', '__v', 'userId', 'createdAt', 'updatedAt', 'configPayload'].includes(key)) continue;
+    result[key] = deepCleanMongo(obj[key]);
+  }
+  return result;
+}
+
 export async function GET() {
   try {
     const user = await getUserFromCookies();
@@ -133,10 +145,19 @@ export async function GET() {
       _id: undefined
     } : null;
 
-    const formattedRoutineConfig = routineConfig ? {
-      ...routineConfig,
-      _id: undefined
-    } : null;
+    let formattedRoutineConfig = null;
+    if (routineConfig) {
+      let data: any = routineConfig;
+      // Prefer configPayload if it has actual cell/table data
+      if (data.configPayload && typeof data.configPayload === 'object') {
+        const cp = data.configPayload;
+        if (cp.cells?.length || cp.timeSlots?.length || cp.tables?.length || cp.satakGoals?.length) {
+          data = cp;
+        }
+      }
+      // Deep-clean all mongo metadata recursively
+      formattedRoutineConfig = deepCleanMongo(data);
+    }
 
     return NextResponse.json({
       habits: formattedHabits,

@@ -3,6 +3,45 @@ import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import RoutineConfig from '@/models/RoutineConfig';
 
+/**
+ * Recursively strips all Mongo metadata (_id, __v, userId, createdAt, updatedAt)
+ * from an object and all nested arrays/objects.
+ */
+function deepCleanMongo(obj: any): any {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+
+  if (Array.isArray(obj)) {
+    return obj.map(deepCleanMongo);
+  }
+
+  const result: any = {};
+  for (const key of Object.keys(obj)) {
+    if (['_id', '__v', 'userId', 'createdAt', 'updatedAt'].includes(key)) continue;
+    result[key] = deepCleanMongo(obj[key]);
+  }
+  return result;
+}
+
+/**
+ * Unwraps configPayload nesting and deep-cleans the result.
+ */
+function cleanRoutinePayload(obj: any): any {
+  if (!obj || typeof obj !== 'object') return obj;
+
+  let data = obj;
+
+  // Prefer configPayload if it has actual cell/table data
+  if (data.configPayload && typeof data.configPayload === 'object') {
+    const cp = data.configPayload;
+    if (cp.cells?.length || cp.timeSlots?.length || cp.tables?.length || cp.satakGoals?.length) {
+      data = cp;
+    }
+  }
+
+  return deepCleanMongo(data);
+}
+
 export async function GET() {
   try {
     const user = await getUserFromCookies();
@@ -10,9 +49,7 @@ export async function GET() {
 
     await connectToDatabase();
 
-    const config = await RoutineConfig.findOne({
-      $or: [{ userId }, { userId: '000000000000000000000000' }]
-    }).lean();
+    const config = await RoutineConfig.findOne({ userId }).lean();
 
     if (!config) {
       return NextResponse.json({
@@ -20,8 +57,10 @@ export async function GET() {
       });
     }
 
+    const cleanPayload = cleanRoutinePayload(config);
+
     return NextResponse.json({
-      routineConfig: (config as any).configPayload || ((config as any).tables ? { tables: (config as any).tables } : config)
+      routineConfig: cleanPayload
     });
   } catch (error: any) {
     console.error('Fetch routine config error:', error);
@@ -38,37 +77,45 @@ export async function POST(req: Request) {
     const userId = user?.userId || '000000000000000000000000';
 
     const body = await req.json();
-    const routineData = body.routineConfig || body;
+    let rawRoutineData = body.routineConfig || body;
 
-    if (!routineData) {
+    if (!rawRoutineData) {
       return NextResponse.json({ error: 'Invalid routine configuration JSON payload' }, { status: 400 });
     }
+
+    const routineData = cleanRoutinePayload(rawRoutineData);
 
     await connectToDatabase();
 
     const updateDoc: any = {
       userId,
-      configPayload: routineData
+      configPayload: routineData,
+      title: routineData.title || 'Master Routine & Schedule',
+      subtitle: routineData.subtitle || '',
+      timeSlots: routineData.timeSlots || [],
+      cells: routineData.cells || [],
+      metrics: routineData.metrics || {},
+      satakGoals: routineData.satakGoals || [],
+      tables: routineData.tables || undefined,
+      weeklySummary: routineData.weeklySummary || undefined,
+      updatedAt: new Date()
     };
 
-    if (routineData.tables) {
-      updateDoc.tables = routineData.tables;
-    }
-    if (routineData.title) updateDoc.title = routineData.title;
-    if (routineData.subtitle) updateDoc.subtitle = routineData.subtitle;
-    if (routineData.timeSlots) updateDoc.timeSlots = routineData.timeSlots;
-    if (routineData.satakGoals) updateDoc.satakGoals = routineData.satakGoals;
-    if (routineData.weeklySummary) updateDoc.weeklySummary = routineData.weeklySummary;
-
-    const result = await RoutineConfig.findOneAndUpdate(
-      { $or: [{ userId }, { userId: '000000000000000000000000' }] },
+    await RoutineConfig.findOneAndUpdate(
+      { userId },
       { $set: updateDoc },
       { upsert: true, new: true }
     );
 
-    return NextResponse.json({ success: true, routineConfig: result.configPayload || result });
+    return NextResponse.json({
+      success: true,
+      routineConfig: routineData
+    });
   } catch (error: any) {
     console.error('Save routine config error:', error);
-    return NextResponse.json({ error: 'Failed to save routine config' }, { status: 500 });
+    return NextResponse.json(
+      { error: error?.message || 'Failed to save routine config' },
+      { status: 500 }
+    );
   }
 }

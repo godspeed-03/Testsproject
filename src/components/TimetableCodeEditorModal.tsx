@@ -287,17 +287,6 @@ export default function TimetableCodeEditorModal({
           }
         }
 
-        const saved = localStorage.getItem('upsc_master_routine_config');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed) {
-            const formatted = JSON.stringify(parsed, null, 2);
-            setJsonText(formatted);
-            validateAndParse(formatted);
-            return;
-          }
-        }
-
         setJsonText('');
         setParsedData([]);
         setIsRoutineConfig(false);
@@ -320,7 +309,18 @@ export default function TimetableCodeEditorModal({
         setIsRoutineConfig(false);
         return false;
       }
-      const parsed = JSON.parse(text);
+      let parsed = JSON.parse(text);
+
+      // Unwrap configPayload if nested
+      if (parsed && parsed.configPayload && typeof parsed.configPayload === 'object') {
+        if (parsed.configPayload.cells?.length || parsed.configPayload.timeSlots?.length || parsed.configPayload.tables?.length || parsed.configPayload.satakGoals?.length) {
+          parsed = parsed.configPayload;
+        }
+      }
+      if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const { _id, userId, __v, createdAt, updatedAt, ...clean } = parsed;
+        parsed = clean;
+      }
 
       const isRoutineOrMultiTable =
         parsed &&
@@ -387,6 +387,21 @@ export default function TimetableCodeEditorModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleLoadPreset = async (fileName: string) => {
+    try {
+      const res = await fetch(`/${fileName}`);
+      if (res.ok) {
+        const text = await res.text();
+        const parsed = JSON.parse(text);
+        const formatted = JSON.stringify(parsed, null, 2);
+        setJsonText(formatted);
+        validateAndParse(formatted);
+      }
+    } catch (e) {
+      console.error('Failed to load preset:', e);
+    }
+  };
+
   const handleSave = async () => {
     if (!validateAndParse(jsonText)) {
       alert('Please fix JSON syntax errors before saving.');
@@ -405,7 +420,6 @@ export default function TimetableCodeEditorModal({
         });
 
         if (!res.ok) throw new Error('Failed to save to database');
-        localStorage.setItem('upsc_master_routine_config', JSON.stringify(parsed));
       } else {
         const itemsArr = Array.isArray(parsedData) ? parsedData : [parsedData];
         for (const item of itemsArr) {
@@ -519,7 +533,7 @@ export default function TimetableCodeEditorModal({
 
         {/* Action Toolbar */}
         <div className="px-5 py-2.5 bg-slate-100/70 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 text-xs shrink-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={handleFormatCode}
@@ -534,6 +548,30 @@ export default function TimetableCodeEditorModal({
             >
               {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
               {copied ? 'Copied!' : 'Copy Code'}
+            </button>
+
+            <span className="text-slate-300 dark:text-slate-700">|</span>
+
+            <button
+              type="button"
+              onClick={() => handleLoadPreset('tt_mains.json')}
+              className="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 font-bold rounded-lg transition-colors text-[11px] cursor-pointer border border-rose-500/20 flex items-center gap-1"
+            >
+              🚀 Load Mains Demo (tt_mains.json)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLoadPreset('tt.json')}
+              className="px-2.5 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 font-bold rounded-lg transition-colors text-[11px] cursor-pointer border border-amber-500/20"
+            >
+              Load Schedule (tt.json)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLoadPreset('tt_prelims.json')}
+              className="px-2.5 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-400 font-bold rounded-lg transition-colors text-[11px] cursor-pointer border border-indigo-500/20"
+            >
+              Load Roadmap (tt_prelims.json)
             </button>
           </div>
 

@@ -3,15 +3,15 @@ import connectToDatabase from '@/lib/mongodb';
 import User from '@/models/User';
 import { signToken } from '@/lib/auth';
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || '845893107647-hj6kv9acb6oge2ej4citu5jglft4e0uq.apps.googleusercontent.com';
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || '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';
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID as string;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET as string;
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get('code');
   const error = searchParams.get('error');
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://test.nxtdev.in';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL as string;
 
   if (error || !code) {
     return NextResponse.redirect(`${appUrl}/login?error=${encodeURIComponent(error || 'Google authorization failed')}`);

@@ -253,15 +253,27 @@ export async function POST(req: Request) {
     // 11. Process RoutineConfig (Master Routine & Schedule Multi-Table)
     if (routineConfigInput) {
       await RoutineConfig.deleteMany(userFilter);
-      const payload = Array.isArray(routineConfigInput) ? { tables: routineConfigInput } : routineConfigInput;
+      let payload = routineConfigInput;
+      while (payload && payload.configPayload && typeof payload.configPayload === 'object' && !payload.timeSlots && !payload.tables && !payload.satakGoals) {
+        payload = payload.configPayload;
+      }
+      if (typeof payload === 'object' && !Array.isArray(payload)) {
+        const { _id, userId: uId, __v, createdAt, updatedAt, ...cleanPayload } = payload;
+        payload = cleanPayload;
+      }
+      const finalPayload = Array.isArray(payload) ? { tables: payload } : payload;
+
       await RoutineConfig.create({
         userId,
-        configPayload: payload,
-        tables: payload.tables,
-        title: payload.title,
-        subtitle: payload.subtitle,
-        satakGoals: payload.satakGoals,
-        weeklySummary: payload.weeklySummary,
+        configPayload: finalPayload,
+        tables: finalPayload.tables,
+        title: finalPayload.title,
+        subtitle: finalPayload.subtitle,
+        timeSlots: finalPayload.timeSlots,
+        cells: finalPayload.cells,
+        metrics: finalPayload.metrics,
+        satakGoals: finalPayload.satakGoals,
+        weeklySummary: finalPayload.weeklySummary,
         updatedAt: new Date()
       });
     }

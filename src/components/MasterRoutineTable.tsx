@@ -40,38 +40,54 @@ export function getCellStyle(theme?: string) {
 export function normalizeRoutineTables(configData: any): any[] {
   if (!configData) return [];
 
+  // Unwrap nested configPayload if present and contains data
+  let data = configData;
+  while (data && data.configPayload && typeof data.configPayload === 'object') {
+    if (data.configPayload.cells?.length || data.configPayload.timeSlots?.length || data.configPayload.tables?.length || data.configPayload.satakGoals?.length) {
+      data = data.configPayload;
+    } else {
+      break;
+    }
+  }
+
+  // Strip mongo fields if present
+  if (typeof data === 'object' && !Array.isArray(data)) {
+    const { _id, userId, __v, createdAt, updatedAt, ...clean } = data;
+    data = clean;
+  }
+
   // Case 1: JSON has explicit "tables" array
-  if (configData.tables && Array.isArray(configData.tables)) {
-    return configData.tables;
+  if (data.tables && Array.isArray(data.tables)) {
+    return data.tables;
   }
 
   // Case 2: Top-level JSON is an array of tables
-  if (Array.isArray(configData) && configData.length > 0 && (configData[0].type || configData[0].columns || configData[0].timeSlots)) {
-    return configData;
+  if (Array.isArray(data) && data.length > 0 && (data[0].type || data[0].columns || data[0].timeSlots || data[0].satakGoals)) {
+    return data;
   }
 
   // Case 3: Single routine config with timeSlots / satakGoals
   const tables: any[] = [];
 
-  if (configData.timeSlots || configData.cells || configData.title) {
+  if ((data.cells && data.cells.length > 0) || (data.timeSlots && data.timeSlots.length > 0) || data.title) {
     tables.push({
       id: 'routine-grid',
       type: 'grid_matrix',
-      title: configData.title || 'Master Routine',
-      subtitle: configData.subtitle || '',
-      timeSlots: configData.timeSlots || [],
-      cells: configData.cells || [],
-      metrics: configData.metrics
+      title: data.title || 'Master Routine',
+      subtitle: data.subtitle || '',
+      timeSlots: data.timeSlots || [],
+      cells: data.cells || [],
+      metrics: data.metrics
     });
   }
 
-  if (configData.satakGoals && Array.isArray(configData.satakGoals) && configData.satakGoals.length > 0) {
+  if (data.satakGoals && Array.isArray(data.satakGoals) && data.satakGoals.length > 0) {
     tables.push({
       id: 'satak-roadmap',
       type: 'satak_goals',
       title: 'Satak Goals & Strategic Roadmap',
       subtitle: 'Long-term phase objectives and execution strategy',
-      satakGoals: configData.satakGoals
+      satakGoals: data.satakGoals
     });
   }
 
@@ -297,17 +313,10 @@ export default function MasterRoutineTable({ onOpenCodeEditor, onConfigLoaded }:
             return;
           }
         }
-
-        const saved = localStorage.getItem('upsc_master_routine_config');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed) {
-            setConfig(parsed);
-            onConfigLoaded?.(parsed);
-          }
-        }
+        setConfig(null);
       } catch (err) {
         console.error('Failed to load routine config:', err);
+        setConfig(null);
       } finally {
         setLoading(false);
       }
@@ -332,16 +341,40 @@ export default function MasterRoutineTable({ onOpenCodeEditor, onConfigLoaded }:
             Create or paste your timetable JSON code using the editor below to display your custom daily schedule and multi-table setup.
           </p>
         </div>
-        {onOpenCodeEditor && (
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {onOpenCodeEditor && (
+            <button
+              type="button"
+              onClick={onOpenCodeEditor}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-black shadow-lg shadow-amber-500/20 transition-all cursor-pointer active:scale-95"
+            >
+              <FileCode size={16} />
+              <span>Open Timetable Code Editor</span>
+            </button>
+          )}
           <button
             type="button"
-            onClick={onOpenCodeEditor}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-black shadow-lg shadow-amber-500/20 transition-all cursor-pointer active:scale-95"
+            onClick={async () => {
+              try {
+                const res = await fetch('/tt_mains.json');
+                const preset = await res.json();
+                const saveRes = await fetch('/api/tracker/routine', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ routineConfig: preset })
+                });
+                if (saveRes.ok) {
+                  window.location.reload();
+                }
+              } catch (e) {
+                console.error(e);
+              }
+            }}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-black shadow-lg shadow-rose-500/20 transition-all cursor-pointer active:scale-95"
           >
-            <FileCode size={16} />
-            <span>Open Timetable Code Editor</span>
+            🚀 Load Mains Demo Timetable
           </button>
-        )}
+        </div>
       </div>
     );
   }

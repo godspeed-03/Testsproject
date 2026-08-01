@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Plus, Trash2, Check, Loader2, ListChecks, ArrowDown, ArrowUp, Zap } from 'lucide-react';
-import ShadcnSelect from '@/components/ui/ShadcnSelect';
 import { ISyllabusRuleState } from '@/models/SyllabusItem';
-import { DEFAULT_RULESETS } from '@/lib/syllabusRules';
 
 interface EditSubjectRulesModalProps {
   isOpen: boolean;
@@ -32,7 +30,6 @@ export default function EditSubjectRulesModal({
   const [rules, setRules] = useState<ISyllabusRuleState[]>([]);
   const [newRuleName, setNewRuleName] = useState('');
   const [ruleTemplates, setRuleTemplates] = useState<any[]>([]);
-  const [selectedTemplateId, setSelectedTemplateId] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -55,20 +52,6 @@ export default function EditSubjectRulesModal({
   };
 
   if (!isOpen || !subjectItem) return null;
-
-  const handleApplyPreset = (presetCategory: string) => {
-    const found = DEFAULT_RULESETS.find((r) => r.category.toLowerCase() === presetCategory.toLowerCase());
-    if (found) {
-      setRules(
-        found.rules.map((r) => ({
-          key: r.key,
-          label: r.label,
-          short: r.short,
-          completed: false
-        }))
-      );
-    }
-  };
 
   const handleApplyTemplate = (templateId: string) => {
     const t = ruleTemplates.find((rs) => rs.id === templateId);
@@ -143,56 +126,29 @@ export default function EditSubjectRulesModal({
           </button>
         </div>
 
-        {/* 1-Click Default Preset Buttons */}
-        <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
-          <div className="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-            <Zap size={14} className="text-amber-500" />
-            Quick Presets — 1-Click Load Default Rules:
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => handleApplyPreset('GS')}
-              className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-black transition-all"
-            >
-              GS Standard (11 steps)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleApplyPreset('Maths')}
-              className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 text-xs font-black transition-all"
-            >
-              Maths Optional (8 steps)
-            </button>
-            <button
-              type="button"
-              onClick={() => handleApplyPreset('CSAT')}
-              className="px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-black transition-all"
-            >
-              CSAT (4 steps)
-            </button>
-          </div>
-        </div>
-
-        {/* Option to load template from DB */}
-        {ruleTemplates.length > 0 && (
-          <div className="p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-between gap-2 flex-wrap">
-            <span className="text-xs font-black text-indigo-700 dark:text-indigo-300">
-              Or Load DB Ruleset Template:
-            </span>
-            <div className="w-48 sm:w-56">
-              <ShadcnSelect
-                value={selectedTemplateId}
-                onChange={(val) => {
-                  setSelectedTemplateId(val);
-                  handleApplyTemplate(val);
-                }}
-                options={[
-                  { value: '', label: 'Choose Template...' },
-                  ...ruleTemplates.map((t) => ({ value: t.id, label: `${t.name} (${t.rules.length} steps)` }))
-                ]}
-              />
+        {/* Dynamic DB Rule Set Presets */}
+        {ruleTemplates.length > 0 ? (
+          <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
+            <div className="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Zap size={14} className="text-amber-500" />
+              Load DB Rule Set Preset:
             </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {ruleTemplates.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => handleApplyTemplate(t.id)}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-xs font-black transition-all"
+                >
+                  {t.name} ({t.rules?.length || 0} steps)
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400">
+            No DB Rule Sets saved yet. Add custom rules below or create rule sets in DB.
           </div>
         )}
 

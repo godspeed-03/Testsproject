@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import SyllabusItem from '@/models/SyllabusItem';
+import SyllabusRuleSet from '@/models/SyllabusRuleSet';
 import TestLog from '@/models/TestLog';
 import TopicRevision from '@/models/TopicRevision';
 import HabitItem from '@/models/HabitItem';
@@ -17,11 +18,13 @@ export async function GET() {
     await connectToDatabase();
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const habits = await HabitItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const lists = await CheckList.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const syllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const testLogs = await TestLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
-    const topicRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
+    const userFilter = { $or: [{ userId }, { userId: '000000000000000000000000' }] };
+    const habits = await HabitItem.find(userFilter).lean();
+    const lists = await CheckList.find(userFilter).lean();
+    const syllabus = await SyllabusItem.find(userFilter).lean();
+    const testLogs = await TestLog.find(userFilter).sort({ createdAt: -1 }).lean();
+    const topicRevisions = await TopicRevision.find(userFilter).lean();
+    const dbRuleSets = await SyllabusRuleSet.find(userFilter).lean();
 
     const formattedHabits = habits.map((h: any) => ({
       ...h,
@@ -44,7 +47,7 @@ export async function GET() {
       source: item.source || '',
       date: item.date || '',
       nextRev: item.nextRev || '',
-      rules: buildDynamicRulesFromLegacy(item)
+      rules: buildDynamicRulesFromLegacy(item, dbRuleSets)
     }));
 
     const formattedTestLogs = testLogs.map((item: any) => ({

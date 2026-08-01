@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import SyllabusItem from '@/models/SyllabusItem';
+import SyllabusRuleSet from '@/models/SyllabusRuleSet';
 import { buildDynamicRulesFromLegacy, getDefaultRulesForCategory } from '@/lib/syllabusRules';
 
 function addDaysStr(dateStr: string, days: number) {
@@ -39,13 +40,15 @@ export async function POST(req: Request) {
       ? { $and: [userFilter, { $or: [{ customId: id }, { _id: id }] }] }
       : { $and: [userFilter, { $or: [{ customId: id }, { subject: id }] }] };
 
+    const dbRuleSets = await SyllabusRuleSet.find(userFilter).lean();
+
     if (action === 'delete') {
       await SyllabusItem.deleteOne(queryFilter);
     } else if (action === 'toggle_rule' || action === 'toggle_milestone') {
       let item = await SyllabusItem.findOne(queryFilter);
       if (item) {
         item.userId = userId;
-        let itemRules = buildDynamicRulesFromLegacy(item);
+        let itemRules = buildDynamicRulesFromLegacy(item, dbRuleSets);
 
         const targetKey = ruleKey || Object.keys(body).find((k) => !['action', 'id'].includes(k));
         if (targetKey) {
@@ -74,7 +77,7 @@ export async function POST(req: Request) {
         if (rules && Array.isArray(rules)) {
           item.rules = rules;
         } else {
-          item.rules = buildDynamicRulesFromLegacy(item);
+          item.rules = buildDynamicRulesFromLegacy(item, dbRuleSets);
         }
 
         await item.save();
@@ -87,7 +90,7 @@ export async function POST(req: Request) {
 
       let initialRules = rules && Array.isArray(rules) && rules.length > 0
         ? rules
-        : getDefaultRulesForCategory(category || 'GS1').map((t) => ({
+        : getDefaultRulesForCategory(category || '', dbRuleSets).map((t) => ({
             key: t.key,
             label: t.label,
             short: t.short,
@@ -107,9 +110,7 @@ export async function POST(req: Request) {
       });
     }
 
-    const syllabus = await SyllabusItem.find({
-      $or: [{ userId }, { userId: '000000000000000000000000' }]
-    }).lean();
+    const syllabus = await SyllabusItem.find(userFilter).lean();
 
     const formattedSyllabus = syllabus.map((item: any) => ({
       id: item.customId || item._id.toString(),
@@ -119,7 +120,7 @@ export async function POST(req: Request) {
       source: item.source || '',
       date: item.date || '',
       nextRev: item.nextRev || '',
-      rules: buildDynamicRulesFromLegacy(item)
+      rules: buildDynamicRulesFromLegacy(item, dbRuleSets)
     }));
 
     return NextResponse.json({ syllabusList: formattedSyllabus });

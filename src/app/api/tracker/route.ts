@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import SyllabusItem from '@/models/SyllabusItem';
+import SyllabusRuleSet from '@/models/SyllabusRuleSet';
 import TestLog from '@/models/TestLog';
 import TopicRevision from '@/models/TopicRevision';
 import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
@@ -82,9 +83,11 @@ export async function GET() {
     await cleanupCorruptedSyllabusItems(userId);
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const syllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const testLogs = await TestLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
-    const topicRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
+    const userFilter = { $or: [{ userId }, { userId: '000000000000000000000000' }] };
+    const syllabus = await SyllabusItem.find(userFilter).lean();
+    const testLogs = await TestLog.find(userFilter).sort({ createdAt: -1 }).lean();
+    const topicRevisions = await TopicRevision.find(userFilter).lean();
+    const dbRuleSets = await SyllabusRuleSet.find(userFilter).lean();
 
     // Format for frontend cleanly with dynamic rules array
     const formattedSyllabus = syllabus.map((item: any) => ({
@@ -95,7 +98,7 @@ export async function GET() {
       source: item.source || '',
       date: item.date || '',
       nextRev: item.nextRev || '',
-      rules: buildDynamicRulesFromLegacy(item)
+      rules: buildDynamicRulesFromLegacy(item, dbRuleSets)
     }));
 
     const formattedTestLogs = testLogs.map((item: any) => ({

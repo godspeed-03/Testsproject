@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import SyllabusRuleSet from '@/models/SyllabusRuleSet';
-import { DEFAULT_RULESETS } from '@/lib/syllabusRules';
 
 export async function GET() {
   try {
@@ -11,23 +10,9 @@ export async function GET() {
 
     await connectToDatabase();
 
-    let ruleSets = await SyllabusRuleSet.find({
+    const ruleSets = await SyllabusRuleSet.find({
       $or: [{ userId }, { userId: '000000000000000000000000' }]
     }).lean();
-
-    if (ruleSets.length === 0) {
-      // Seed defaults for user
-      const seedDocs = DEFAULT_RULESETS.map((rs) => ({
-        userId,
-        name: rs.name,
-        category: rs.category,
-        rules: rs.rules
-      }));
-      await SyllabusRuleSet.insertMany(seedDocs);
-      ruleSets = await SyllabusRuleSet.find({
-        $or: [{ userId }, { userId: '000000000000000000000000' }]
-      }).lean();
-    }
 
     const formatted = ruleSets.map((rs: any) => ({
       id: rs._id.toString(),

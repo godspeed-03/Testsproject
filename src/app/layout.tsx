@@ -20,13 +20,16 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "UPSC Study Tracker",
+  title: "UPSC tracker — Executive Preparation & Syllabus Suite",
   description: "Executive-level UPSC Civil Services preparation suite: automated syllabus tracking, spaced repetition revision engine, focus timer, and performance analytics.",
+  verification: {
+    google: "BBC_-UN0nPiBk5hGBTmMDhj7ryHNoMVGZ9viAgJQWAQ",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "UPSC Tracker"
+    title: "UPSC tracker"
   },
   icons: {
     icon: [
@@ -48,6 +51,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn("h-full", "antialiased", inter.className, inter.variable)} suppressHydrationWarning>
+      <head>
+        <meta name="google-site-verification" content="BBC_-UN0nPiBk5hGBTmMDhj7ryHNoMVGZ9viAgJQWAQ" />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans" suppressHydrationWarning>
         <Navbar />
         <main className="flex-1 flex flex-col">

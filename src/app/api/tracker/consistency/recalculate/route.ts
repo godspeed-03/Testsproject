@@ -15,7 +15,6 @@ export async function POST(req: Request) {
     }
 
     const mode = body.mode || 'manual';
-    console.log(`[ConsistencyEngineV3] Running recalculation (mode: ${mode}) for user: ${effectiveUserId}`);
 
     const result = await runFullConsistencyPipeline(effectiveUserId);
 

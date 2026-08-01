@@ -66,9 +66,9 @@ export default async function Home() {
       <TransparencySection />
 
       {/* Final CTA */}
-      <section className="py-20 bg-gradient-to-b from-white to-indigo-50/40 border-t border-slate-100">
+      <section className="py-20 bg-gradient-to-b from-white via-violet-50/20 to-white border-t border-slate-100">
         <div className="max-w-3xl mx-auto px-6 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-xs text-indigo-700 font-bold">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/25 text-xs text-[#7C3AED] font-bold">
             <Target size={14} />
             Ready to start?
           </div>
@@ -76,11 +76,11 @@ export default async function Home() {
             Start Tracking Your UPSC Journey
           </h2>
           <p className="text-sm sm:text-base text-slate-500 max-w-xl mx-auto font-medium">
-            Sign in with Google and import your study data in seconds. Free to use for all UPSC CSE aspirants.
+            Sign in with Google and structure your study data in seconds. Free to use for all UPSC CSE aspirants.
           </p>
           <Link
             href="/login"
-            className="inline-flex items-center gap-2.5 px-8 py-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-700 hover:to-purple-700 text-white font-black text-base rounded-2xl shadow-xl shadow-indigo-600/25 transition-all active:scale-95"
+            className="inline-flex items-center gap-2.5 px-8 py-4 bg-gradient-to-r from-[#7C3AED] via-[#8B5CF6] to-[#9333EA] hover:from-[#6D28D9] hover:to-[#7E22CE] text-white font-black text-base rounded-2xl shadow-xl shadow-violet-600/25 transition-all active:scale-95"
           >
             <span>Get Started — Sign In</span>
             <ArrowRight size={20} />

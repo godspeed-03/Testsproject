@@ -36,7 +36,6 @@ export default function AgendaPage() {
     handleDeleteHabit,
     handleItemClick,
   } = useTracker();
-  console.log("🚀 ~ AgendaPage ~ todayItems:", todayItems);
 
   const cardBg = "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80";
   const textTitle = "text-slate-900 dark:text-slate-100";
@@ -192,7 +191,6 @@ export default function AgendaPage() {
                       </span>
                       {(() => {
                         const isAugmentedTask = h.isAugmentedRevision;
-                        console.log("🚀 ~ AgendaPage ~ isAugmentedTask:", h.isAugmentedRevision);
 
                         if (h.title?.startsWith("[R1")) {
                           return (

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Upload, FileText, CheckCircle2, AlertCircle, Download, X, Copy } from 'lucide-react';
 
 interface ImportDataModalProps {
@@ -28,6 +29,7 @@ export default function ImportDataModal({
   textTitle,
   textMuted,
 }: ImportDataModalProps) {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'upload' | 'paste'>('upload');
   const [pastedJson, setPastedJson] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -35,7 +37,11 @@ export default function ImportDataModal({
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -91,8 +97,8 @@ export default function ImportDataModal({
     }
   };
 
-  return (
-    <div className={`fixed inset-0 z-[9999] overflow-y-auto ${isLight ? 'bg-slate-900/65' : 'bg-slate-950/85'} backdrop-blur-md px-3 sm:px-4 py-8 text-center animate-fade-in`}>
+  const modalContent = (
+    <div className={`fixed inset-0 z-[999999] overflow-y-auto ${isLight ? 'bg-slate-900/65' : 'bg-slate-950/85'} backdrop-blur-md px-3 sm:px-4 py-8 text-center animate-fade-in`}>
       {/* Vertically align helper */}
       <span className="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
 
@@ -239,4 +245,6 @@ export default function ImportDataModal({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

@@ -209,6 +209,71 @@ function recalculateHabitStreak(habit: any) {
   return habit;
 }
 
+async function cleanupCorruptedSyllabusItems(userId: string) {
+  try {
+    const allSyllabus = await SyllabusItem.find({
+      $or: [{ userId }, { userId: '000000000000000000000000' }]
+    });
+
+    const knownCategories = ['gs1', 'gs2', 'gs3', 'gs4', 'maths', 'csat', 'optional', 'essay', 'general', 'study'];
+    const toDeleteIds: string[] = [];
+    const subjectMap = new Map<string, any[]>();
+
+    for (const item of allSyllabus) {
+      const sName = item.subject?.trim().toLowerCase();
+      if (!sName) {
+        toDeleteIds.push(item._id.toString());
+        continue;
+      }
+      if (!subjectMap.has(sName)) {
+        subjectMap.set(sName, []);
+      }
+      subjectMap.get(sName)!.push(item);
+    }
+
+    for (const [sName, items] of subjectMap.entries()) {
+      if (items.length > 1) {
+        const validItems = items.filter(i => knownCategories.some(k => i.category?.toLowerCase().includes(k)));
+        if (validItems.length > 0) {
+          const keepId = validItems[0]._id.toString();
+          items.forEach(i => {
+            if (i._id.toString() !== keepId) {
+              toDeleteIds.push(i._id.toString());
+            }
+          });
+        } else {
+          const keepId = items[0]._id.toString();
+          items.forEach(i => {
+            if (i._id.toString() !== keepId) {
+              toDeleteIds.push(i._id.toString());
+            }
+          });
+        }
+      } else if (items.length === 1) {
+        const item = items[0];
+        const catLower = item.category?.trim().toLowerCase() || '';
+        const isKnown = knownCategories.some(k => catLower.includes(k));
+        if (!isKnown) {
+          const safeCat = item.category?.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+          const isTopic = await TopicRevision.exists({
+            $or: [{ userId }, { userId: '000000000000000000000000' }],
+            topic: { $regex: new RegExp(`^${safeCat}$`, 'i') }
+          });
+          if (isTopic) {
+            toDeleteIds.push(item._id.toString());
+          }
+        }
+      }
+    }
+
+    if (toDeleteIds.length > 0) {
+      await SyllabusItem.deleteMany({ _id: { $in: toDeleteIds } });
+    }
+  } catch (err) {
+    console.error('Failed to clean up corrupted SyllabusItems:', err);
+  }
+}
+
 export async function GET(req: Request) {
   try {
     const user = await getUserFromCookies();
@@ -224,6 +289,9 @@ export async function GET(req: Request) {
         { userId, title: { $regex: /^\[R[123] Revision\].*(csat|maths|mathematics|math)/i } }
       ]
     });
+
+    // Clean up any corrupted SyllabusItems created by topic-as-category bug
+    await cleanupCorruptedSyllabusItems(userId);
 
     // Auto-sync TopicRevisions with HabitItem tasks for scheduled revisions
     const topicRevisions = await TopicRevision.find({
@@ -413,8 +481,7 @@ export async function POST(req: Request) {
             // 2. Sync with SyllabusItem
             let sysItem = await SyllabusItem.findOne({
               $or: [{ userId }, { userId: '000000000000000000000000' }],
-              subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') },
-              category: { $regex: new RegExp(`^${safeTop}$`, 'i') }
+              subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') }
             });
 
             if (sysItem) {
@@ -476,27 +543,28 @@ export async function POST(req: Request) {
           const taskStartDate = startDate || new Date().toISOString().split('T')[0];
           const cleanSubject = subject.trim();
           const cleanTopic = topic.trim();
+          const categoryLabel = typeof category === 'string' ? category : (category?.label || category?.id || 'GS1');
 
-          // 1. Always save in Syllabus Matrix (SyllabusItem)
+          // 1. Link to existing Subject in Syllabus Matrix if it exists (DO NOT create subject automatically)
           const safeSubj = cleanSubject.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-          const safeTopic = cleanTopic.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
           let sysItem = await SyllabusItem.findOne({
             $or: [{ userId }, { userId: '000000000000000000000000' }],
-            subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') },
-            category: { $regex: new RegExp(`^${safeTopic}$`, 'i') }
+            subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') }
           });
 
-          if (!sysItem) {
-            await SyllabusItem.create({
-              userId,
-              subject: cleanSubject,
-              category: cleanTopic,
-              status: 'in-progress'
-            });
+          if (sysItem) {
+            if (sysItem.status === 'Not Started') {
+              sysItem.status = 'In Progress';
+            }
+            const knownCats = ['gs1', 'gs2', 'gs3', 'gs4', 'maths', 'csat', 'optional', 'essay', 'general', 'study'];
+            const isCurrCatKnown = knownCats.some(k => sysItem.category?.toLowerCase().includes(k));
+            if (!isCurrCatKnown && categoryLabel) {
+              sysItem.category = categoryLabel;
+            }
+            await sysItem.save();
           }
 
           // 2. CSAT Aptitude and Maths Optional are practice categories/subjects — exempt from SRS memory revisions
-          const categoryLabel = typeof category === 'string' ? category : (category?.label || category?.id || '');
           const isExcludedSubjectOrCategory = /csat|maths|mathematics|math/i.test(cleanSubject) || /csat|maths|mathematics|math/i.test(categoryLabel);
 
           if (!isExcludedSubjectOrCategory) {
@@ -505,7 +573,7 @@ export async function POST(req: Request) {
               {
                 subject: cleanSubject,
                 topic: cleanTopic,
-                category: typeof category === 'string' ? category : (category?.id || 'GS1')
+                category: categoryLabel
               },
               taskStartDate
             );

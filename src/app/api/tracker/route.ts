@@ -6,12 +6,79 @@ import TestLog from '@/models/TestLog';
 import TopicRevision from '@/models/TopicRevision';
 import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
 
+async function cleanupCorruptedSyllabusItems(userId: string) {
+  try {
+    const allSyllabus = await SyllabusItem.find({
+      $or: [{ userId }, { userId: '000000000000000000000000' }]
+    });
+
+    const knownCategories = ['gs1', 'gs2', 'gs3', 'gs4', 'maths', 'csat', 'optional', 'essay', 'general', 'study'];
+    const toDeleteIds: string[] = [];
+    const subjectMap = new Map<string, any[]>();
+
+    for (const item of allSyllabus) {
+      const sName = item.subject?.trim().toLowerCase();
+      if (!sName) {
+        toDeleteIds.push(item._id.toString());
+        continue;
+      }
+      if (!subjectMap.has(sName)) {
+        subjectMap.set(sName, []);
+      }
+      subjectMap.get(sName)!.push(item);
+    }
+
+    for (const [sName, items] of subjectMap.entries()) {
+      if (items.length > 1) {
+        const validItems = items.filter(i => knownCategories.some(k => i.category?.toLowerCase().includes(k)));
+        if (validItems.length > 0) {
+          const keepId = validItems[0]._id.toString();
+          items.forEach(i => {
+            if (i._id.toString() !== keepId) {
+              toDeleteIds.push(i._id.toString());
+            }
+          });
+        } else {
+          const keepId = items[0]._id.toString();
+          items.forEach(i => {
+            if (i._id.toString() !== keepId) {
+              toDeleteIds.push(i._id.toString());
+            }
+          });
+        }
+      } else if (items.length === 1) {
+        const item = items[0];
+        const catLower = item.category?.trim().toLowerCase() || '';
+        const isKnown = knownCategories.some(k => catLower.includes(k));
+        if (!isKnown) {
+          const safeCat = item.category?.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+          const isTopic = await TopicRevision.exists({
+            $or: [{ userId }, { userId: '000000000000000000000000' }],
+            topic: { $regex: new RegExp(`^${safeCat}$`, 'i') }
+          });
+          if (isTopic) {
+            toDeleteIds.push(item._id.toString());
+          }
+        }
+      }
+    }
+
+    if (toDeleteIds.length > 0) {
+      await SyllabusItem.deleteMany({ _id: { $in: toDeleteIds } });
+    }
+  } catch (err) {
+    console.error('Failed to clean up corrupted SyllabusItems:', err);
+  }
+}
+
 export async function GET() {
   try {
     const user = await getUserFromCookies();
     const userId = user?.userId || '000000000000000000000000';
 
     await connectToDatabase();
+
+    await cleanupCorruptedSyllabusItems(userId);
 
     const todayStr = new Date().toISOString().split('T')[0];
     const syllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();

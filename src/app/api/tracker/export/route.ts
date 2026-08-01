@@ -65,15 +65,26 @@ export async function GET() {
     const formattedTestLogs = testLogs.map((item: any) => ({
       id: item.customId || item._id.toString(),
       customId: item.customId || item._id.toString(),
-      code: item.code,
-      date: item.date,
-      subject: item.subject,
-      score: item.score,
-      accuracy: item.accuracy,
-      concept: item.concept,
-      silly: item.silly,
-      timeP: item.timeP,
-      takeaway: item.takeaway
+      testName: item.testName || item.code || 'Untitled Mock Test',
+      code: item.code || 'MOCK',
+      type: item.type || 'PRELIMS',
+      category: item.category || 'GS1',
+      date: item.date || '',
+      subject: item.subject || 'General Studies',
+      score: item.score || 0,
+      maxScore: item.maxScore || 200,
+      percent: item.percent || 0,
+      benchmarkCutoff: item.benchmarkCutoff || 95,
+      durationMins: item.durationMins || 120,
+      accuracy: item.accuracy || '0%',
+      correctCount: item.correctCount || 0,
+      incorrectCount: item.incorrectCount || 0,
+      unattemptedCount: item.unattemptedCount || 0,
+      concept: item.concept || 0,
+      silly: item.silly || 0,
+      timeP: item.timeP || 0,
+      weakAreas: item.weakAreas || [],
+      takeaway: item.takeaway || ''
     }));
 
     const formattedTopicRevisions = topicRevisions.map((t: any) => {

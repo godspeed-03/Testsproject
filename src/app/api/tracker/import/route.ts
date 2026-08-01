@@ -136,14 +136,25 @@ export async function POST(req: Request) {
       const docs = testLogsInput.map((t: any) => ({
         userId,
         customId: t.customId || t.id || 'test_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
-        code: t.code || 'TEST-01',
+        testName: t.testName || t.code || 'Untitled Mock Test',
+        code: t.code || t.testName || 'MOCK',
+        type: t.type || 'PRELIMS',
+        category: t.category || t.subject || 'GS1',
         date: t.date || '',
-        subject: t.subject || 'General Studies',
+        subject: t.subject || t.category || 'General Studies',
         score: t.score || 0,
-        accuracy: t.accuracy || 0,
+        maxScore: t.maxScore || 200,
+        percent: t.percent !== undefined ? t.percent : (t.maxScore ? Math.round(((t.score || 0) / t.maxScore) * 100) : 0),
+        benchmarkCutoff: t.benchmarkCutoff || 95,
+        durationMins: t.durationMins || 120,
+        accuracy: t.accuracy || '0%',
+        correctCount: t.correctCount || 0,
+        incorrectCount: t.incorrectCount || 0,
+        unattemptedCount: t.unattemptedCount || 0,
         concept: t.concept || 0,
         silly: t.silly || 0,
         timeP: t.timeP || 0,
+        weakAreas: Array.isArray(t.weakAreas) ? t.weakAreas : [],
         takeaway: t.takeaway || ''
       }));
       await TestLog.insertMany(docs);
@@ -249,34 +260,31 @@ export async function POST(req: Request) {
         tables: payload.tables,
         title: payload.title,
         subtitle: payload.subtitle,
-        timeSlots: payload.timeSlots,
-        cells: payload.cells,
-        metrics: payload.metrics,
-        satakGoals: payload.satakGoals
+        satakGoals: payload.satakGoals,
+        weeklySummary: payload.weeklySummary,
+        updatedAt: new Date()
       });
     }
 
-    // Fetch updated dataset
-    const updatedHabits = await HabitItem.find(userFilter).lean();
-    const updatedLists = await CheckList.find(userFilter).lean();
-    const updatedSyllabus = await SyllabusItem.find(userFilter).lean();
-    const updatedTestLogs = await TestLog.find(userFilter).sort({ createdAt: -1 }).lean();
-    const updatedTopicRevisions = await TopicRevision.find(userFilter).lean();
-    const updatedRuleSets = await SyllabusRuleSet.find(userFilter).lean();
-    const updatedRoutineConfig = await RoutineConfig.findOne(userFilter).lean();
-
     return NextResponse.json({
-      message: 'Data imported successfully across all 11 MongoDB models!',
-      habits: updatedHabits,
-      lists: updatedLists,
-      syllabusList: updatedSyllabus,
-      testLogs: updatedTestLogs,
-      topicRevisions: updatedTopicRevisions,
-      ruleSets: updatedRuleSets,
-      routineConfig: updatedRoutineConfig
+      success: true,
+      message: 'System data imported successfully across all collections',
+      importedCount: {
+        habits: habitsInput.length,
+        lists: listsInput.length,
+        topicRevisions: topicRevisionsInput.length,
+        syllabus: syllabusInput.length,
+        testLogs: testLogsInput.length,
+        ruleSets: ruleSetsInput.length,
+        dailySnapshots: dailySnapshotsInput.length,
+        monthlySnapshots: monthlySnapshotsInput.length,
+        consistencySnapshots: consistencySnapshotsInput.length,
+        allTimeSnapshot: allTimeSnapshotInput ? 1 : 0,
+        routineConfig: routineConfigInput ? 1 : 0
+      }
     });
   } catch (error: any) {
-    console.error('Import data error:', error);
-    return NextResponse.json({ error: 'Failed to import JSON data' }, { status: 500 });
+    console.error('Import tracker error:', error);
+    return NextResponse.json({ error: error.message || 'Import failed' }, { status: 500 });
   }
 }

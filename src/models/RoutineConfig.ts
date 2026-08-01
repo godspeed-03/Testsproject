@@ -9,6 +9,7 @@ export interface IRoutineConfig extends Document {
   metrics?: any;
   satakGoals?: any[];
   tables?: any[];
+  weeklySummary?: any;
   configPayload?: any;
   createdAt: Date;
   updatedAt: Date;
@@ -24,6 +25,7 @@ const RoutineConfigSchema: Schema = new Schema<IRoutineConfig>(
     metrics: { type: Schema.Types.Mixed, default: {} },
     satakGoals: { type: Schema.Types.Mixed, default: [] },
     tables: { type: Schema.Types.Mixed, default: undefined },
+    weeklySummary: { type: Schema.Types.Mixed, default: undefined },
     configPayload: { type: Schema.Types.Mixed, default: undefined }
   },
   { timestamps: true, strict: false }

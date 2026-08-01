@@ -9,21 +9,27 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
   const { pathname } = request.nextUrl;
   
-  // Public API routes
-  if (pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/register') || pathname.startsWith('/api/tracker')) {
-    return NextResponse.next();
+  // Create base response and set COOP header for Google GIS compatibility
+  const applySecurityHeaders = (response: NextResponse) => {
+    response.headers.set('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+    return response;
+  };
+
+  // Public API routes (including Google auth endpoints)
+  if (pathname.startsWith('/api/auth/') || pathname.startsWith('/api/tracker')) {
+    return applySecurityHeaders(NextResponse.next());
   }
 
   // Protected API routes
   if (pathname.startsWith('/api/')) {
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return applySecurityHeaders(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     }
     try {
       await jwtVerify(token, secret);
-      return NextResponse.next();
+      return applySecurityHeaders(NextResponse.next());
     } catch (e) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      return applySecurityHeaders(NextResponse.json({ error: 'Invalid token' }, { status: 401 }));
     }
   }
 
@@ -32,25 +38,25 @@ export async function middleware(request: NextRequest) {
   
   if (!token) {
     if (!isAuthPage && pathname !== '/') {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return applySecurityHeaders(NextResponse.redirect(new URL('/login', request.url)));
     }
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   }
 
   try {
     await jwtVerify(token, secret);
     
-    // Redirect authenticated users away from auth pages to revision
+    // Redirect authenticated users away from auth pages to agenda
     if (isAuthPage) {
-      return NextResponse.redirect(new URL('/tracker', request.url));
+      return applySecurityHeaders(NextResponse.redirect(new URL('/tracker/agenda', request.url)));
     }
 
-    return NextResponse.next();
+    return applySecurityHeaders(NextResponse.next());
   } catch (e) {
     // Invalid token, clear cookie
     const response = NextResponse.redirect(new URL('/login', request.url));
     response.cookies.delete('token');
-    return response;
+    return applySecurityHeaders(response);
   }
 }
 

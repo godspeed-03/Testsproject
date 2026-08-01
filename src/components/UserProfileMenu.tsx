@@ -9,6 +9,8 @@ import { useRouter, usePathname } from 'next/navigation';
 interface UserProfileMenuProps {
   user: {
     email: string;
+    name?: string;
+    picture?: string;
     [key: string]: any;
   };
 }
@@ -17,6 +19,7 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -67,18 +70,33 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
     window.location.reload();
   };
 
+  const displayName = user.name || user.email;
+  const initial = (user.name || user.email || 'U').charAt(0).toUpperCase();
+
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700"
+        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer"
       >
-        <div className="w-8 h-8 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 flex items-center justify-center font-medium text-xs shadow-sm">
-          {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
-        </div>
+        {/* Google Profile Avatar with Initial Fallback */}
+        {user.picture && !imgError ? (
+          <img
+            src={user.picture}
+            alt={displayName}
+            referrerPolicy="no-referrer"
+            onError={() => setImgError(true)}
+            className="w-8 h-8 rounded-full object-cover shadow-xs border border-amber-500/30"
+          />
+        ) : (
+          <div className="w-8 h-8 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-xs shadow-xs">
+            {initial}
+          </div>
+        )}
+
         <div className="flex flex-col items-start hidden sm:flex text-left">
-          <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 max-w-[140px] truncate">{user.email}</span>
-          <span className="text-[10px] text-slate-500 font-medium">UPSC Aspirant</span>
+          <span className="text-xs font-bold text-slate-900 dark:text-slate-100 max-w-[140px] truncate">{displayName}</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">UPSC Aspirant</span>
         </div>
         <ChevronDown size={14} className="text-slate-400" />
       </button>
@@ -87,16 +105,31 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-scale-up">
-            <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800">
-              <p className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">{user.email}</p>
-              <p className="text-[10px] text-slate-500">Connected to Database</p>
+            <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
+              {user.picture && !imgError ? (
+                <img
+                  src={user.picture}
+                  alt={displayName}
+                  referrerPolicy="no-referrer"
+                  onError={() => setImgError(true)}
+                  className="w-9 h-9 rounded-full object-cover border border-amber-500/30 shrink-0"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-sm shadow-xs shrink-0">
+                  {initial}
+                </div>
+              )}
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">{displayName}</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user.email}</p>
+              </div>
             </div>
 
             <div className="py-1 px-1 border-b border-slate-100 dark:border-slate-800 space-y-0.5">
               <button
                 type="button"
                 onClick={handleOpenCreate}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-colors cursor-pointer"
               >
                 <PlusCircle size={15} />
                 <span>Log Task / Habit</span>
@@ -105,9 +138,9 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
               <button
                 type="button"
                 onClick={() => { setIsOpen(false); setShowImportModal(true); }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               >
-                <Upload size={15} className="text-indigo-500" />
+                <Upload size={15} className="text-amber-500" />
                 <span>Import Data (JSON)</span>
               </button>
 
@@ -115,7 +148,7 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
                 type="button"
                 disabled={exporting}
                 onClick={handleExportData}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <Download size={15} className="text-emerald-500" />
                 <span>{exporting ? 'Exporting...' : 'Export Backup (JSON)'}</span>

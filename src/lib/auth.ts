@@ -7,6 +7,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-jwt-key-replace-in-pr
 export interface TokenPayload {
   userId: string;
   email: string;
+  name?: string;
+  picture?: string;
   role: 'admin' | 'user';
 }
 

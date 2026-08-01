@@ -13,6 +13,7 @@ export async function POST(req: Request) {
 
     let email = '';
     let name = '';
+    let picture = '';
 
     if (credential) {
       // Verify Google ID Token via Google tokeninfo endpoint
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
 
       email = tokenPayload.email;
       name = tokenPayload.name || tokenPayload.given_name || '';
+      picture = tokenPayload.picture || '';
     } else if (code) {
       // Exchange Authorization Code for Tokens
       const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -55,6 +57,7 @@ export async function POST(req: Request) {
       const tokenPayload = await idTokenInfo.json();
       email = tokenPayload.email;
       name = tokenPayload.name || '';
+      picture = tokenPayload.picture || '';
     } else {
       return NextResponse.json({ error: 'Missing credential or code' }, { status: 400 });
     }
@@ -70,23 +73,36 @@ export async function POST(req: Request) {
       user = await User.create({
         email: email.toLowerCase(),
         name: name,
+        picture: picture,
         passwordHash: '',
         role: 'user'
       });
-    } else if (name && !user.name) {
-      user.name = name;
-      await user.save();
+    } else {
+      let updated = false;
+      if (name && !user.name) {
+        user.name = name;
+        updated = true;
+      }
+      if (picture && user.picture !== picture) {
+        user.picture = picture;
+        updated = true;
+      }
+      if (updated) {
+        await user.save();
+      }
     }
 
     const token = signToken({
       userId: user._id.toString(),
       email: user.email,
+      name: user.name,
+      picture: user.picture,
       role: user.role
     });
 
     const response = NextResponse.json({
       message: 'Authenticated successfully via Google',
-      user: { id: user._id, email: user.email, name: user.name, role: user.role }
+      user: { id: user._id, email: user.email, name: user.name, picture: user.picture, role: user.role }
     });
 
     response.cookies.set({

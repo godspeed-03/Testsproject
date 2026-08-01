@@ -41,6 +41,7 @@ export async function GET(req: Request) {
 
     const email = tokenPayload.email;
     const name = tokenPayload.name || tokenPayload.given_name || '';
+    const picture = tokenPayload.picture || '';
 
     if (!email) {
       return NextResponse.redirect(`${appUrl}/login?error=${encodeURIComponent('No email received from Google')}`);
@@ -53,21 +54,34 @@ export async function GET(req: Request) {
       user = await User.create({
         email: email.toLowerCase(),
         name: name,
+        picture: picture,
         passwordHash: '',
         role: 'user'
       });
-    } else if (name && !user.name) {
-      user.name = name;
-      await user.save();
+    } else {
+      let updated = false;
+      if (name && !user.name) {
+        user.name = name;
+        updated = true;
+      }
+      if (picture && user.picture !== picture) {
+        user.picture = picture;
+        updated = true;
+      }
+      if (updated) {
+        await user.save();
+      }
     }
 
     const token = signToken({
       userId: user._id.toString(),
       email: user.email,
+      name: user.name,
+      picture: user.picture,
       role: user.role
     });
 
-    const response = NextResponse.redirect(`${appUrl}/tracker`);
+    const response = NextResponse.redirect(`${appUrl}/tracker/agenda`);
 
     response.cookies.set({
       name: 'token',

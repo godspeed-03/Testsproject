@@ -3,9 +3,9 @@ import Link from "next/link";
 import { ShieldCheck, FileText, ArrowLeft, Mail, CheckCircle2, AlertCircle, HelpCircle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | UPSC tracker",
+  title: "Terms of Service | UPSC Tracker",
   description:
-    "Terms of Service for UPSC tracker app, governing user access, account registration, authentication, service availability, and usage guidelines.",
+    "Terms of Service for UPSC Tracker app, governing user access, account registration, authentication, service availability, and usage guidelines.",
 };
 
 export default function TermsOfServicePage() {
@@ -25,7 +25,7 @@ export default function TermsOfServicePage() {
             className="inline-flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-full"
           >
             <ArrowLeft size={14} />
-            <span>Back to UPSC tracker</span>
+            <span>Back to UPSC Tracker</span>
           </Link>
         </div>
 
@@ -42,7 +42,7 @@ export default function TermsOfServicePage() {
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                   Terms of Service
                 </h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">UPSC tracker • Official Legal Terms</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">UPSC Tracker • Official Legal Terms</p>
               </div>
             </div>
 
@@ -52,7 +52,7 @@ export default function TermsOfServicePage() {
           </div>
 
           <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mt-4 border-t border-slate-200 dark:border-slate-800/80 pt-4">
-            Welcome to <strong className="text-amber-600 dark:text-amber-400 font-semibold">UPSC tracker</strong>{" "}
+            Welcome to <strong className="text-amber-600 dark:text-amber-400 font-semibold">UPSC Tracker</strong>{" "}
             (accessible via{" "}
             <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-amber-700 dark:text-amber-300 text-xs">
               nxtdev.in
@@ -78,7 +78,7 @@ export default function TermsOfServicePage() {
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-3">
               By accessing or creating an account on{" "}
-              <strong className="text-slate-800 dark:text-slate-200">UPSC tracker</strong>, you confirm that you have
+              <strong className="text-slate-800 dark:text-slate-200">UPSC Tracker</strong>, you confirm that you have
               read, understood, and agreed to be bound by these Terms of Service, as well as our{" "}
               <Link
                 href="/privacy-policy"
@@ -102,7 +102,7 @@ export default function TermsOfServicePage() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Description of Service</h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-              <strong className="text-slate-800 dark:text-slate-200">UPSC tracker</strong> provides an executive-level
+              <strong className="text-slate-800 dark:text-slate-200">UPSC Tracker</strong> provides an executive-level
               digital preparation dashboard for Union Public Service Commission Civil Services Examination (UPSC CSE)
               candidates. Services include:
             </p>
@@ -147,8 +147,8 @@ export default function TermsOfServicePage() {
                 <li>You must provide accurate account information when registering or interacting with the service.</li>
                 <li>
                   Notify us immediately at{" "}
-                  <a href="mailto:byt.satysm@gmail.com" className="text-amber-600 dark:text-amber-400 underline">
-                    byt.satysm@gmail.com
+                  <a href="mailto:satyam2001anand@gmail.com" className="text-amber-600 dark:text-amber-400 underline">
+                    satyam2001anand@gmail.com
                   </a>{" "}
                   if you suspect unauthorized access to your account.
                 </li>
@@ -165,7 +165,7 @@ export default function TermsOfServicePage() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Acceptable Use Policy</h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-3">
-              You agree to use <strong className="text-slate-800 dark:text-slate-200">UPSC tracker</strong> solely for
+              You agree to use <strong className="text-slate-800 dark:text-slate-200">UPSC Tracker</strong> solely for
               personal, non-commercial educational purposes. You agree NOT to:
             </p>
             <div className="grid sm:grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-300">
@@ -199,7 +199,7 @@ export default function TermsOfServicePage() {
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
               All branding, application logos, software source code, user interface designs, custom syllabus tools, and
               visual layouts on <strong className="text-slate-800 dark:text-slate-200">nxtdev.in</strong> are the
-              intellectual property of UPSC tracker and its creator. You may not copy, modify, distribute, or
+              intellectual property of UPSC Tracker and its creator. You may not copy, modify, distribute, or
               reverse-engineer any component of the application without prior written approval.
             </p>
           </section>
@@ -241,7 +241,7 @@ export default function TermsOfServicePage() {
               </h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-3">
-              We reserve the right to modify, update, or discontinue any feature of UPSC tracker at any time. We also
+              We reserve the right to modify, update, or discontinue any feature of UPSC Tracker at any time. We also
               reserve the right to suspend or terminate user accounts that violate these Terms of Service.
             </p>
           </section>
@@ -262,10 +262,10 @@ export default function TermsOfServicePage() {
               <div>
                 <p className="text-slate-500 dark:text-slate-400">User Support Email:</p>
                 <a
-                  href="mailto:byt.satysm@gmail.com"
+                  href="mailto:satyam2001anand@gmail.com"
                   className="text-amber-600 dark:text-amber-400 font-bold text-sm hover:underline"
                 >
-                  byt.satysm@gmail.com
+                  satyam2001anand@gmail.com
                 </a>
               </div>
               <div>

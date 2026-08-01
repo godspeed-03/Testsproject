@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Shield, ArrowLeft, Mail, Lock, CheckCircle2, UserCheck, Trash2, Database, EyeOff } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | UPSC tracker",
+  title: "Privacy Policy | UPSC Tracker",
   description:
-    "Privacy Policy for UPSC tracker app detailing user data collection, Google API Service User Data Policy compliance, data protection, and user rights.",
+    "Privacy Policy for UPSC Tracker app detailing user data collection, Google API Service User Data Policy compliance, data protection, and user rights.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
             className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full"
           >
             <ArrowLeft size={14} />
-            <span>Back to UPSC tracker</span>
+            <span>Back to UPSC Tracker</span>
           </Link>
         </div>
 
@@ -43,7 +43,7 @@ export default function PrivacyPolicyPage() {
                   Privacy Policy
                 </h1>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  UPSC tracker • User Data & Google OAuth Compliance Statement
+                  UPSC Tracker • User Data & Google OAuth Compliance Statement
                 </p>
               </div>
             </div>
@@ -54,7 +54,7 @@ export default function PrivacyPolicyPage() {
           </div>
 
           <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mt-4 border-t border-slate-200 dark:border-slate-800/80 pt-4">
-            At <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">UPSC tracker</strong>{" "}
+            At <strong className="text-emerald-600 dark:text-emerald-400 font-semibold">UPSC Tracker</strong>{" "}
             (accessible via{" "}
             <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-emerald-700 dark:text-emerald-300 text-xs">
               nxtdev.in
@@ -76,7 +76,7 @@ export default function PrivacyPolicyPage() {
             <span>Google API Services User Data Policy Disclosure</span>
           </div>
           <p className="leading-relaxed">
-            <strong className="text-slate-900 dark:text-white">UPSC tracker&apos;s</strong> use and transfer to any
+            <strong className="text-slate-900 dark:text-white">UPSC Tracker&apos;s</strong> use and transfer to any
             other app of information received from Google APIs will strictly adhere to the{" "}
             <a
               href="https://developers.google.com/terms/api-services-user-data-policy"
@@ -103,15 +103,15 @@ export default function PrivacyPolicyPage() {
             <div className="grid sm:grid-cols-2 gap-4 text-xs text-slate-600 dark:text-slate-300">
               <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 p-4 rounded-lg">
                 <span className="text-slate-500 dark:text-slate-400 block mb-1">Application Name:</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">UPSC tracker</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold text-sm">UPSC Tracker</span>
               </div>
               <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 p-4 rounded-lg">
                 <span className="text-slate-500 dark:text-slate-400 block mb-1">Developer & Support Contact:</span>
                 <a
-                  href="mailto:byt.satysm@gmail.com"
+                  href="mailto:satyam2001anand@gmail.com"
                   className="text-emerald-600 dark:text-emerald-400 font-bold text-sm hover:underline"
                 >
-                  byt.satysm@gmail.com
+                  satyam2001anand@gmail.com
                 </a>
               </div>
               <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 p-4 rounded-lg">
@@ -177,7 +177,7 @@ export default function PrivacyPolicyPage() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">How We Use Your Information</h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-3">
-              Your data is exclusively utilized to deliver and improve your experience on UPSC tracker:
+              Your data is exclusively utilized to deliver and improve your experience on UPSC Tracker:
             </p>
             <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300 pl-2">
               <li className="flex items-start gap-2">
@@ -199,8 +199,8 @@ export default function PrivacyPolicyPage() {
                 <span>
                   <strong>Support & Communication:</strong> Respond to your technical inquiries or account assistance
                   sent to{" "}
-                  <a href="mailto:byt.satysm@gmail.com" className="text-emerald-600 dark:text-emerald-400 underline">
-                    byt.satysm@gmail.com
+                  <a href="mailto:satyam2001anand@gmail.com" className="text-emerald-600 dark:text-emerald-400 underline">
+                    satyam2001anand@gmail.com
                   </a>
                   .
                 </span>
@@ -288,10 +288,10 @@ export default function PrivacyPolicyPage() {
                 <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
                   To request complete deletion of your account and associated study data, email our support team at{" "}
                   <a
-                    href="mailto:byt.satysm@gmail.com"
+                    href="mailto:satyam2001anand@gmail.com"
                     className="text-emerald-600 dark:text-emerald-400 underline font-semibold"
                   >
-                    byt.satysm@gmail.com
+                    satyam2001anand@gmail.com
                   </a>{" "}
                   with the subject line <strong>&quot;Data Deletion Request&quot;</strong>. Upon verification, your
                   account record and stored progress data will be permanently wiped from our database within 7 working
@@ -331,15 +331,15 @@ export default function PrivacyPolicyPage() {
               <div>
                 <p className="text-slate-500 dark:text-slate-400">Support Email:</p>
                 <a
-                  href="mailto:byt.satysm@gmail.com"
+                  href="mailto:satyam2001anand@gmail.com"
                   className="text-emerald-600 dark:text-emerald-400 font-bold text-sm hover:underline"
                 >
-                  byt.satysm@gmail.com
+                  satyam2001anand@gmail.com
                 </a>
               </div>
               <div>
                 <p className="text-slate-500 dark:text-slate-400">App Name:</p>
-                <p className="text-slate-900 dark:text-slate-200 font-semibold">UPSC tracker</p>
+                <p className="text-slate-900 dark:text-slate-200 font-semibold">UPSC Tracker</p>
               </div>
               <div>
                 <p className="text-slate-500 dark:text-slate-400">Authorized Domain:</p>

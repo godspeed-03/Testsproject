@@ -2,6 +2,12 @@
   "name": "testsproject",
   "version": "0.1.0",
   "private": true,
+  "author": {
+    "name": "Satyam Anand",
+    "email": "satyam2001anand@gmail.com",
+    "url": "https://test.nxtdev.in"
+  },
+  "license": "MIT",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -19,9 +19,34 @@ export const metadata: Metadata = {
   title: "UPSC Tracker — Executive Preparation & Syllabus Suite",
   description:
     "UPSC Tracker is an executive-level study suite for UPSC Civil Services Examination (CSE) aspirants featuring automated syllabus tracking, spaced repetition revision engines, daily study timetables, and progress analytics.",
-  verification: {
-    google: "BBC_-UN0nPiBk5hGBTmMDhj7ryHNoMVGZ9viAgJQWAQ",
+  openGraph: {
+    title: "UPSC Tracker — Executive Preparation & Syllabus Suite",
+    description:
+      "Executive study management suite for UPSC Civil Services Examination (CSE) aspirants: automated 12-stage revision pipelines, GS & Optional syllabus matrix, daily timetable, and mock test analytics.",
+    url: "https://test.nxtdev.in",
+    siteName: "UPSC Tracker",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "UPSC Tracker — Executive Study & Syllabus Management Suite",
+        type: "image/png"
+      }
+    ],
+    locale: "en_US",
+    type: "website"
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "UPSC Tracker — Executive Preparation & Syllabus Suite",
+    description:
+      "Executive study management suite for UPSC Civil Services Examination (CSE) aspirants: automated 12-stage revision pipelines, GS & Optional syllabus matrix, daily timetable, and mock test analytics.",
+    images: ["/og-image.png"]
+  },
+  verification: {
+    google: "BBC_-UN0nPiBk5hGBTmMDhj7ryHNoMVGZ9viAgJQWAQ"
+  }
 };
 
 export default async function Home() {

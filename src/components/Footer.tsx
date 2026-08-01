@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Target, Shield, FileText, Mail } from "lucide-react";
+import { Shield, FileText, Mail } from "lucide-react";
+import BrandLogoIcon from "./BrandLogoIcon";
 
 export default function Footer() {
   const pathname = usePathname();
@@ -33,14 +34,12 @@ export default function Footer() {
         {/* Brand & Description */}
         <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
           <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-200">
-            <div className="w-6 h-6 rounded-md bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-xs">
-              <Target size={14} />
-            </div>
-            <span>UPSC Tracker</span>
+            <BrandLogoIcon size="sm" />
+            <span>UPSC tracker</span>
           </div>
           <span className="hidden sm:inline text-slate-300 dark:text-slate-700">|</span>
           <p className="text-slate-500 dark:text-slate-400 text-xs">
-            Executive preparation suite for UPSC CSE aspirants.
+            Executive study management suite for UPSC Civil Services Examination (CSE) aspirants.
           </p>
         </div>
 
@@ -48,7 +47,7 @@ export default function Footer() {
         <div className="flex flex-wrap items-center justify-center gap-6 text-xs">
           <Link
             href="/privacy-policy"
-            className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-1.5 font-medium"
+            className="hover:text-[#7C3AED] dark:hover:text-violet-400 transition-colors flex items-center gap-1.5 font-medium"
           >
             <Shield size={14} />
             <span>Privacy Policy</span>
@@ -56,7 +55,7 @@ export default function Footer() {
 
           <Link
             href="/terms-of-service"
-            className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-1.5 font-medium"
+            className="hover:text-[#7C3AED] dark:hover:text-violet-400 transition-colors flex items-center gap-1.5 font-medium"
           >
             <FileText size={14} />
             <span>Terms of Service</span>
@@ -64,7 +63,7 @@ export default function Footer() {
 
           <a
             href="mailto:byt.satysm@gmail.com"
-            className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-1.5 font-medium"
+            className="hover:text-[#7C3AED] dark:hover:text-violet-400 transition-colors flex items-center gap-1.5 font-medium"
           >
             <Mail size={14} />
             <span>Support</span>

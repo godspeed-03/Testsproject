@@ -3,9 +3,9 @@ import Link from "next/link";
 import { Shield, ArrowLeft, Mail, Lock, CheckCircle2, UserCheck, Trash2, Database, EyeOff } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | UPSC Tracker",
+  title: "Privacy Policy | UPSC tracker",
   description:
-    "Privacy Policy for UPSC Tracker app detailing user data collection, Google API Service User Data Policy compliance, data protection, and user rights.",
+    "Privacy Policy for UPSC tracker app detailing user data collection, Google API Service User Data Policy compliance, data protection, and user rights.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
             className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 transition-colors bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full"
           >
             <ArrowLeft size={14} />
-            <span>Back to UPSC Tracker App</span>
+            <span>Back to UPSC tracker</span>
           </Link>
         </div>
 

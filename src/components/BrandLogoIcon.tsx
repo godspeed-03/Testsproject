@@ -18,7 +18,7 @@ export default function BrandLogoIcon({ size = 'md', className = '' }: BrandLogo
     <div className={`relative inline-flex items-center justify-center shrink-0 ${sizeClasses[size]} overflow-hidden shadow-md shadow-violet-500/20 ${className}`}>
       <img
         src="/icon.svg"
-        alt="UPSC Tracker Logo"
+        alt="UPSC tracker Logo"
         className="w-full h-full object-cover"
       />
     </div>

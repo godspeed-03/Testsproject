@@ -20,7 +20,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "UPSC tracker — Executive Preparation & Syllabus Suite",
+  title: "UPSC Tracker — Executive Preparation & Syllabus Suite",
   description: "Executive-level UPSC Civil Services preparation suite: automated syllabus tracking, spaced repetition revision engine, focus timer, and performance analytics.",
   verification: {
     google: "BBC_-UN0nPiBk5hGBTmMDhj7ryHNoMVGZ9viAgJQWAQ",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "UPSC tracker"
+    title: "UPSC Tracker"
   },
   icons: {
     icon: [

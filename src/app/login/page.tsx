@@ -26,7 +26,10 @@ export default function LoginPage() {
 
           <div>
             <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center justify-center gap-1.5">
-              UPSC <span className="bg-gradient-to-r from-[#7C3AED] via-[#8B5CF6] to-[#9333EA] bg-clip-text text-transparent">tracker</span>
+              UPSC{" "}
+              <span className="bg-gradient-to-r from-[#7C3AED] via-[#8B5CF6] to-[#9333EA] bg-clip-text text-transparent">
+                Tracker
+              </span>
             </h1>
             <p className="text-xs font-extrabold text-[#7C3AED] dark:text-violet-400 mt-1 uppercase tracking-wider">
               Official Civil Services Preparation Suite
@@ -34,7 +37,8 @@ export default function LoginPage() {
           </div>
 
           <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-relaxed max-w-xs mx-auto">
-            Sign in with your Google account to access your personal study timetable, syllabus tracker, and spaced repetition engine.
+            Sign in with your Google account to access your personal study timetable, syllabus tracker, and spaced
+            repetition engine.
           </p>
         </div>
 

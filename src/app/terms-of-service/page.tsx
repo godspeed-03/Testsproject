@@ -3,9 +3,9 @@ import Link from "next/link";
 import { ShieldCheck, FileText, ArrowLeft, Mail, CheckCircle2, AlertCircle, HelpCircle } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | UPSC Tracker",
+  title: "Terms of Service | UPSC tracker",
   description:
-    "Terms of Service for UPSC Tracker app, governing user access, account registration, authentication, service availability, and usage guidelines.",
+    "Terms of Service for UPSC tracker app, governing user access, account registration, authentication, service availability, and usage guidelines.",
 };
 
 export default function TermsOfServicePage() {
@@ -25,7 +25,7 @@ export default function TermsOfServicePage() {
             className="inline-flex items-center gap-2 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 transition-colors bg-amber-500/10 border border-amber-500/20 px-3.5 py-1.5 rounded-full"
           >
             <ArrowLeft size={14} />
-            <span>Back to UPSC Tracker App</span>
+            <span>Back to UPSC tracker</span>
           </Link>
         </div>
 

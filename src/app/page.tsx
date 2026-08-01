@@ -16,9 +16,9 @@ import TimetableShowcase from "@/components/landing/TimetableShowcase";
 import TransparencySection from "@/components/landing/TransparencySection";
 
 export const metadata: Metadata = {
-  title: "UPSC tracker — Executive Preparation & Syllabus Suite",
+  title: "UPSC Tracker — Executive Preparation & Syllabus Suite",
   description:
-    "UPSC tracker is an executive-level study suite for UPSC Civil Services Examination (CSE) aspirants featuring automated syllabus tracking, spaced repetition revision engines, daily study timetables, and progress analytics.",
+    "UPSC Tracker is an executive-level study suite for UPSC Civil Services Examination (CSE) aspirants featuring automated syllabus tracking, spaced repetition revision engines, daily study timetables, and progress analytics.",
   verification: {
     google: "BBC_-UN0nPiBk5hGBTmMDhj7ryHNoMVGZ9viAgJQWAQ",
   },

@@ -12,36 +12,46 @@ export default function TransparencySection() {
             <div className="w-10 h-10 rounded-xl bg-violet-50 border border-violet-200 flex items-center justify-center text-[#7C3AED]">
               <Lock size={20} />
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Application Purpose & Google Account Transparency</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+              Application Purpose & Google Account Transparency
+            </h2>
           </div>
 
           <p className="text-slate-600 text-sm leading-relaxed">
-            <strong className="text-slate-900 font-semibold">UPSC tracker</strong> is an executive study management suite built for UPSC Civil Services Examination (CSE) aspirants to structure daily routines, track syllabus completion, run spaced repetition revision schedules, and analyze test performance. When you sign in using <strong className="text-slate-800">Google Authentication</strong>, our application requests access strictly to your basic profile information (email address, full name, and avatar).
+            <strong className="text-slate-900 font-semibold">UPSC Tracker</strong> is an executive study management
+            suite built for UPSC Civil Services Examination (CSE) aspirants to structure daily routines, track syllabus
+            completion, run spaced repetition revision schedules, and analyze test performance. When you sign in using{" "}
+            <strong className="text-slate-800">Google Authentication</strong>, our application requests access strictly
+            to your basic profile information (email address, full name, and avatar).
           </p>
 
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-3 text-xs sm:text-sm text-slate-600">
             <div className="flex items-start gap-2.5">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
               <span>
-                <strong>Purpose of Collection:</strong> We use your Google email address and profile name exclusively to create your personal user account, authenticate your session, and securely sync your study timetable and syllabus matrix across your devices.
+                <strong>Purpose of Collection:</strong> We use your Google email address and profile name exclusively to
+                create your personal user account, authenticate your session, and securely sync your study timetable and
+                syllabus matrix across your devices.
               </span>
             </div>
             <div className="flex items-start gap-2.5">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
               <span>
-                <strong>No Third-Party Data Sharing:</strong> We do NOT sell, rent, or transfer your personal data or Google user data to advertisers, data brokers, or third parties.
+                <strong>No Third-Party Data Sharing:</strong> We do NOT sell, rent, or transfer your personal data or
+                Google user data to advertisers, data brokers, or third parties.
               </span>
             </div>
             <div className="flex items-start gap-2.5">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
               <span>
-                <strong>No AI Model Training:</strong> Google OAuth user data is never used to train generalized artificial intelligence or machine learning models.
+                <strong>No AI Model Training:</strong> Google OAuth user data is never used to train generalized
+                artificial intelligence or machine learning models.
               </span>
             </div>
             <div className="flex items-start gap-2.5">
               <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" />
               <span>
-                <strong>Limited Use Compliance:</strong> UPSC tracker adheres strictly to the{" "}
+                <strong>Limited Use Compliance:</strong> UPSC Tracker adheres strictly to the{" "}
                 <a
                   href="https://developers.google.com/terms/api-services-user-data-policy"
                   target="_blank"
@@ -69,8 +79,8 @@ export default function TransparencySection() {
             <div className="flex items-center gap-1.5 text-slate-500">
               <Mail size={14} className="text-slate-400" />
               <span>
-                Support:{" "}
-                <a href="mailto:byt.satysm@gmail.com" className="text-slate-800 underline">
+                User Support Email:{" "}
+                <a href="mailto:byt.satysm@gmail.com" className="text-slate-800 font-bold underline">
                   byt.satysm@gmail.com
                 </a>
               </span>

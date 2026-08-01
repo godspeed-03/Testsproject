@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'UPSC Study Tracker',
+    name: 'UPSC Tracker',
     short_name: 'UPSC Tracker',
     description: 'Executive-level UPSC Civil Services preparation suite: automated syllabus tracking, spaced repetition revision engine, focus timer, and performance analytics.',
     start_url: '/tracker',

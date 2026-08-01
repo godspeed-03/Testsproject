@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import { getUserFromCookies } from '@/lib/auth';
 import RoutineConfig from '@/models/RoutineConfig';
-import { DEFAULT_MASTER_ROUTINE_CONFIG } from '@/lib/routineDefaultConfig';
 
 export async function GET() {
   try {
@@ -17,7 +16,7 @@ export async function GET() {
 
     if (!config) {
       return NextResponse.json({
-        routineConfig: DEFAULT_MASTER_ROUTINE_CONFIG
+        routineConfig: null
       });
     }
 
@@ -27,7 +26,7 @@ export async function GET() {
   } catch (error: any) {
     console.error('Fetch routine config error:', error);
     return NextResponse.json(
-      { routineConfig: DEFAULT_MASTER_ROUTINE_CONFIG, error: 'Database fetch failed' },
+      { routineConfig: null, error: 'Database fetch failed' },
       { status: 500 }
     );
   }
@@ -58,22 +57,18 @@ export async function POST(req: Request) {
     if (routineData.title) updateDoc.title = routineData.title;
     if (routineData.subtitle) updateDoc.subtitle = routineData.subtitle;
     if (routineData.timeSlots) updateDoc.timeSlots = routineData.timeSlots;
-    if (routineData.cells) updateDoc.cells = routineData.cells;
-    if (routineData.metrics) updateDoc.metrics = routineData.metrics;
     if (routineData.satakGoals) updateDoc.satakGoals = routineData.satakGoals;
+    if (routineData.weeklySummary) updateDoc.weeklySummary = routineData.weeklySummary;
 
-    const updated = await RoutineConfig.findOneAndUpdate(
-      { userId },
-      updateDoc,
-      { upsert: true, new: true, runValidators: false }
-    ).lean();
+    const result = await RoutineConfig.findOneAndUpdate(
+      { $or: [{ userId }, { userId: '000000000000000000000000' }] },
+      { $set: updateDoc },
+      { upsert: true, new: true }
+    );
 
-    return NextResponse.json({
-      message: 'Master Routine configuration saved to MongoDB database successfully!',
-      routineConfig: (updated as any).configPayload || updated
-    });
+    return NextResponse.json({ success: true, routineConfig: result.configPayload || result });
   } catch (error: any) {
     console.error('Save routine config error:', error);
-    return NextResponse.json({ error: 'Failed to save routine to MongoDB' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to save routine config' }, { status: 500 });
   }
 }

@@ -21,7 +21,6 @@ import {
   Grid,
   Columns
 } from 'lucide-react';
-import { DEFAULT_MASTER_ROUTINE_CONFIG } from '@/lib/routineDefaultConfig';
 import { normalizeRoutineTables, getCellStyle } from '@/components/MasterRoutineTable';
 
 interface TimetableCodeEditorModalProps {
@@ -31,11 +30,15 @@ interface TimetableCodeEditorModalProps {
 }
 
 function GridMatrixTablePreview({ table }: { table: any }) {
-  const timeSlots = table.timeSlots || DEFAULT_MASTER_ROUTINE_CONFIG.timeSlots;
-  const cells = table.cells || DEFAULT_MASTER_ROUTINE_CONFIG.cells;
-  const metrics = table.metrics || DEFAULT_MASTER_ROUTINE_CONFIG.metrics;
+  const timeSlots = table.timeSlots || [];
+  const cells = table.cells || [];
+  const metrics = table.metrics;
   const numSlots = timeSlots.length;
   const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+  if (numSlots === 0) {
+    return <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400 italic">No time slots defined in grid matrix.</div>;
+  }
 
   const coveredMatrix: boolean[][] = Array.from({ length: 7 }, () => Array(numSlots).fill(false));
 
@@ -255,65 +258,6 @@ function MasterRoutineTablePreview({ config }: { config: any }) {
   );
 }
 
-const DEFAULT_SAMPLE_JSON = [
-  {
-    "title": "GS Paper 1: Modern Indian History",
-    "type": "task",
-    "category": { "id": "gs1", "label": "GS1", "icon": "📜", "color": "#F59E0B" },
-    "subject": "History",
-    "topic": "Freedom Movement & 1857 Revolt",
-    "priority": "high",
-    "frequency": { "mode": "daily", "days": [] },
-    "target": { "value": 2, "unit": "hours" },
-    "startDate": "2026-08-01",
-    "icon": "📖",
-    "color": "#F59E0B",
-    "isStudyTask": true,
-    "isAugmentedRevision": true,
-    "reminders": [{ "time": "09:00", "enabled": true }]
-  },
-  {
-    "title": "Daily Answer Writing Practice (2 Questions)",
-    "type": "habit",
-    "category": { "id": "mains", "label": "Mains Practice", "icon": "✍️", "color": "#6366F1" },
-    "subject": "GS Mains",
-    "priority": "high",
-    "frequency": { "mode": "daily", "days": [] },
-    "target": { "value": 2, "unit": "answers" },
-    "startDate": "2026-08-01",
-    "icon": "✍️",
-    "color": "#6366F1",
-    "isStudyTask": true,
-    "reminders": [{ "time": "14:00", "enabled": true }]
-  },
-  {
-    "title": "The Hindu & Indian Express Editorial Analysis",
-    "type": "habit",
-    "category": { "id": "current_affairs", "label": "Current Affairs", "icon": "🗞️", "color": "#10B981" },
-    "subject": "Current Affairs",
-    "priority": "medium",
-    "frequency": { "mode": "daily", "days": [] },
-    "target": { "value": 1.5, "unit": "hours" },
-    "startDate": "2026-08-01",
-    "icon": "📰",
-    "color": "#10B981",
-    "reminders": [{ "time": "07:30", "enabled": true }]
-  },
-  {
-    "title": "CSAT Quantitative Aptitude & Reasoning",
-    "type": "task",
-    "category": { "id": "csat", "label": "CSAT", "icon": "🧮", "color": "#EC4899" },
-    "subject": "CSAT",
-    "priority": "medium",
-    "frequency": { "mode": "specific_days", "days": ["Mon", "Wed", "Fri"] },
-    "target": { "value": 1, "unit": "hours" },
-    "startDate": "2026-08-01",
-    "icon": "🔢",
-    "color": "#EC4899",
-    "reminders": [{ "time": "17:00", "enabled": true }]
-  }
-];
-
 export default function TimetableCodeEditorModal({
   isOpen,
   onClose,
@@ -329,11 +273,41 @@ export default function TimetableCodeEditorModal({
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (isOpen && !jsonText) {
-      const initialStr = JSON.stringify(DEFAULT_MASTER_ROUTINE_CONFIG, null, 2);
-      setJsonText(initialStr);
-      validateAndParse(initialStr);
+    async function initEditorContent() {
+      if (!isOpen) return;
+      try {
+        const res = await fetch('/api/tracker/routine');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.routineConfig) {
+            const formatted = JSON.stringify(data.routineConfig, null, 2);
+            setJsonText(formatted);
+            validateAndParse(formatted);
+            return;
+          }
+        }
+
+        const saved = localStorage.getItem('upsc_master_routine_config');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed) {
+            const formatted = JSON.stringify(parsed, null, 2);
+            setJsonText(formatted);
+            validateAndParse(formatted);
+            return;
+          }
+        }
+
+        setJsonText('');
+        setParsedData([]);
+        setIsRoutineConfig(false);
+        setJsonError(null);
+      } catch (err) {
+        console.error('Failed to load initial editor JSON:', err);
+      }
     }
+
+    initEditorContent();
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -341,7 +315,7 @@ export default function TimetableCodeEditorModal({
   const validateAndParse = (text: string) => {
     try {
       if (!text.trim()) {
-        setJsonError('Code editor is empty');
+        setJsonError(null);
         setParsedData([]);
         setIsRoutineConfig(false);
         return false;
@@ -397,33 +371,14 @@ export default function TimetableCodeEditorModal({
 
   const handleFormatCode = () => {
     try {
+      if (!jsonText.trim()) return;
       const parsed = JSON.parse(jsonText);
       const formatted = JSON.stringify(parsed, null, 2);
       setJsonText(formatted);
       validateAndParse(formatted);
-    } catch (err: any) {
-      setJsonError('Cannot format: Invalid JSON code');
+    } catch (e) {
+      // syntax error handled by validateAndParse
     }
-  };
-
-  const handleLoadSample = (sampleType: 'routine' | 'upsc' | 'minimal') => {
-    let sample: any = DEFAULT_SAMPLE_JSON;
-    if (sampleType === 'routine') {
-      sample = DEFAULT_MASTER_ROUTINE_CONFIG;
-    } else if (sampleType === 'minimal') {
-      sample = [
-        {
-          "title": "Morning Revision Session",
-          "type": "habit",
-          "category": { "id": "revision", "label": "Revision", "icon": "⚡", "color": "#F59E0B" },
-          "target": { "value": 1, "unit": "hours" },
-          "startDate": new Date().toISOString().split('T')[0]
-        }
-      ];
-    }
-    const str = JSON.stringify(sample, null, 2);
-    setJsonText(str);
-    validateAndParse(str);
   };
 
   const handleCopyCode = () => {
@@ -432,55 +387,51 @@ export default function TimetableCodeEditorModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSaveTimetable = async () => {
-    if (!validateAndParse(jsonText)) return;
+  const handleSave = async () => {
+    if (!validateAndParse(jsonText)) {
+      alert('Please fix JSON syntax errors before saving.');
+      return;
+    }
 
+    setSaving(true);
     try {
-      setSaving(true);
-      setJsonError(null);
+      const parsed = JSON.parse(jsonText);
 
       if (isRoutineConfig) {
-        // Save Master Routine & Schedule config directly to MongoDB API
         const res = await fetch('/api/tracker/routine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(parsedData)
+          body: JSON.stringify({ routineConfig: parsed })
         });
 
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.error || 'Failed to save routine to database');
-        }
+        if (!res.ok) throw new Error('Failed to save to database');
+        localStorage.setItem('upsc_master_routine_config', JSON.stringify(parsed));
       } else {
-        // Save Habits/Tasks to MongoDB via import API
-        const payload = {
-          habits: parsedData.map((item: any) => ({
-            type: item.type || 'task',
-            title: item.title || 'Untitled Study Block',
-            category: item.category || { id: 'general', label: 'General', icon: '📚', color: '#6366F1' },
-            subject: item.subject || '',
-            topic: item.topic || '',
+        const itemsArr = Array.isArray(parsedData) ? parsedData : [parsedData];
+        for (const item of itemsArr) {
+          const payload = {
+            title: item.title || 'Untitled Task',
+            type: item.type || 'habit',
+            category: item.category || { id: 'general', label: 'General', icon: '📌', color: '#6366F1' },
+            description: item.description || '',
             priority: item.priority || 'medium',
             frequency: item.frequency || { mode: 'daily', days: [] },
-            target: item.target || { value: 1, unit: 'hours' },
+            target: item.target || { value: 1, unit: 'times' },
             startDate: item.startDate || new Date().toISOString().split('T')[0],
-            icon: item.icon || '📖',
-            color: item.color || '#6366F1',
             isStudyTask: item.isStudyTask !== undefined ? item.isStudyTask : true,
             isAugmentedRevision: item.isAugmentedRevision !== undefined ? item.isAugmentedRevision : true,
+            subject: item.subject || '',
+            topic: item.topic || '',
+            color: item.color || '#6366F1',
+            icon: item.icon || '📌',
             reminders: item.reminders || [{ time: '08:00', enabled: true }]
-          }))
-        };
+          };
 
-        const res = await fetch('/api/tracker/import', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          const errData = await res.json();
-          throw new Error(errData.error || 'Failed to save timetable code');
+          await fetch('/api/tracker/habits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
         }
       }
 
@@ -491,307 +442,218 @@ export default function TimetableCodeEditorModal({
         onClose();
       }, 1000);
     } catch (err: any) {
-      console.error('Save error:', err);
-      setJsonError(err.message || 'Error saving timetable code');
+      alert('Save failed: ' + (err.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="w-full max-w-7xl max-h-[96vh] flex flex-col rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100">
+    <div className="fixed inset-0 z-[999999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50">
+        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-extrabold shadow-inner shrink-0">
-              <FileCode size={22} />
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 flex items-center justify-center">
+              <FileCode size={20} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  Timetable & Routine Code Editor
-                </h2>
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                  JSON Engine
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Paste, edit, or format master routine matrix or habit timetable JSON code with live UI preview.
-              </p>
+              <h3 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                Timetable Code Editor
+                {isRoutineConfig ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
+                    Multi-Table Routine Config
+                  </span>
+                ) : parsedData.length > 0 ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                    {parsedData.length} Tasks Array
+                  </span>
+                ) : null}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Edit or paste timetable JSON code</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-            {/* View Mode Switcher Toggle */}
-            <div className="flex p-1 rounded-xl bg-slate-200 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-xs">
+          <div className="flex items-center gap-2">
+            {/* View Switchers */}
+            <div className="hidden sm:flex bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setActiveTab('split')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
-                  activeTab === 'split' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'split' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Columns size={14} />
-                <span>Side-by-Side View</span>
+                Split View
               </button>
-
               <button
                 type="button"
                 onClick={() => setActiveTab('editor')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
-                  activeTab === 'editor' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'editor' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Code size={14} />
-                <span>Code Only</span>
+                JSON Only
               </button>
-
               <button
                 type="button"
                 onClick={() => setActiveTab('preview')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-all flex items-center gap-1.5 ${
-                  activeTab === 'preview' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === 'preview' ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-xs' : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Eye size={14} />
-                <span>Table Preview</span>
+                Preview Only
               </button>
             </div>
 
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
         </div>
 
-        {/* Toolbar Strip */}
-        <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-100/80 dark:bg-slate-950/90 border-b border-slate-200 dark:border-slate-800/80 text-xs px-5 sm:px-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-slate-500 dark:text-slate-400 font-semibold text-[11px]">Presets:</span>
-            <button
-              type="button"
-              onClick={() => handleLoadSample('routine')}
-              className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30 transition-all font-semibold flex items-center gap-1"
-            >
-              <Grid size={12} className="text-amber-600 dark:text-amber-400" />
-              <span>Load Master Routine JSON</span>
-            </button>
+        {/* Action Toolbar */}
+        <div className="px-5 py-2.5 bg-slate-100/70 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 text-xs shrink-0">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleFormatCode}
-              className="px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30 transition-all font-semibold flex items-center gap-1"
+              className="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <RefreshCw size={12} />
-              <span>Format JSON</span>
+              <Sparkles size={14} className="text-amber-500" /> Format JSON
             </button>
-          </div>
-
-          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={handleCopyCode}
-              className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors font-medium flex items-center gap-1"
+              className="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
             >
-              <Copy size={13} />
-              <span>{copied ? 'Copied!' : 'Copy Code'}</span>
+              {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+              {copied ? 'Copied!' : 'Copy Code'}
             </button>
+          </div>
 
+          <div className="flex items-center gap-2">
             {jsonError ? (
-              <span className="inline-flex items-center gap-1.5 text-xs text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2.5 py-0.5 rounded-full font-bold">
-                <AlertTriangle size={13} /> Invalid JSON Syntax
+              <span className="text-rose-600 dark:text-rose-400 font-extrabold flex items-center gap-1 text-xs">
+                <AlertTriangle size={14} /> Syntax Error
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full font-bold">
-                <CheckCircle2 size={13} /> Valid Code Format
+              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center gap-1 text-xs">
+                <CheckCircle2 size={14} /> Valid JSON
               </span>
             )}
           </div>
         </div>
 
-        {/* Main Body: Code Editor + Live UI Preview (Side by Side Left / Right) */}
-        <div className="flex-1 overflow-hidden flex flex-col md:flex-row min-h-[480px] max-h-[76vh]">
+        {/* Main Body */}
+        <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800">
           
-          {/* Left Column: Code Textarea Editor */}
-          {(activeTab === 'split' || activeTab === 'editor') && (
-            <div className={`${activeTab === 'editor' ? 'w-full' : 'w-full md:w-1/2'} flex flex-col border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 relative`}>
-              <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">
-                <span className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
-                  <Code size={14} /> JSON Timetable Code
-                </span>
-                <span>{jsonText.length} chars</span>
-              </div>
-
-              <textarea
-                value={jsonText}
-                onChange={handleTextChange}
-                placeholder="Paste or type JSON code here..."
-                spellCheck={false}
-                className="flex-1 w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 text-slate-800 dark:text-amber-300 rounded-xl p-4 font-mono text-xs leading-relaxed outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/30 resize-none scrollbar-thin shadow-xs min-h-[350px]"
-              />
-
-              {jsonError && (
-                <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-mono space-y-1">
-                  <div className="font-bold flex items-center gap-1.5">
-                    <AlertTriangle size={14} /> Syntax Error Details:
-                  </div>
-                  <div className="text-[11px] opacity-90">{jsonError}</div>
-                </div>
-              )}
+          {/* Editor Column */}
+          <div className={`h-full flex flex-col p-4 bg-slate-900 text-slate-100 ${activeTab === 'preview' ? 'hidden' : activeTab === 'editor' ? 'md:col-span-2' : ''}`}>
+            <div className="flex justify-between items-center mb-2 text-xs font-bold text-slate-400">
+              <span className="flex items-center gap-1">
+                <Code size={14} className="text-amber-400" /> JSON Code Input
+              </span>
+              <span>UTF-8 • {jsonText.length} chars</span>
             </div>
-          )}
 
-          {/* Right Column: Live UI Table & Card Preview */}
-          {(activeTab === 'split' || activeTab === 'preview') && (
-            <div className={`${activeTab === 'preview' ? 'w-full' : 'w-full md:w-1/2'} flex flex-col bg-slate-50/50 dark:bg-slate-900 p-4 sm:p-5 overflow-y-auto scrollbar-thin space-y-4`}>
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <Eye size={16} className="text-emerald-600 dark:text-emerald-400" />
-                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">Live UI Render Preview</h3>
-                </div>
-                <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                  {isRoutineConfig ? 'Live Routine Matrix' : `${parsedData?.length || 0} Items`}
-                </span>
+            <textarea
+              value={jsonText}
+              onChange={handleTextChange}
+              placeholder="Paste your timetable JSON configuration here..."
+              spellCheck={false}
+              className="w-full flex-1 bg-slate-950 text-amber-300 font-mono text-xs p-4 rounded-xl outline-none resize-none border border-slate-800 focus:border-amber-500/50 leading-relaxed scrollbar-thin"
+            />
+
+            {jsonError && (
+              <div className="mt-3 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl text-xs font-mono">
+                ⚠ {jsonError}
               </div>
+            )}
+          </div>
 
-              {isRoutineConfig ? (
-                /* Live Master Routine Matrix Table Preview */
-                <MasterRoutineTablePreview config={parsedData} />
-              ) : parsedData?.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center p-8 text-center border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-2xl space-y-3">
-                  <FileCode size={36} className="text-slate-400 dark:text-slate-600" />
-                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">
-                    No valid timetable items parsed. Type or paste valid JSON code on the left editor to preview UI layout.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {Array.isArray(parsedData) && parsedData.map((item: any, idx: number) => (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-amber-500/40 transition-all space-y-2.5 shadow-xs"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-xl p-2 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                            {item.icon || '📖'}
-                          </span>
-                          <div>
-                            <h4 className="font-extrabold text-sm text-slate-900 dark:text-white leading-tight">
-                              {item.title || 'Untitled Item'}
-                            </h4>
-                            <div className="flex items-center gap-2 mt-1 flex-wrap text-[11px]">
-                              {item.category && (
-                                <span
-                                  className="px-2 py-0.5 rounded-md font-bold"
-                                  style={{
-                                    backgroundColor: (item.category?.color || '#6366F1') + '20',
-                                    color: item.category?.color || '#6366F1',
-                                    border: `1px solid ${(item.category?.color || '#6366F1')}40`
-                                  }}
-                                >
-                                  {item.category?.icon || '📚'} {item.category?.label || 'General'}
-                                </span>
-                              )}
-                              {item.subject && (
-                                <span className="text-slate-600 dark:text-slate-400 font-semibold bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800">
-                                  {item.subject}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
+          {/* Live Preview Column */}
+          <div className={`h-full overflow-y-auto p-4 sm:p-6 bg-slate-50 dark:bg-slate-950 ${activeTab === 'editor' ? 'hidden' : activeTab === 'preview' ? 'md:col-span-2' : ''}`}>
+            <div className="flex justify-between items-center mb-4 text-xs font-extrabold text-slate-800 dark:text-slate-200">
+              <span className="flex items-center gap-1.5">
+                <Eye size={14} className="text-amber-500" /> Live Timetable Preview
+              </span>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Auto-renders structured tables</span>
+            </div>
 
-                        <span
-                          className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${
-                            item.priority === 'high'
-                              ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
-                              : item.priority === 'low'
-                              ? 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700'
-                              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                          }`}
-                        >
-                          {item.priority || 'medium'}
-                        </span>
+            {jsonError ? (
+              <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-400 text-xs">
+                Fix JSON syntax errors to see the live rendering preview.
+              </div>
+            ) : isRoutineConfig ? (
+              <MasterRoutineTablePreview config={parsedData} />
+            ) : Array.isArray(parsedData) && parsedData.length > 0 ? (
+              <div className="space-y-3">
+                {parsedData.map((item: any, idx: number) => (
+                  <div key={idx} className="p-3.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs flex items-center justify-between">
+                    <div>
+                      <div className="font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span>{item.icon || '📌'}</span>
+                        <span>{item.title}</span>
                       </div>
-
-                      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-900 flex-wrap gap-2">
-                        <div className="flex items-center gap-3">
-                          <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300 font-bold">
-                            <Target size={13} className="text-amber-500" />
-                            Target: {item.target?.value || 1} {item.target?.unit || 'hours'}
-                          </span>
-                          <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400">
-                            <Calendar size={13} className="text-indigo-500" />
-                            {item.frequency?.mode === 'daily' ? 'Everyday' : item.frequency?.mode || 'Daily'}
-                          </span>
-                        </div>
-
-                        {item.reminders?.[0]?.time && (
-                          <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400 text-[11px] bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800">
-                            <Clock size={12} className="text-amber-500" />
-                            {item.reminders[0].time}
-                          </span>
-                        )}
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                        {item.subject && <span>{item.subject} • </span>}
+                        {item.target?.value && <span>Goal: {item.target.value} {item.target.unit}</span>}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Footer Actions */}
-        <div className="flex items-center justify-between p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70">
-          <div className="text-xs text-slate-500 dark:text-slate-400">
-            {jsonError ? (
-              <span className="text-rose-600 dark:text-rose-400 font-semibold">Fix syntax errors before saving</span>
-            ) : isRoutineConfig ? (
-              <span className="text-amber-700 dark:text-amber-300 font-semibold">Live Master Routine Grid Matrix JSON loaded</span>
+                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                      {item.type || 'task'}
+                    </span>
+                  </div>
+                ))}
+              </div>
             ) : (
-              <span>Ready to save {parsedData?.length || 0} timetable items</span>
+              <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-400 text-xs italic">
+                Enter valid timetable JSON to preview your structure.
+              </div>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-colors"
-            >
-              Cancel
-            </button>
+        </div>
 
-            <button
-              type="button"
-              disabled={saving || !!jsonError}
-              onClick={handleSaveTimetable}
-              className="px-6 py-2.5 rounded-xl text-xs font-extrabold text-slate-950 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 hover:from-amber-500 hover:to-orange-500 shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-            >
-              {saving ? (
-                <>
-                  <RefreshCw size={15} className="animate-spin text-slate-950" />
-                  <span>Saving & Applying Timetable...</span>
-                </>
-              ) : saveSuccess ? (
-                <>
-                  <Check size={15} className="text-slate-950" />
-                  <span>Applied Successfully!</span>
-                </>
-              ) : (
-                <>
-                  <Save size={15} className="text-slate-950" />
-                  <span>Save & Apply Timetable UI</span>
-                </>
-              )}
-            </button>
-          </div>
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors text-xs cursor-pointer"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving || !!jsonError}
+            className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 text-white font-extrabold rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2 text-xs cursor-pointer active:scale-95"
+          >
+            {saving ? (
+              <>
+                <RefreshCw size={16} className="animate-spin" />
+                <span>Saving Timetable...</span>
+              </>
+            ) : saveSuccess ? (
+              <>
+                <CheckCircle2 size={16} />
+                <span>Timetable Saved!</span>
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                <span>Save Timetable Configuration</span>
+              </>
+            )}
+          </button>
         </div>
 
       </div>

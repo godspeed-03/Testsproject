@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Clock, Printer, Target, FileCode, Loader2, Table as TableIcon, Layers } from 'lucide-react';
-import { DEFAULT_MASTER_ROUTINE_CONFIG } from '@/lib/routineDefaultConfig';
+import { Clock, Printer, Target, FileCode, Loader2, Table as TableIcon, Layers, Calendar, Plus } from 'lucide-react';
 
 interface MasterRoutineTableProps {
   onOpenCodeEditor?: () => void;
@@ -58,33 +57,21 @@ export function normalizeRoutineTables(configData: any): any[] {
     tables.push({
       id: 'routine-grid',
       type: 'grid_matrix',
-      title: configData.title || 'Master Routine & Schedule',
-      subtitle: configData.subtitle || DEFAULT_MASTER_ROUTINE_CONFIG.subtitle,
-      timeSlots: configData.timeSlots || DEFAULT_MASTER_ROUTINE_CONFIG.timeSlots,
-      cells: configData.cells || DEFAULT_MASTER_ROUTINE_CONFIG.cells,
-      metrics: configData.metrics || DEFAULT_MASTER_ROUTINE_CONFIG.metrics
+      title: configData.title || 'Master Routine',
+      subtitle: configData.subtitle || '',
+      timeSlots: configData.timeSlots || [],
+      cells: configData.cells || [],
+      metrics: configData.metrics
     });
   }
 
   if (configData.satakGoals && Array.isArray(configData.satakGoals) && configData.satakGoals.length > 0) {
     tables.push({
-      id: 'satak-goals',
+      id: 'satak-roadmap',
       type: 'satak_goals',
-      title: 'SATAK GOALS — MAINS + PRELIMS ROADMAP',
+      title: 'Satak Goals & Strategic Roadmap',
+      subtitle: 'Long-term phase objectives and execution strategy',
       satakGoals: configData.satakGoals
-    });
-  }
-
-  // Fallback if empty
-  if (tables.length === 0) {
-    tables.push({
-      id: 'routine-grid',
-      type: 'grid_matrix',
-      title: DEFAULT_MASTER_ROUTINE_CONFIG.title,
-      subtitle: DEFAULT_MASTER_ROUTINE_CONFIG.subtitle,
-      timeSlots: DEFAULT_MASTER_ROUTINE_CONFIG.timeSlots,
-      cells: DEFAULT_MASTER_ROUTINE_CONFIG.cells,
-      metrics: DEFAULT_MASTER_ROUTINE_CONFIG.metrics
     });
   }
 
@@ -92,27 +79,29 @@ export function normalizeRoutineTables(configData: any): any[] {
 }
 
 /**
- * Single Grid Matrix Table Component
+ * Grid Matrix Timetable Component
  */
 function GridMatrixTable({ table }: { table: any }) {
-  const timeSlots = table.timeSlots || DEFAULT_MASTER_ROUTINE_CONFIG.timeSlots;
-  const cells = table.cells || DEFAULT_MASTER_ROUTINE_CONFIG.cells;
-  const metrics = table.metrics || DEFAULT_MASTER_ROUTINE_CONFIG.metrics;
+  const timeSlots: any[] = table.timeSlots || [];
+  const cells: any[] = table.cells || [];
+  const metrics = table.metrics;
   const numSlots = timeSlots.length;
+
+  if (numSlots === 0) return null;
 
   const coveredMatrix: boolean[][] = Array.from({ length: 7 }, () => Array(numSlots).fill(false));
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
-      <div className="overflow-x-auto">
-        <table className="w-full text-center border-collapse min-w-[1200px] text-xs">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className="overflow-x-auto scrollbar-thin">
+        <table className="w-full text-center border-collapse min-w-[950px] text-xs">
           <thead>
-            <tr className="bg-slate-100 text-slate-800 dark:bg-slate-950 dark:text-white font-extrabold text-[11px] uppercase tracking-wider divide-x divide-slate-200 dark:divide-slate-800 border-b border-slate-200 dark:border-slate-800">
-              <th className="p-3 whitespace-nowrap bg-slate-200 text-slate-900 dark:bg-slate-900 dark:text-white sticky left-0 z-10 font-black">DAYS</th>
+            <tr className="bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white font-extrabold uppercase tracking-wider divide-x divide-slate-200 dark:divide-slate-800 border-b border-slate-200 dark:border-slate-800">
+              <th className="p-3 whitespace-nowrap bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white sticky left-0 z-10 font-black">DAYS</th>
               {timeSlots.map((slot: any, idx: number) => (
-                <th key={idx} className="p-2.5">
-                  {slot.time}
-                  <span className="block text-[9px] text-slate-500 dark:text-slate-400 font-bold">{slot.label}</span>
+                <th key={idx} className="p-2.5 min-w-[90px]">
+                  <span className="block font-black">{slot.time}</span>
+                  <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-0.5">{slot.label}</span>
                 </th>
               ))}
             </tr>
@@ -120,7 +109,7 @@ function GridMatrixTable({ table }: { table: any }) {
           <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-medium">
             {DAYS.map((dayName, dIdx) => (
               <tr key={dayName} className="divide-x divide-slate-200 dark:divide-slate-800">
-                <td className="p-3 bg-slate-200 text-slate-900 dark:bg-slate-900 dark:text-white font-extrabold text-xs sticky left-0 z-10">
+                <td className="p-3 bg-slate-200 dark:bg-slate-900 text-slate-900 dark:text-white font-extrabold text-xs sticky left-0 z-10">
                   {dayName}
                 </td>
                 {timeSlots.map((_: any, sIdx: number) => {
@@ -202,7 +191,7 @@ function GridMatrixTable({ table }: { table: any }) {
 }
 
 /**
- * Single Custom Dynamic Table Component (Custom Columns & Rows)
+ * Single Custom Dynamic Table Component
  */
 function CustomTable({ table }: { table: any }) {
   const columns: string[] = table.columns || table.headers || [];
@@ -210,7 +199,7 @@ function CustomTable({ table }: { table: any }) {
   const rowStyles: string[] = table.rowStyles || [];
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full text-xs text-left border-collapse min-w-[600px]">
           {columns.length > 0 && (
@@ -258,7 +247,7 @@ function SatakGoalsTable({ table }: { table: any }) {
   const satakGoals = table.satakGoals || [];
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full text-xs text-left border-collapse min-w-[700px]">
           <thead>
@@ -292,7 +281,7 @@ function SatakGoalsTable({ table }: { table: any }) {
 }
 
 export default function MasterRoutineTable({ onOpenCodeEditor }: MasterRoutineTableProps) {
-  const [config, setConfig] = useState<any>(DEFAULT_MASTER_ROUTINE_CONFIG);
+  const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -325,6 +314,34 @@ export default function MasterRoutineTable({ onOpenCodeEditor }: MasterRoutineTa
 
   const tables = normalizeRoutineTables(config);
 
+  if (!loading && tables.length === 0) {
+    return (
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center space-y-4 my-4 shadow-sm">
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 mx-auto flex items-center justify-center border border-amber-500/20">
+          <Calendar size={28} />
+        </div>
+        <div className="max-w-md mx-auto space-y-1">
+          <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
+            No Timetable Configured
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Create or paste your timetable JSON code using the editor below to display your custom daily schedule and multi-table setup.
+          </p>
+        </div>
+        {onOpenCodeEditor && (
+          <button
+            type="button"
+            onClick={onOpenCodeEditor}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-black shadow-lg shadow-amber-500/20 transition-all cursor-pointer active:scale-95"
+          >
+            <FileCode size={16} />
+            <span>Open Timetable Code Editor</span>
+          </button>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8 animate-fade-in relative">
       {loading && (
@@ -332,8 +349,6 @@ export default function MasterRoutineTable({ onOpenCodeEditor }: MasterRoutineTa
           <Loader2 className="animate-spin text-amber-500" size={24} />
         </div>
       )}
-
-
 
       {/* Sequentially Render Every Table in the JSON Array */}
       {tables.map((table: any, idx: number) => (

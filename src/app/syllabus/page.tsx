@@ -1,11 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import AddSubjectModal from "@/components/dashboard/AddSubjectModal";
 import SubjectTopicsModal from "@/components/dashboard/SubjectTopicsModal";
 import ManageRuleSetsModal from "@/components/dashboard/ManageRuleSetsModal";
 import EditSubjectRulesModal from "@/components/dashboard/EditSubjectRulesModal";
-import { Loader2, Plus, Table, Trash2, Check, Search, BookOpen, Filter, Settings, Edit3 } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Table,
+  Trash2,
+  Check,
+  Search,
+  BookOpen,
+  Filter,
+  Settings,
+  Edit3,
+  Square,
+  CheckSquare,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { ISyllabusRuleState } from "@/models/SyllabusItem";
 
 export default function SyllabusPage() {
@@ -20,6 +35,11 @@ export default function SyllabusPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingKey, setTogglingKey] = useState<string | null>(null);
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<string[]>([]);
+  const [bulkMilestoneLabel, setBulkMilestoneLabel] = useState("");
+  const [bulkMilestoneShort, setBulkMilestoneShort] = useState("");
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [showBulkAddPanel, setShowBulkAddPanel] = useState(false);
 
   const cardBg = "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80";
   const textTitle = "text-slate-900 dark:text-slate-100";
@@ -157,6 +177,98 @@ export default function SyllabusPage() {
     return matchCat && matchSearch;
   });
 
+  const visibleSubjectIds = useMemo(() => filteredSubjects.map((subject) => subject.id), [filteredSubjects]);
+  const selectedVisibleCount = selectedSubjectIds.filter((id) => visibleSubjectIds.includes(id)).length;
+  const selectedSubjects = useMemo(
+    () => syllabusList.filter((subject) => selectedSubjectIds.includes(subject.id)),
+    [syllabusList, selectedSubjectIds],
+  );
+
+  const syncSelectedSubjects = (nextIds: string[]) => {
+    const uniqueIds = Array.from(new Set(nextIds));
+    setSelectedSubjectIds(uniqueIds);
+  };
+
+  const toggleSubjectSelection = (subjectId: string) => {
+    syncSelectedSubjects(
+      selectedSubjectIds.includes(subjectId)
+        ? selectedSubjectIds.filter((id) => id !== subjectId)
+        : [...selectedSubjectIds, subjectId],
+    );
+  };
+
+  const selectAllVisibleSubjects = () => {
+    syncSelectedSubjects(Array.from(new Set([...selectedSubjectIds, ...visibleSubjectIds])));
+  };
+
+  const clearSelectedSubjects = () => {
+    setSelectedSubjectIds([]);
+    setBulkMilestoneLabel("");
+    setBulkMilestoneShort("");
+  };
+
+  const normalizeBulkMilestoneLabel = (label: string) => label.trim().replace(/\s+/g, " ");
+
+  const createBulkRule = (label: string, short?: string) => {
+    const cleanLabel = normalizeBulkMilestoneLabel(label);
+    return {
+      key: cleanLabel.toLowerCase().replace(/[^a-z0-9]/g, "_") + "_" + Date.now(),
+      label: cleanLabel,
+      short: (short || cleanLabel.slice(0, 5)).trim(),
+      completed: false,
+    };
+  };
+
+  const handleBulkAddMilestone = async () => {
+    const cleanLabel = normalizeBulkMilestoneLabel(bulkMilestoneLabel);
+    if (!cleanLabel || selectedSubjectIds.length === 0) return;
+
+    setBulkSaving(true);
+    try {
+      const rule = createBulkRule(cleanLabel, bulkMilestoneShort);
+      const targets = selectedSubjects;
+
+      await Promise.all(
+        targets.map(async (subject) => {
+          const existingRules: ISyllabusRuleState[] = Array.isArray(subject.rules) ? subject.rules : [];
+          const duplicate = existingRules.some((existing) => {
+            const existingLabel = String(existing.label || "")
+              .trim()
+              .toLowerCase();
+            const existingKey = String(existing.key || "")
+              .trim()
+              .toLowerCase();
+            const ruleLabel = cleanLabel.toLowerCase();
+            const ruleKey = rule.key.toLowerCase();
+            return existingLabel === ruleLabel || existingKey === ruleKey;
+          });
+
+          const nextRules = duplicate ? existingRules : [...existingRules, rule];
+
+          await fetch("/api/tracker/syllabus", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "update_rules",
+              id: subject.id,
+              rules: nextRules,
+            }),
+          });
+        }),
+      );
+
+      await fetchSyllabusData();
+      setBulkMilestoneLabel("");
+      setBulkMilestoneShort("");
+      setSelectedSubjectIds([]);
+      setShowBulkAddPanel(false);
+    } catch (e) {
+      console.error("Failed to bulk add milestone", e);
+    } finally {
+      setBulkSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <div className="max-w-370 mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6">
@@ -179,6 +291,24 @@ export default function SyllabusPage() {
             >
               <Settings size={15} className="text-amber-500" />
               <span>Ruleset Templates</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (showBulkAddPanel) {
+                  clearSelectedSubjects();
+                }
+                setShowBulkAddPanel((current) => !current);
+              }}
+              className={`font-extrabold text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-1.5 border shadow-sm transition-all ${
+                showBulkAddPanel
+                  ? "bg-indigo-600 text-white border-indigo-500 shadow-indigo-600/20"
+                  : "bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-500 shadow-cyan-600/20"
+              }`}
+            >
+              <Sparkles size={15} className="text-amber-300" />
+              <span>Bulk Add</span>
             </button>
 
             <button
@@ -225,6 +355,68 @@ export default function SyllabusPage() {
           </div>
         </div>
 
+        {showBulkAddPanel && (
+          <div className="rounded-2xl border border-indigo-200/70 dark:border-indigo-900/60 bg-white dark:bg-slate-900 shadow-sm p-3 sm:p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-600 text-white text-[10px] font-black">
+                  <CheckSquare size={12} /> {selectedSubjectIds.length} selected
+                </span>
+                <span className={`text-[10px] sm:text-xs ${textMuted} font-bold`}>
+                  {selectedVisibleCount} visible in current filter
+                </span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={selectAllVisibleSubjects}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-black transition-all"
+                >
+                  Select visible
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearSelectedSubjects();
+                    setShowBulkAddPanel(false);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-black transition-all inline-flex items-center gap-1"
+                >
+                  <X size={12} /> Close
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_0.6fr_auto_auto] gap-2.5">
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2">
+                <Sparkles size={14} className="text-amber-500 shrink-0" />
+                <input
+                  type="text"
+                  value={bulkMilestoneLabel}
+                  onChange={(e) => setBulkMilestoneLabel(e.target.value)}
+                  placeholder="Bulk add milestone to all selected subjects"
+                  className="w-full bg-transparent outline-none text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 placeholder:text-slate-400"
+                />
+              </div>
+              <input
+                type="text"
+                value={bulkMilestoneShort}
+                onChange={(e) => setBulkMilestoneShort(e.target.value)}
+                placeholder="Short label"
+                className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 outline-none placeholder:text-slate-400"
+              />
+              <button
+                type="button"
+                disabled={bulkSaving || !bulkMilestoneLabel.trim()}
+                onClick={handleBulkAddMilestone}
+                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-black transition-all inline-flex items-center justify-center gap-1.5"
+              >
+                {bulkSaving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Add to selected
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Subject Cards */}
         {loading ? (
           <div className={`p-16 sm:p-20 rounded-2xl border ${cardBg} text-center space-y-4 shadow-xs`}>
@@ -258,10 +450,31 @@ export default function SyllabusPage() {
               const completedCount = rulesList.filter((r) => r.completed).length;
 
               return (
-                <div key={s.id} className={`p-4 sm:p-5 rounded-2xl border ${cardBg} space-y-3 sm:space-y-4 shadow-xs`}>
+                <div
+                  key={s.id}
+                  className={`p-4 sm:p-5 rounded-2xl border ${cardBg} space-y-3 sm:space-y-4 shadow-xs transition-all ${
+                    selectedSubjectIds.includes(s.id)
+                      ? "ring-2 ring-indigo-500/30 border-indigo-300 dark:border-indigo-800"
+                      : ""
+                  }`}
+                >
                   {/* Subject Header */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
                     <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      {showBulkAddPanel && (
+                        <button
+                          type="button"
+                          onClick={() => toggleSubjectSelection(s.id)}
+                          className="shrink-0 w-7 h-7 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 hover:border-indigo-500 transition-all flex items-center justify-center text-slate-400 hover:text-indigo-600"
+                          title={selectedSubjectIds.includes(s.id) ? "Deselect subject" : "Select subject"}
+                        >
+                          {selectedSubjectIds.includes(s.id) ? (
+                            <CheckSquare size={16} className="text-indigo-600" />
+                          ) : (
+                            <Square size={16} />
+                          )}
+                        </button>
+                      )}
                       <span
                         className={`text-[9px] sm:text-[10px] font-black px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg border uppercase tracking-wider shrink-0 ${getCategoryBadge(s.category)}`}
                       >

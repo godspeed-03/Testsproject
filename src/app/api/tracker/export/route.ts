@@ -11,6 +11,7 @@ import DailySnapshot from '@/models/DailySnapshot';
 import MonthlySnapshot from '@/models/MonthlySnapshot';
 import ConsistencySnapshot from '@/models/ConsistencySnapshot';
 import AllTimeSnapshot from '@/models/AllTimeSnapshot';
+import RoutineConfig from '@/models/RoutineConfig';
 import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
 import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
 
@@ -24,7 +25,7 @@ export async function GET() {
     const todayStr = new Date().toISOString().split('T')[0];
     const userFilter = { $or: [{ userId }, { userId: '000000000000000000000000' }] };
 
-    // Fetch all model data
+    // Fetch all 11 data models
     const habits = await HabitItem.find(userFilter).lean();
     const lists = await CheckList.find(userFilter).lean();
     const syllabus = await SyllabusItem.find(userFilter).lean();
@@ -35,6 +36,7 @@ export async function GET() {
     const monthlySnapshots = await MonthlySnapshot.find(userFilter).lean();
     const consistencySnapshots = await ConsistencySnapshot.find(userFilter).lean();
     const allTimeSnapshot = await AllTimeSnapshot.findOne(userFilter).lean();
+    const routineConfig = await RoutineConfig.findOne(userFilter).lean();
 
     const formattedHabits = habits.map((h: any) => ({
       ...h,
@@ -120,6 +122,11 @@ export async function GET() {
       _id: undefined
     } : null;
 
+    const formattedRoutineConfig = routineConfig ? {
+      ...routineConfig,
+      _id: undefined
+    } : null;
+
     return NextResponse.json({
       habits: formattedHabits,
       lists: formattedLists,
@@ -131,6 +138,7 @@ export async function GET() {
       monthlySnapshots: formattedMonthlySnapshots,
       consistencySnapshots: formattedConsistencySnapshots,
       allTimeSnapshot: formattedAllTimeSnapshot,
+      routineConfig: formattedRoutineConfig,
       exportedAt: new Date().toISOString()
     });
   } catch (error: any) {

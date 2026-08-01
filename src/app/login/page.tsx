@@ -1,105 +1,61 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { GraduationCap, ArrowRight } from 'lucide-react';
+import React from 'react';
+import Link from 'next/link';
+import { GraduationCap, Shield, Lock } from 'lucide-react';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
-
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Authentication failed');
-      }
-
-      router.push('/tracker');
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="flex-1 flex items-center justify-center p-4">
-      <div className="glass-panel w-full max-w-md p-8 animate-fade-in relative overflow-hidden">
+    <div className="flex-1 flex items-center justify-center p-4 bg-slate-950 text-slate-100">
+      <div className="w-full max-w-md p-8 rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl animate-fade-in relative overflow-hidden space-y-6">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-emerald-500"></div>
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/20 shadow-inner">
-            <GraduationCap className="text-amber-400" size={28} />
+
+        {/* Brand Header */}
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto border border-amber-500/30 shadow-inner text-amber-400">
+            <GraduationCap size={32} />
           </div>
-          <h2 className="text-2xl font-bold text-foreground mb-2">UPSC Aspirant Access</h2>
-          <p className="text-muted-foreground text-xs leading-relaxed">
-            Enter your email and password to sign in. New accounts are created automatically!
+
+          <div>
+            <h1 className="text-2xl font-extrabold text-white tracking-tight">
+              UPSC tracker
+            </h1>
+            <p className="text-xs font-semibold text-amber-400 mt-0.5">
+              Official Civil Services Preparation Suite
+            </p>
+          </div>
+
+          <p className="text-xs text-slate-300 leading-relaxed max-w-xs mx-auto">
+            Sign in with your Google account to access your personal study timetable, syllabus tracker, and spaced repetition engine.
           </p>
         </div>
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg mb-6 text-xs text-center font-medium">
-            {error}
-          </div>
-        )}
+        {/* Primary Google Sign-In Method */}
+        <div className="py-2 space-y-4">
+          <GoogleSignInButton text="signin_with" />
 
-        <form onSubmit={handleAuth} className="space-y-5">
-          <div>
-            <label className="block text-xs font-semibold text-foreground/90 mb-1.5 uppercase tracking-wider">
-              Student Email
-            </label>
-            <input
-              type="email"
-              required
-              className="input-field text-sm"
-              placeholder="aspirant@upsc2027.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+          <div className="flex items-center gap-2 text-[11px] text-slate-400 justify-center">
+            <Lock size={13} className="text-emerald-400 shrink-0" />
+            <span>Secure 256-bit SSL encrypted Google Authentication</span>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-foreground/90 mb-1.5 uppercase tracking-wider">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              className="input-field text-sm"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary w-full flex justify-center items-center gap-2 h-11 mt-2 bg-gradient-to-r from-amber-500 via-orange-600 to-amber-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold text-sm rounded-lg transition-all shadow-lg"
-          >
-            {loading ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-            ) : (
-              <>
-                <span>Continue to Dashboard</span>
-                <ArrowRight size={16} />
-              </>
-            )}
-          </button>
-        </form>
+        </div>
+
+        {/* Compliance & Policy Links */}
+        <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+          <Link href="/privacy-policy" className="hover:text-amber-400 underline font-medium flex items-center gap-1">
+            <Shield size={12} className="text-emerald-400" />
+            <span>Privacy Policy</span>
+          </Link>
+          <span className="text-slate-700">•</span>
+          <Link href="/terms-of-service" className="hover:text-amber-400 underline font-medium">
+            Terms of Service
+          </Link>
+          <span className="text-slate-700">•</span>
+          <a href="mailto:satyam2001anand@gmail.com" className="hover:text-amber-400 underline">
+            Support
+          </a>
+        </div>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import DailySnapshot from '@/models/DailySnapshot';
 import MonthlySnapshot from '@/models/MonthlySnapshot';
 import ConsistencySnapshot from '@/models/ConsistencySnapshot';
 import AllTimeSnapshot from '@/models/AllTimeSnapshot';
+import RoutineConfig from '@/models/RoutineConfig';
 import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
 
 function sanitizeBson(obj: any): any {
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     const rawData = await req.json();
     const data = sanitizeBson(rawData);
 
-    // Flexible collection matching (handles mongo export names and app export names)
+    // Flexible collection matching across all 11 MongoDB models
     const habitsInput = data.habits || data.habitItems || [];
     const listsInput = data.lists || data.checkLists || [];
     const topicRevisionsInput = data.topicrevisions || data.topicRevisions || [];
@@ -47,10 +48,13 @@ export async function POST(req: Request) {
     const monthlySnapshotsInput = data.monthlysnapshots || data.monthlySnapshots || [];
     const consistencySnapshotsInput = data.consistencysnapshots || data.consistencySnapshots || [];
     const allTimeSnapshotInput = data.alltimesnapshot || data.allTimeSnapshot || null;
+    const routineConfigInput = data.routineconfig || data.routineConfig || data.tables || null;
+
+    const userFilter = { $or: [{ userId }, { userId: '000000000000000000000000' }] };
 
     // 1. Process Habits & Agenda Items
     if (Array.isArray(habitsInput) && habitsInput.length > 0) {
-      await HabitItem.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await HabitItem.deleteMany(userFilter);
       const docs = habitsInput.map((h: any) => ({
         userId,
         type: h.type || 'habit',
@@ -78,7 +82,7 @@ export async function POST(req: Request) {
 
     // 2. Process Checklists
     if (Array.isArray(listsInput) && listsInput.length > 0) {
-      await CheckList.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await CheckList.deleteMany(userFilter);
       const docs = listsInput.map((l: any) => ({
         userId,
         title: l.title || 'Untitled List',
@@ -90,7 +94,7 @@ export async function POST(req: Request) {
 
     // 3. Process Topic Revisions
     if (Array.isArray(topicRevisionsInput) && topicRevisionsInput.length > 0) {
-      await TopicRevision.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await TopicRevision.deleteMany(userFilter);
       const docs = topicRevisionsInput.map((t: any) => ({
         userId,
         customId: t.customId || t.id || 'tr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -110,7 +114,7 @@ export async function POST(req: Request) {
 
     // 4. Process Syllabus Items
     if (Array.isArray(syllabusInput) && syllabusInput.length > 0) {
-      await SyllabusItem.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await SyllabusItem.deleteMany(userFilter);
       const docs = syllabusInput.map((item: any) => ({
         userId,
         customId: item.customId || item.id || 'subj_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -128,7 +132,7 @@ export async function POST(req: Request) {
 
     // 5. Process Test Logs
     if (Array.isArray(testLogsInput) && testLogsInput.length > 0) {
-      await TestLog.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await TestLog.deleteMany(userFilter);
       const docs = testLogsInput.map((t: any) => ({
         userId,
         customId: t.customId || t.id || 'test_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -147,7 +151,7 @@ export async function POST(req: Request) {
 
     // 6. Process Syllabus Rule Sets
     if (Array.isArray(ruleSetsInput) && ruleSetsInput.length > 0) {
-      await SyllabusRuleSet.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await SyllabusRuleSet.deleteMany(userFilter);
       const docs = ruleSetsInput.map((r: any) => ({
         userId,
         name: r.name || 'Custom Rule Set',
@@ -159,7 +163,7 @@ export async function POST(req: Request) {
 
     // 7. Process Daily Snapshots
     if (Array.isArray(dailySnapshotsInput) && dailySnapshotsInput.length > 0) {
-      await DailySnapshot.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await DailySnapshot.deleteMany(userFilter);
       const docs = dailySnapshotsInput.map((d: any) => ({
         userId,
         studyDayKey: d.studyDayKey,
@@ -179,7 +183,7 @@ export async function POST(req: Request) {
 
     // 8. Process Monthly Snapshots
     if (Array.isArray(monthlySnapshotsInput) && monthlySnapshotsInput.length > 0) {
-      await MonthlySnapshot.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await MonthlySnapshot.deleteMany(userFilter);
       const docs = monthlySnapshotsInput.map((m: any) => ({
         userId,
         monthKey: m.monthKey,
@@ -199,7 +203,7 @@ export async function POST(req: Request) {
 
     // 9. Process Consistency Snapshots
     if (Array.isArray(consistencySnapshotsInput) && consistencySnapshotsInput.length > 0) {
-      await ConsistencySnapshot.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await ConsistencySnapshot.deleteMany(userFilter);
       const docs = consistencySnapshotsInput.map((c: any) => ({
         userId,
         studyDayKey: c.studyDayKey,
@@ -220,7 +224,7 @@ export async function POST(req: Request) {
 
     // 10. Process All-Time Snapshot
     if (allTimeSnapshotInput) {
-      await AllTimeSnapshot.deleteMany({ $or: [{ userId }, { userId: '000000000000000000000000' }] });
+      await AllTimeSnapshot.deleteMany(userFilter);
       await AllTimeSnapshot.create({
         userId,
         overallScore: allTimeSnapshotInput.overallScore || 0,
@@ -235,22 +239,41 @@ export async function POST(req: Request) {
       });
     }
 
+    // 11. Process RoutineConfig (Master Routine & Schedule Multi-Table)
+    if (routineConfigInput) {
+      await RoutineConfig.deleteMany(userFilter);
+      const payload = Array.isArray(routineConfigInput) ? { tables: routineConfigInput } : routineConfigInput;
+      await RoutineConfig.create({
+        userId,
+        configPayload: payload,
+        tables: payload.tables,
+        title: payload.title,
+        subtitle: payload.subtitle,
+        timeSlots: payload.timeSlots,
+        cells: payload.cells,
+        metrics: payload.metrics,
+        satakGoals: payload.satakGoals
+      });
+    }
+
     // Fetch updated dataset
-    const updatedHabits = await HabitItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const updatedLists = await CheckList.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const updatedSyllabus = await SyllabusItem.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const updatedTestLogs = await TestLog.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).sort({ createdAt: -1 }).lean();
-    const updatedTopicRevisions = await TopicRevision.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
-    const updatedRuleSets = await SyllabusRuleSet.find({ $or: [{ userId }, { userId: '000000000000000000000000' }] }).lean();
+    const updatedHabits = await HabitItem.find(userFilter).lean();
+    const updatedLists = await CheckList.find(userFilter).lean();
+    const updatedSyllabus = await SyllabusItem.find(userFilter).lean();
+    const updatedTestLogs = await TestLog.find(userFilter).sort({ createdAt: -1 }).lean();
+    const updatedTopicRevisions = await TopicRevision.find(userFilter).lean();
+    const updatedRuleSets = await SyllabusRuleSet.find(userFilter).lean();
+    const updatedRoutineConfig = await RoutineConfig.findOne(userFilter).lean();
 
     return NextResponse.json({
-      message: 'Data imported successfully across all 10 models!',
+      message: 'Data imported successfully across all 11 MongoDB models!',
       habits: updatedHabits,
       lists: updatedLists,
       syllabusList: updatedSyllabus,
       testLogs: updatedTestLogs,
       topicRevisions: updatedTopicRevisions,
-      ruleSets: updatedRuleSets
+      ruleSets: updatedRuleSets,
+      routineConfig: updatedRoutineConfig
     });
   } catch (error: any) {
     console.error('Import data error:', error);

@@ -22,12 +22,14 @@ import {
   ChevronRight,
   Clock,
   Check,
-  Edit3
+  Edit3,
+  FileCode
 } from 'lucide-react';
 import { useTracker, getTargetGoalLabel, calculateHabitStreak } from './TrackerContext';
 import ShadcnDatePicker from '@/components/ui/ShadcnDatePicker';
 import ShadcnSelect from '@/components/ui/ShadcnSelect';
 import ShadcnTimePicker from '@/components/ui/ShadcnTimePicker';
+import TimetableCodeEditorModal from '@/components/TimetableCodeEditorModal';
 
 export default function TrackerLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -103,11 +105,13 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     handleSaveHabitProgress,
     handleDeleteHabit,
     handleOpenCreateModal,
-    getFilteredCategorySubjects
+    getFilteredCategorySubjects,
+    fetchTrackerData
   } = useTracker();
 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [activeEmojiTab, setActiveEmojiTab] = useState('all');
+  const [showCodeModal, setShowCodeModal] = useState(false);
 
   useEffect(() => {
     const handleOpen = () => {
@@ -153,13 +157,15 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => handleOpenCreateModal('task')}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all shrink-0 active:scale-95"
-          >
-            <Plus size={18} /> New Habit or Task
-          </button>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              type="button"
+              onClick={() => handleOpenCreateModal('task')}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all shrink-0 active:scale-95 cursor-pointer"
+            >
+              <Plus size={18} /> New Habit or Task
+            </button>
+          </div>
         </div>
 
         {/* Sidebar + Content Grid Layout */}
@@ -980,6 +986,15 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
           </div>
         </div>
       )}
+
+      {/* Timetable Code Editor & Live UI Preview Modal */}
+      <TimetableCodeEditorModal
+        isOpen={showCodeModal}
+        onClose={() => setShowCodeModal(false)}
+        onSaveSuccess={() => {
+          if (fetchTrackerData) fetchTrackerData();
+        }}
+      />
     </div>
   );
 }

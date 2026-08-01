@@ -7,6 +7,7 @@ import TopicRevision from '@/models/TopicRevision';
 import HabitItem from '@/models/HabitItem';
 import CheckList from '@/models/CheckList';
 import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
+import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
 
 export async function GET() {
   try {

@@ -7,6 +7,7 @@ import CheckList from '@/models/CheckList';
 import SyllabusItem from '@/models/SyllabusItem';
 import TopicRevision from '@/models/TopicRevision';
 import { processTopicTag } from '@/lib/topicRevisionEngine';
+import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
 
 function addDaysStr(dateStr: string, days: number): string {
   const d = new Date(dateStr);
@@ -569,13 +570,18 @@ export async function POST(req: Request) {
             });
 
             if (sysItem) {
+              let targetKey = 'firstRead';
               if (habit.title.startsWith('[R1 Revision]')) {
-                sysItem.rev1 = isDone;
+                targetKey = 'rev1';
               } else if (habit.title.startsWith('[R2 Revision]')) {
-                sysItem.rev2 = isDone;
-              } else {
-                sysItem.firstRead = isDone;
+                targetKey = 'rev2';
               }
+              const itemRules = buildDynamicRulesFromLegacy(sysItem);
+              const ruleIdx = itemRules.findIndex((r: any) => r.key === targetKey || r.key.includes(targetKey));
+              if (ruleIdx !== -1) {
+                itemRules[ruleIdx].completed = isDone;
+              }
+              sysItem.rules = itemRules;
               sysItem.status = isDone ? 'In Progress' : 'Not Started';
               sysItem.date = date;
               await sysItem.save();

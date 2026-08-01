@@ -20,7 +20,7 @@ export default function CalendarShowcase() {
 
   return (
     <section className="py-20 bg-gradient-to-b from-white to-slate-50 border-t border-slate-100">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
         <div className="text-center space-y-3 mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 text-indigo-700 text-xs font-black uppercase tracking-wider border border-indigo-500/20">
@@ -38,9 +38,9 @@ export default function CalendarShowcase() {
         {/* Outer Application Mock Container */}
         <div className="bg-slate-50/50 border border-slate-200/90 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/50 space-y-4">
           {/* Top Bar */}
-          <div className="flex items-center justify-between gap-4 pb-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 pb-2">
             <div>
-              <h3 className="font-black text-xl text-slate-900">Habit & Task Module</h3>
+              <h3 className="font-black text-lg sm:text-xl text-slate-900">Habit & Task Module</h3>
               <p className="text-xs text-slate-500 font-medium">
                 Track events, to-dos, recurring habits, streaks, and focus timers seamlessly in one place.
               </p>

@@ -215,9 +215,9 @@ export default function AgendaShowcase() {
         {/* Outer Application Mock Container */}
         <div className="bg-slate-50/50 border border-slate-200/90 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/50 space-y-4">
           {/* Top Bar with New Habit Button */}
-          <div className="flex items-center justify-between gap-4 pb-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 pb-2">
             <div>
-              <h3 className="font-black text-xl text-slate-900">Habit & Task Module</h3>
+              <h3 className="font-black text-lg sm:text-xl text-slate-900">Habit & Task Module</h3>
               <p className="text-xs text-slate-500 font-medium">
                 Track events, to-dos, recurring habits, streaks, and focus timers seamlessly in one place.
               </p>
@@ -225,7 +225,7 @@ export default function AgendaShowcase() {
             <button
               type="button"
               onClick={() => setIsNewModalOpen(true)}
-              className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl flex items-center gap-1.5 shadow-md shadow-violet-600/20 active:scale-95 transition-all"
+              className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl flex items-center gap-1.5 shadow-md shadow-violet-600/20 active:scale-95 transition-all shrink-0 cursor-pointer"
             >
               + New Habit or Task
             </button>

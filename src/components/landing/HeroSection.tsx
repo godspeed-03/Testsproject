@@ -5,21 +5,21 @@ import { ArrowRight, Target, ChevronDown, Shield } from "lucide-react";
 
 export default function HeroSection() {
   return (
-    <section className="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-6 lg:px-20 py-16 overflow-hidden bg-gradient-to-b from-slate-50 via-white to-violet-50/30">
+    <section className="relative min-h-[90vh] flex flex-col items-center justify-center text-center px-4 sm:px-6 lg:px-20 py-12 sm:py-16 overflow-hidden bg-gradient-to-b from-slate-50 via-white to-violet-50/30">
       {/* Ambient glow */}
       <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-violet-500/8 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-20 right-1/4 w-[400px] h-[400px] bg-purple-500/8 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-600/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="z-10 max-w-4xl space-y-8 animate-fade-in">
+      <div className="z-10 max-w-4xl space-y-6 sm:space-y-8 animate-fade-in">
         {/* Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/25 text-sm text-[#7C3AED] font-bold tracking-wide">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full bg-violet-500/10 border border-violet-500/25 text-xs sm:text-sm text-[#7C3AED] font-bold tracking-wide">
           <Target size={16} className="text-[#7C3AED]" />
           <span>UPSC Tracker — Study Management Suite</span>
         </div>
 
         {/* Main heading */}
-        <h1 className="text-5xl sm:text-6xl lg:text-8xl font-black tracking-tight leading-[0.95] text-slate-900">
+        <h1 className="text-4xl sm:text-6xl lg:text-8xl font-black tracking-tight leading-[0.95] text-slate-900">
           UPSC{" "}
           <span className="bg-gradient-to-r from-[#7C3AED] via-[#9333EA] to-[#C084FC] bg-clip-text text-transparent">
             Tracker

@@ -4,7 +4,7 @@ import { Lock, CheckCircle2, Mail, Shield } from "lucide-react";
 export default function TransparencySection() {
   return (
     <section className="py-20 bg-white border-t border-slate-100">
-      <div className="max-w-4xl mx-auto px-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
         <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-10 shadow-xl relative overflow-hidden space-y-6">
           <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[#4F46E5] via-[#7C3AED] to-[#06B6D4]" />
 

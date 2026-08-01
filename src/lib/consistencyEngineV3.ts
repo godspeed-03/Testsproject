@@ -682,3 +682,5 @@ export async function runFullConsistencyPipeline(userId: string) {
   const allTime = await recalculateAllTimeSnapshot(userId);
   return { daily, monthly, allTime };
 }
+
+

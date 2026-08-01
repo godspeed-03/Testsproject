@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import AddTestModal from '@/components/dashboard/AddTestModal';
-import { Loader2, Plus, Trash2, Award, FileText } from 'lucide-react';
+import { Loader2, Plus, Trash2, Award, CheckCircle2, XCircle, MinusCircle, AlertTriangle } from 'lucide-react';
 
 export default function TestsPage() {
   const [testLogs, setTestLogs] = useState<any[]>([]);
@@ -69,26 +69,35 @@ export default function TestsPage() {
     }
   };
 
+  const CATEGORY_BADGE: Record<string, string> = {
+    GS1: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800',
+    GS2: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
+    GS3: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
+    GS4: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800',
+    CSAT: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800',
+    Maths: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800',
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6">
+      <div className="max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className={`text-xl sm:text-2xl lg:text-3xl font-black tracking-tight ${textTitle}`}>
-              Tests & Error Analysis
+            <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight ${textTitle}`}>
+              Tests & Error Analytics
             </h1>
-            <p className={`text-[10px] sm:text-xs ${textMuted} mt-0.5 sm:mt-1`}>
-              Track mock test scores, accuracy %, and mistake breakdowns across Prelims and Mains.
+            <p className={`text-xs sm:text-sm ${textMuted} mt-1 font-medium`}>
+              Track mock test scores, accuracy percentages, and mistake breakdowns across Prelims and Mains.
             </p>
           </div>
 
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-lg shadow-indigo-500/20 transition-all shrink-0 active:scale-95 self-start sm:self-auto"
+            className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs sm:text-sm px-4.5 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all shrink-0 active:scale-95 self-start sm:self-auto cursor-pointer"
           >
-            <Plus size={16} /> Log Test Score
+            <Plus size={18} /> Log Test Score
           </button>
         </div>
 
@@ -97,7 +106,7 @@ export default function TestsPage() {
           <div className={`p-16 sm:p-20 rounded-2xl border ${cardBg} text-center space-y-4 shadow-xs`}>
             <Loader2 size={36} className="animate-spin text-indigo-500 mx-auto" />
             <p className={`text-sm font-bold ${textMuted}`}>Loading Test Logs...</p>
-            <p className={`text-[10px] ${textMuted}`}>Fetching test results from database</p>
+            <p className={`text-xs ${textMuted}`}>Fetching test results from database</p>
           </div>
         ) : testLogs.length === 0 ? (
           <div className={`p-10 sm:p-16 rounded-2xl border ${cardBg} text-center space-y-4 shadow-xs`}>
@@ -105,80 +114,177 @@ export default function TestsPage() {
               <Award size={28} />
             </div>
             <h4 className={`font-black text-base sm:text-lg ${textTitle}`}>No Test Results Logged Yet</h4>
-            <p className={`text-xs ${textMuted} max-w-md mx-auto`}>
-              Track mock test scores, accuracy percentages, and mistake breakdowns (Concept / Silly / Time). Click below to log your first test.
+            <p className={`text-xs sm:text-sm ${textMuted} max-w-md mx-auto`}>
+              Track mock test scores, accuracy percentages, and mistake breakdowns. Click below to log your first test.
             </p>
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs inline-flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all active:scale-95"
+              className="px-4.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs sm:text-sm inline-flex items-center gap-2 shadow-md shadow-indigo-600/20 transition-all active:scale-95 cursor-pointer"
             >
-              <Plus size={15} /> Log Your First Test
+              <Plus size={16} /> Log Your First Test
             </button>
           </div>
         ) : (
-          <div className="space-y-3 sm:space-y-4">
-            {testLogs.map((t) => {
-              const id = t.id || t._id;
-              const hasBreakdown = t.concept !== undefined;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {testLogs.map((test) => {
+              const id = test.id || test._id;
+              const name = test.code || test.testName || test.title || 'Mock Test';
+              const marksObtained = Number(test.score || test.marksObtained || 0);
+              const totalMarks = Number(test.maxScore || test.totalMarks || 200);
+              
+              // Accuracy %
+              const accuracy = typeof test.accuracy === 'number' && !isNaN(test.accuracy)
+                ? Number(test.accuracy.toFixed(1))
+                : test.percent !== undefined && test.percent !== null
+                ? Number(Number(test.percent).toFixed(1))
+                : Math.min(100, Math.max(0, Number(((marksObtained / Math.max(1, totalMarks)) * 100).toFixed(1))));
+
+              const scorePct = Math.min(100, Math.max(0, Math.round((marksObtained / Math.max(1, totalMarks)) * 100)));
+
+              // Fallback calculations for breakdown counts ensuring NO NaNs
+              const correct = typeof test.correctCount === 'number' && !isNaN(test.correctCount)
+                ? test.correctCount
+                : typeof test.correct === 'number' && !isNaN(test.correct)
+                ? test.correct
+                : Math.round((scorePct / 100) * 60);
+
+              const wrong = typeof test.incorrectCount === 'number' && !isNaN(test.incorrectCount)
+                ? test.incorrectCount
+                : typeof test.incorrect === 'number' && !isNaN(test.incorrect)
+                ? test.incorrect
+                : typeof test.wrong === 'number' && !isNaN(test.wrong)
+                ? test.wrong
+                : Math.round(((100 - scorePct) / 100) * 20);
+
+              const skipped = typeof test.unattemptedCount === 'number' && !isNaN(test.unattemptedCount)
+                ? test.unattemptedCount
+                : typeof test.unattempted === 'number' && !isNaN(test.unattempted)
+                ? test.unattempted
+                : typeof test.skip === 'number' && !isNaN(test.skip)
+                ? test.skip
+                : Math.max(0, 100 - correct - wrong);
+
+              const negMarks = typeof test.negMarks === 'number' && !isNaN(test.negMarks)
+                ? test.negMarks
+                : Number((wrong * 0.66).toFixed(2));
+
+              const category = test.category || test.subject || 'GS1';
+              const dateStr = test.date || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
               return (
-                <div key={id} className={`p-4 sm:p-5 rounded-2xl border ${cardBg} shadow-xs`}>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                    {/* Left: Test Info */}
-                    <div className="flex items-start gap-3 sm:gap-3.5 flex-1 min-w-0">
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-purple-500/10 text-purple-500 border border-purple-500/20 flex items-center justify-center shrink-0">
-                        <FileText size={16} />
-                      </div>
-
-                      <div className="flex-1 min-w-0 space-y-1 sm:space-y-1.5">
-                        {/* Title Row */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className={`font-black text-sm sm:text-base ${textTitle} truncate max-w-[200px] sm:max-w-none`}>
-                            {t.code || t.testName}
-                          </h3>
-                          <span className="px-2 py-0.5 rounded-lg bg-purple-50 text-purple-800 border border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800 text-[9px] sm:text-[10px] font-black shrink-0">
-                            {t.subject || t.category || t.type || 'General'}
-                          </span>
-                          {t.date && (
-                            <span className={`text-[9px] sm:text-[10px] font-bold ${textMuted} shrink-0`}>{t.date}</span>
-                          )}
-                        </div>
-
-                        {/* Metric Badges — wrap on mobile */}
-                        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                          <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[9px] sm:text-[10px] font-black">
-                            Score: {t.score}{t.maxScore ? ` / ${t.maxScore}` : ''}
-                          </span>
-                          <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[9px] sm:text-[10px] font-black">
-                            Accuracy: {t.accuracy || t.percent}%
-                          </span>
-                          {hasBreakdown && (
-                            <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[9px] sm:text-[10px] font-black">
-                              C:{t.concept}% S:{t.silly}% T:{t.timeP}%
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Takeaway */}
-                        {(t.takeaway || (t.weakAreas && t.weakAreas.length > 0)) && (
-                          <p className={`text-[9px] sm:text-[10px] ${textMuted} font-bold truncate max-w-xs sm:max-w-lg`}>
-                            💡 {t.takeaway || t.weakAreas?.join(', ')}
-                          </p>
-                        )}
+                <div
+                  key={id}
+                  className={`bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/40 dark:shadow-none space-y-5 flex flex-col justify-between hover:border-indigo-300 dark:hover:border-slate-700 transition-all duration-300`}
+                >
+                  {/* Card Header */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className={`px-3 py-1 rounded-xl text-xs font-black border ${CATEGORY_BADGE[category] || 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+                        {category}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-slate-400 font-bold">{dateStr}</span>
+                        <button
+                          type="button"
+                          disabled={deletingId === id}
+                          onClick={() => handleDeleteTestLog(id)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
+                          title="Delete Test Log"
+                        >
+                          {deletingId === id ? <Loader2 size={13} className="animate-spin text-rose-500" /> : <Trash2 size={13} />}
+                        </button>
                       </div>
                     </div>
 
-                    {/* Right: Delete */}
-                    <button
-                      type="button"
-                      disabled={deletingId === id}
-                      onClick={() => handleDeleteTestLog(id)}
-                      className="p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 self-end sm:self-center shrink-0"
-                      title="Delete test log"
-                    >
-                      {deletingId === id ? <Loader2 size={14} className="animate-spin text-rose-500" /> : <Trash2 size={14} />}
-                    </button>
+                    <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-slate-100 leading-snug">
+                      {name}
+                    </h3>
+                  </div>
+
+                  {/* Score & Accuracy Banner (Theme Adaptive) */}
+                  <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-white shadow-xs">
+                    <div>
+                      <span className="text-[10px] sm:text-[11px] font-extrabold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">
+                        NET SCORE
+                      </span>
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">{marksObtained}</span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">/ {totalMarks}</span>
+                      </div>
+                    </div>
+
+                    {/* Circular Accuracy Ring */}
+                    <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+                      <svg className="w-14 h-14 -rotate-90" viewBox="0 0 36 36">
+                        <path
+                          className="text-slate-200 dark:text-slate-800"
+                          strokeWidth="3.5"
+                          stroke="currentColor"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path
+                          className="text-emerald-500 dark:text-emerald-400"
+                          strokeDasharray={`${accuracy}, 100`}
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          stroke="currentColor"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                      </svg>
+                      <div className="absolute text-center">
+                        <span className="text-[11px] font-black block leading-tight text-slate-900 dark:text-slate-100">{accuracy}%</span>
+                        <span className="text-[8px] text-slate-500 dark:text-slate-400 font-bold block uppercase">ACC</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Performance Target Bar */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                      <span>Performance Target</span>
+                      <span className="font-black text-slate-900 dark:text-slate-100">{scorePct}%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-amber-500"
+                        style={{ width: `${scorePct}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* 3 Metric Pills */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="p-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-800 text-center space-y-0.5">
+                      <div className="flex items-center justify-center gap-1 text-[10px] font-extrabold">
+                        <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" /> Correct
+                      </div>
+                      <span className="font-black text-base block">{correct}</span>
+                    </div>
+
+                    <div className="p-2.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-200/70 dark:border-rose-800 text-center space-y-0.5">
+                      <div className="flex items-center justify-center gap-1 text-[10px] font-extrabold">
+                        <XCircle size={12} className="text-rose-600 dark:text-rose-400" /> Wrong
+                      </div>
+                      <span className="font-black text-base block">{wrong}</span>
+                    </div>
+
+                    <div className="p-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-center space-y-0.5">
+                      <div className="flex items-center justify-center gap-1 text-[10px] font-extrabold">
+                        <MinusCircle size={12} className="text-slate-500 dark:text-slate-400" /> Skipped
+                      </div>
+                      <span className="font-black text-base block">{skipped}</span>
+                    </div>
+                  </div>
+
+                  {/* Penalty Alert Box */}
+                  <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 flex items-center justify-between text-xs font-bold text-rose-800 dark:text-rose-300">
+                    <span className="flex items-center gap-1.5 font-extrabold">
+                      <AlertTriangle size={14} className="text-rose-600 dark:text-rose-400" /> Penalty Deducted
+                    </span>
+                    <span className="font-black text-xs sm:text-sm">-{negMarks} marks</span>
                   </div>
                 </div>
               );

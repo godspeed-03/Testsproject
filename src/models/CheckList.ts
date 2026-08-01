@@ -21,11 +21,14 @@ const CheckListSchema = new Schema<ICheckList>(
     title: { type: String, required: true },
     color: { type: String, default: '#6366F1' },
     items: [
-      {
-        id: { type: String, required: true },
-        text: { type: String, required: true },
-        checked: { type: Boolean, default: false }
-      }
+      new Schema(
+        {
+          id: { type: String, required: true },
+          text: { type: String, required: true },
+          checked: { type: Boolean, default: false }
+        },
+        { _id: false }
+      )
     ]
   },
   { timestamps: true }

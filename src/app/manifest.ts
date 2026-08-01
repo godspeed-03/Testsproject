@@ -8,9 +8,15 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/tracker',
     display: 'standalone',
     background_color: '#0F172A',
-    theme_color: '#4F46E5',
+    theme_color: '#7C3AED',
     orientation: 'portrait',
     icons: [
+      {
+        src: '/icon.svg',
+        sizes: 'any',
+        type: 'image/svg+xml',
+        purpose: 'any'
+      },
       {
         src: '/icon-192.png',
         sizes: '192x192',
@@ -22,11 +28,6 @@ export default function manifest(): MetadataRoute.Manifest {
         sizes: '512x512',
         type: 'image/png',
         purpose: 'maskable'
-      },
-      {
-        src: '/icon.svg',
-        sizes: 'any',
-        type: 'image/svg+xml'
       }
     ]
   };

@@ -15,6 +15,7 @@ export interface ITestLog extends Document {
   correctCount?: number;
   incorrectCount?: number;
   unattemptedCount?: number;
+  negMarks?: number;
   durationMins?: number;
   benchmarkCutoff?: number;
   concept?: any;
@@ -43,6 +44,7 @@ const TestLogSchema = new Schema<ITestLog>(
     correctCount: { type: Number, default: 0 },
     incorrectCount: { type: Number, default: 0 },
     unattemptedCount: { type: Number, default: 0 },
+    negMarks: { type: Number, default: 0 },
     durationMins: { type: Number, default: 120 },
     benchmarkCutoff: { type: Number, default: 100 },
     concept: { type: Schema.Types.Mixed, default: 0 },

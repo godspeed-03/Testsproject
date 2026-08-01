@@ -1,10 +1,11 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
-import { ShieldCheck, FileText, ArrowLeft, Mail, CheckCircle2, AlertCircle, HelpCircle } from 'lucide-react';
+import type { Metadata } from "next";
+import Link from "next/link";
+import { ShieldCheck, FileText, ArrowLeft, Mail, CheckCircle2, AlertCircle, HelpCircle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Terms of Service | UPSC Tracker",
-  description: "Terms of Service for UPSC Tracker app, governing user access, account registration, authentication, service availability, and usage guidelines.",
+  description:
+    "Terms of Service for UPSC Tracker app, governing user access, account registration, authentication, service availability, and usage guidelines.",
 };
 
 export default function TermsOfServicePage() {
@@ -17,7 +18,6 @@ export default function TermsOfServicePage() {
       <div className="absolute top-1/3 right-10 w-96 h-96 bg-orange-500/5 blur-3xl pointer-events-none rounded-full" />
 
       <div className="max-w-4xl mx-auto relative z-10">
-        
         {/* Navigation Breadcrumb */}
         <div className="mb-8">
           <Link
@@ -32,7 +32,7 @@ export default function TermsOfServicePage() {
         {/* Header Hero Banner */}
         <div className="bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-10 mb-10 shadow-xl backdrop-blur-md relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600" />
-          
+
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-xs">
@@ -42,9 +42,7 @@ export default function TermsOfServicePage() {
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                   Terms of Service
                 </h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  UPSC tracker • Official Legal Terms
-                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">UPSC tracker • Official Legal Terms</p>
               </div>
             </div>
 
@@ -54,13 +52,22 @@ export default function TermsOfServicePage() {
           </div>
 
           <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mt-4 border-t border-slate-200 dark:border-slate-800/80 pt-4">
-            Welcome to <strong className="text-amber-600 dark:text-amber-400 font-semibold">UPSC tracker</strong> (accessible via <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-amber-700 dark:text-amber-300 text-xs">nxtdev.in</code> and <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-amber-700 dark:text-amber-300 text-xs">test.nxtdev.in</code>). These Terms of Service govern your access to and use of our web application, tools, study management features, and services. Please read these terms carefully before using the application.
+            Welcome to <strong className="text-amber-600 dark:text-amber-400 font-semibold">UPSC tracker</strong>{" "}
+            (accessible via{" "}
+            <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-amber-700 dark:text-amber-300 text-xs">
+              nxtdev.in
+            </code>{" "}
+            and{" "}
+            <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-amber-700 dark:text-amber-300 text-xs">
+              test.nxtdev.in
+            </code>
+            ). These Terms of Service govern your access to and use of our web application, tools, study management
+            features, and services. Please read these terms carefully before using the application.
           </p>
         </div>
 
         {/* Terms Content Sections */}
         <div className="space-y-8">
-
           {/* Section 1: Acceptance of Terms */}
           <section className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-xl p-6 sm:p-8 shadow-xs">
             <div className="flex items-center gap-2.5 mb-4">
@@ -70,7 +77,16 @@ export default function TermsOfServicePage() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Acceptance of Terms</h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-3">
-              By accessing or creating an account on <strong className="text-slate-800 dark:text-slate-200">UPSC tracker</strong>, you confirm that you have read, understood, and agreed to be bound by these Terms of Service, as well as our <Link href="/privacy-policy" className="text-amber-600 dark:text-amber-400 underline hover:text-amber-700 dark:hover:text-amber-300">Privacy Policy</Link>.
+              By accessing or creating an account on{" "}
+              <strong className="text-slate-800 dark:text-slate-200">UPSC tracker</strong>, you confirm that you have
+              read, understood, and agreed to be bound by these Terms of Service, as well as our{" "}
+              <Link
+                href="/privacy-policy"
+                className="text-amber-600 dark:text-amber-400 underline hover:text-amber-700 dark:hover:text-amber-300"
+              >
+                Privacy Policy
+              </Link>
+              .
             </p>
             <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
               If you do not agree to these terms, you must discontinue using the app immediately.
@@ -86,12 +102,20 @@ export default function TermsOfServicePage() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Description of Service</h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
-              <strong className="text-slate-800 dark:text-slate-200">UPSC tracker</strong> provides an executive-level digital preparation dashboard for Union Public Service Commission Civil Services Examination (UPSC CSE) candidates. Services include:
+              <strong className="text-slate-800 dark:text-slate-200">UPSC tracker</strong> provides an executive-level
+              digital preparation dashboard for Union Public Service Commission Civil Services Examination (UPSC CSE)
+              candidates. Services include:
             </p>
             <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300 pl-2">
               <li className="flex items-start gap-2">
                 <CheckCircle2 size={15} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                <span>Automated daily study timetables and milestone trackers (Home page: <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded text-amber-700 dark:text-amber-300">https://test.nxtdev.in/tracker/agenda</code>).</span>
+                <span>
+                  Automated daily study timetables and milestone trackers (Home page:{" "}
+                  <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded text-amber-700 dark:text-amber-300">
+                    https://test.nxtdev.in/tracker/agenda
+                  </code>
+                  ).
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle2 size={15} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -113,14 +137,21 @@ export default function TermsOfServicePage() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">User Accounts & Google Sign-In</h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-3">
-              To access personalized study schedules, you may log in using standard authentication or third-party sign-in providers such as <strong className="text-slate-800 dark:text-slate-200">Google Sign-In</strong>.
+              To access personalized study schedules, you may log in using standard authentication or third-party
+              sign-in providers such as <strong className="text-slate-800 dark:text-slate-200">Google Sign-In</strong>.
             </p>
             <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-lg p-4 text-xs text-slate-600 dark:text-slate-300 space-y-2">
               <p className="font-semibold text-amber-700 dark:text-amber-400">Account Security Responsibilities:</p>
               <ul className="list-disc pl-5 space-y-1 text-slate-500 dark:text-slate-400">
                 <li>You are responsible for safeguarding your login credentials and Google Account access.</li>
                 <li>You must provide accurate account information when registering or interacting with the service.</li>
-                <li>Notify us immediately at <a href="mailto:satyam2001anand@gmail.com" className="text-amber-600 dark:text-amber-400 underline">satyam2001anand@gmail.com</a> if you suspect unauthorized access to your account.</li>
+                <li>
+                  Notify us immediately at{" "}
+                  <a href="mailto:byt.satysm@gmail.com" className="text-amber-600 dark:text-amber-400 underline">
+                    byt.satysm@gmail.com
+                  </a>{" "}
+                  if you suspect unauthorized access to your account.
+                </li>
               </ul>
             </div>
           </section>
@@ -134,7 +165,8 @@ export default function TermsOfServicePage() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Acceptable Use Policy</h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-3">
-              You agree to use <strong className="text-slate-800 dark:text-slate-200">UPSC tracker</strong> solely for personal, non-commercial educational purposes. You agree NOT to:
+              You agree to use <strong className="text-slate-800 dark:text-slate-200">UPSC tracker</strong> solely for
+              personal, non-commercial educational purposes. You agree NOT to:
             </p>
             <div className="grid sm:grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-300">
               <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 p-3 rounded-lg flex items-start gap-2">
@@ -165,7 +197,10 @@ export default function TermsOfServicePage() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Intellectual Property Rights</h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
-              All branding, application logos, software source code, user interface designs, custom syllabus tools, and visual layouts on <strong className="text-slate-800 dark:text-slate-200">nxtdev.in</strong> are the intellectual property of UPSC tracker and its creator. You may not copy, modify, distribute, or reverse-engineer any component of the application without prior written approval.
+              All branding, application logos, software source code, user interface designs, custom syllabus tools, and
+              visual layouts on <strong className="text-slate-800 dark:text-slate-200">nxtdev.in</strong> are the
+              intellectual property of UPSC tracker and its creator. You may not copy, modify, distribute, or
+              reverse-engineer any component of the application without prior written approval.
             </p>
           </section>
 
@@ -175,14 +210,22 @@ export default function TermsOfServicePage() {
               <span className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/20">
                 6
               </span>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Disclaimers & Limitation of Liability</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                Disclaimers & Limitation of Liability
+              </h2>
             </div>
             <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
               <p className="leading-relaxed">
-                <strong className="text-slate-800 dark:text-slate-200">Independent Preparation Platform:</strong> UPSC tracker is an independent digital study tool created for UPSC Civil Services Examination aspirants. It is not affiliated with, endorsed by, or sponsored by the Union Public Service Commission (UPSC) or any government entity.
+                <strong className="text-slate-800 dark:text-slate-200">Independent Preparation Platform:</strong> UPSC
+                tracker is an independent digital study tool created for UPSC Civil Services Examination aspirants. It
+                is not affiliated with, endorsed by, or sponsored by the Union Public Service Commission (UPSC) or any
+                government entity.
               </p>
               <p className="leading-relaxed">
-                <strong className="text-slate-800 dark:text-slate-200">As-Is Service:</strong> The platform is provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis without warranties of any kind, whether express or implied. We do not guarantee uninterrupted access, error-free operations, or specific exam results.
+                <strong className="text-slate-800 dark:text-slate-200">As-Is Service:</strong> The platform is provided
+                on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis without warranties of any kind, whether
+                express or implied. We do not guarantee uninterrupted access, error-free operations, or specific exam
+                results.
               </p>
             </div>
           </section>
@@ -193,10 +236,13 @@ export default function TermsOfServicePage() {
               <span className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-xs border border-amber-500/20">
                 7
               </span>
-              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Modifications & Account Termination</h2>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                Modifications & Account Termination
+              </h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-3">
-              We reserve the right to modify, update, or discontinue any feature of UPSC tracker at any time. We also reserve the right to suspend or terminate user accounts that violate these Terms of Service.
+              We reserve the right to modify, update, or discontinue any feature of UPSC tracker at any time. We also
+              reserve the right to suspend or terminate user accounts that violate these Terms of Service.
             </p>
           </section>
 
@@ -209,13 +255,17 @@ export default function TermsOfServicePage() {
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Contact & Support</h2>
             </div>
             <p className="text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed mb-4">
-              If you have any questions, inquiries, or feedback regarding these Terms of Service or your account, please reach out to our user support team:
+              If you have any questions, inquiries, or feedback regarding these Terms of Service or your account, please
+              reach out to our user support team:
             </p>
             <div className="bg-slate-50 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800 p-4 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
               <div>
                 <p className="text-slate-500 dark:text-slate-400">User Support Email:</p>
-                <a href="mailto:satyam2001anand@gmail.com" className="text-amber-600 dark:text-amber-400 font-bold text-sm hover:underline">
-                  satyam2001anand@gmail.com
+                <a
+                  href="mailto:byt.satysm@gmail.com"
+                  className="text-amber-600 dark:text-amber-400 font-bold text-sm hover:underline"
+                >
+                  byt.satysm@gmail.com
                 </a>
               </div>
               <div>
@@ -224,9 +274,7 @@ export default function TermsOfServicePage() {
               </div>
             </div>
           </section>
-
         </div>
-
       </div>
     </div>
   );

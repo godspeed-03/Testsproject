@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Target, Menu, X, RotateCcw, Calendar, BookOpen, FileText, Clock, Zap, Plus } from 'lucide-react';
 import UserProfileMenu from './UserProfileMenu';
+import BrandLogoIcon from './BrandLogoIcon';
 
 interface NavbarClientProps {
   user: {
@@ -42,16 +43,14 @@ export default function NavbarClient({ user }: NavbarClientProps) {
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-6">
             <Link href={logoTarget} className="flex items-center gap-2.5 group">
-              <div className="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold shadow-xs group-hover:scale-105 transition-transform">
-                <Target size={18} />
-              </div>
+              <BrandLogoIcon size="md" className="group-hover:scale-105" />
               <span className="font-bold text-base tracking-tight text-slate-900 dark:text-slate-100">
                 UPSC Tracker
               </span>
             </Link>
 
             {user && (
-              <div className="hidden md:flex items-center gap-1 border-l border-slate-200 dark:border-slate-800 pl-6">
+              <div className="hidden md:flex items-center gap-1.5 border-l border-slate-200 dark:border-slate-800 pl-6">
                 {navLinks.map((link) => {
                   const Icon = link.icon;
                   const isActive = pathname === link.href || (link.href === '/tracker' && pathname.startsWith('/tracker'));
@@ -59,13 +58,13 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         isActive
-                          ? 'bg-amber-500/10 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30 shadow-2xs'
+                          ? 'bg-violet-50 text-[#7C3AED] dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800/80 shadow-2xs'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                       }`}
                     >
-                      <Icon size={14} />
+                      <Icon size={14} strokeWidth={2.2} />
                       <span>{link.name}</span>
                     </Link>
                   );
@@ -80,7 +79,7 @@ export default function NavbarClient({ user }: NavbarClientProps) {
             ) : (
               <Link
                 href="/login"
-                className="text-xs px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg shadow-xs transition-all"
+                className="text-xs px-5 py-2 bg-gradient-to-r from-[#7C3AED] to-[#9333EA] hover:from-[#6D28D9] hover:to-[#7E22CE] text-white font-bold rounded-full shadow-md shadow-violet-500/25 transition-all"
               >
                 Sign In
               </Link>
@@ -112,7 +111,7 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`px-3 py-2 rounded-md text-xs font-medium flex items-center gap-2 transition-colors ${
                     isActive
-                      ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold'
+                      ? 'bg-[#FFF5EB] text-[#C2410C] dark:text-amber-400 font-semibold'
                       : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >

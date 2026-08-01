@@ -176,10 +176,16 @@ export const isHabitScheduledForDate = (h: any, dateIso: string): boolean => {
 };
 
 export const getTargetGoalLabel = (h: any) => {
-  if (h.type === 'task' || h.type === 'event') return 'One-time Task';
   const val = h.target?.value || 1;
   const unit = h.target?.unit || 'times';
   if (unit === 'yes_no' || unit === 'boolean') return 'Mark Done (Yes/No)';
+  if (unit !== 'times' && unit !== 'yes_no' && unit !== 'boolean') {
+    return `${val} ${unit}`;
+  }
+  if (h.type === 'task' || h.type === 'event') {
+    if (val > 1) return `One-time Task (${val} ${unit})`;
+    return 'One-time Task';
+  }
   return `${val} ${unit}`;
 };
 

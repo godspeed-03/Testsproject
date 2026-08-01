@@ -51,6 +51,13 @@ export async function POST(req: Request) {
         item.rules = itemRules;
         await item.save();
       }
+    } else if (action === "update_status") {
+      let item = await SyllabusItem.findOne(queryFilter);
+      if (item) {
+        item.userId = userId;
+        item.status = status;
+        await item.save();
+      }
     } else if (action === "update" || action === "update_rules") {
       let item = await SyllabusItem.findOne(queryFilter);
       if (item) {

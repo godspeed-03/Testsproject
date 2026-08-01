@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Target, Shield, FileText, Mail } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Target, Shield, FileText, Mail } from "lucide-react";
 
 export default function Footer() {
   const pathname = usePathname();
@@ -11,17 +11,17 @@ export default function Footer() {
 
   useEffect(() => {
     // Check if user token cookie exists
-    const hasToken = document.cookie.split(';').some((item) => item.trim().startsWith('token='));
+    const hasToken = document.cookie.split(";").some((item) => item.trim().startsWith("token="));
     setIsLoggedIn(hasToken);
   }, [pathname]);
 
   // Hide footer when user is logged in or navigating app workspace pages
   const isAppRoute =
-    pathname.startsWith('/tracker') ||
-    pathname.startsWith('/syllabus') ||
-    pathname.startsWith('/tests') ||
-    pathname.startsWith('/routine') ||
-    pathname.startsWith('/timetable');
+    pathname.startsWith("/tracker") ||
+    pathname.startsWith("/syllabus") ||
+    pathname.startsWith("/tests") ||
+    pathname.startsWith("/routine") ||
+    pathname.startsWith("/timetable");
 
   if (isLoggedIn || isAppRoute) {
     return null;
@@ -30,7 +30,6 @@ export default function Footer() {
   return (
     <footer className="w-full bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 text-xs py-8 px-4 sm:px-6 lg:px-8 mt-auto transition-colors">
       <div className="max-w-[1480px] mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-        
         {/* Brand & Description */}
         <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
           <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-200">
@@ -47,24 +46,24 @@ export default function Footer() {
 
         {/* Footer Links */}
         <div className="flex flex-wrap items-center justify-center gap-6 text-xs">
-          <Link 
-            href="/privacy-policy" 
+          <Link
+            href="/privacy-policy"
             className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-1.5 font-medium"
           >
             <Shield size={14} />
             <span>Privacy Policy</span>
           </Link>
 
-          <Link 
-            href="/terms-of-service" 
+          <Link
+            href="/terms-of-service"
             className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-1.5 font-medium"
           >
             <FileText size={14} />
             <span>Terms of Service</span>
           </Link>
 
-          <a 
-            href="mailto:satyam2001anand@gmail.com" 
+          <a
+            href="mailto:byt.satysm@gmail.com"
             className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors flex items-center gap-1.5 font-medium"
           >
             <Mail size={14} />
@@ -76,7 +75,6 @@ export default function Footer() {
         <div className="text-slate-500 dark:text-slate-400 text-xs text-center md:text-right">
           © {new Date().getFullYear()} nxtdev.in. All rights reserved.
         </div>
-
       </div>
     </footer>
   );

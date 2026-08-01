@@ -87,7 +87,11 @@ export async function POST(req: Request) {
         userId,
         title: l.title || 'Untitled List',
         color: l.color || '#6366F1',
-        items: l.items || []
+        items: (l.items || []).map((item: any, idx: number) => ({
+          id: String(item.id || item._id || `item_${idx}_${Date.now()}`),
+          text: String(item.text || ''),
+          checked: item.checked !== undefined ? !!item.checked : !!item.completed
+        }))
       }));
       await CheckList.insertMany(docs);
     }

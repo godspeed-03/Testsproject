@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   Search,
   ChevronLeft,
@@ -11,11 +11,11 @@ import {
   Trash2,
   Loader2,
   Check,
-  Circle
-} from 'lucide-react';
-import { useTracker, getTargetGoalLabel, calculateHabitStreak } from '../TrackerContext';
-import ShadcnDatePicker from '@/components/ui/ShadcnDatePicker';
-import ShadcnSelect from '@/components/ui/ShadcnSelect';
+  Circle,
+} from "lucide-react";
+import { useTracker, getTargetGoalLabel, calculateHabitStreak } from "../TrackerContext";
+import ShadcnDatePicker from "@/components/ui/ShadcnDatePicker";
+import ShadcnSelect from "@/components/ui/ShadcnSelect";
 
 export default function AgendaPage() {
   const {
@@ -34,13 +34,13 @@ export default function AgendaPage() {
     handleNextWeek,
     handleGoToToday,
     handleDeleteHabit,
-    handleItemClick
+    handleItemClick,
   } = useTracker();
-    console.log("🚀 ~ AgendaPage ~ todayItems:", todayItems)
+  console.log("🚀 ~ AgendaPage ~ todayItems:", todayItems);
 
-  const cardBg = 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80';
-  const textTitle = 'text-slate-900 dark:text-slate-100';
-  const textMuted = 'text-slate-500 dark:text-slate-400';
+  const cardBg = "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80";
+  const textTitle = "text-slate-900 dark:text-slate-100";
+  const textMuted = "text-slate-500 dark:text-slate-400";
 
   return (
     <div className="space-y-6">
@@ -48,11 +48,7 @@ export default function AgendaPage() {
       <div className={`p-5 rounded-2xl border ${cardBg} space-y-4 shadow-xs`}>
         <div className="flex flex-wrap justify-between items-center gap-3">
           <div className="flex items-center gap-3">
-            <ShadcnDatePicker
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-              disablePastDates={false}
-            />
+            <ShadcnDatePicker selectedDate={selectedDate} onSelectDate={setSelectedDate} disablePastDates={false} />
           </div>
 
           {/* Search & Type Filters */}
@@ -73,9 +69,9 @@ export default function AgendaPage() {
                 value={typeFilter}
                 onChange={(val: string) => setTypeFilter(val as any)}
                 options={[
-                  { value: 'ALL', label: 'All Items' },
-                  { value: 'habit', label: 'Habits Only' },
-                  { value: 'task', label: 'Tasks & Events' }
+                  { value: "ALL", label: "All Items" },
+                  { value: "habit", label: "Habits Only" },
+                  { value: "task", label: "Tasks & Events" },
                 ]}
               />
             </div>
@@ -84,7 +80,7 @@ export default function AgendaPage() {
 
         {/* 7-Day Date Picker Strip with In-Line Prev / Next Arrows */}
         <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
-          {selectedDate !== new Date().toISOString().split('T')[0] && (
+          {selectedDate !== new Date().toISOString().split("T")[0] && (
             <div className="flex justify-end">
               <button
                 type="button"
@@ -108,19 +104,22 @@ export default function AgendaPage() {
             <div className="grid grid-cols-7 gap-1.5 sm:gap-2 flex-1">
               {weekDays.map((w: any) => {
                 const isSel = w.iso === selectedDate;
-                const isSunday = w.dayName === 'Sun';
+                const isSunday = w.dayName === "Sun";
 
-                let cardBgClass = '';
+                let cardBgClass = "";
                 if (isSel) {
                   cardBgClass = w.isToday
-                    ? 'bg-indigo-600 text-white font-black shadow-lg ring-2 ring-amber-400 scale-105'
-                    : 'bg-indigo-600 text-white font-black shadow-lg ring-2 ring-indigo-500/50 scale-105';
+                    ? "bg-indigo-600 text-white font-black shadow-lg ring-2 ring-amber-400 scale-105"
+                    : "bg-indigo-600 text-white font-black shadow-lg ring-2 ring-indigo-500/50 scale-105";
                 } else if (w.isToday) {
-                  cardBgClass = 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-2 border-amber-500 font-extrabold shadow-xs hover:bg-amber-500/25';
+                  cardBgClass =
+                    "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-2 border-amber-500 font-extrabold shadow-xs hover:bg-amber-500/25";
                 } else if (isSunday) {
-                  cardBgClass = 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold hover:bg-rose-500/20';
+                  cardBgClass =
+                    "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30 font-bold hover:bg-rose-500/20";
                 } else {
-                  cardBgClass = 'bg-slate-100 dark:bg-slate-950/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-800/50 font-bold';
+                  cardBgClass =
+                    "bg-slate-100 dark:bg-slate-950/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200/50 dark:border-slate-800/50 font-bold";
                 }
 
                 return (
@@ -164,9 +163,13 @@ export default function AgendaPage() {
         ) : (
           todayItems.map((h: any) => {
             const hist = (h.history || []).find((entry: any) => entry.date === selectedDate);
-            const isDone = hist?.status === 'done';
-            const loggedVal = hist ? (hist.value || 0) : 0;
-            const isNumeric = h.type === 'habit' && h.target?.unit !== 'yes_no' && h.target?.unit !== 'boolean';
+            const isDone = hist?.status === "done";
+            const loggedVal = hist ? hist.value || 0 : 0;
+            const isNumeric =
+              h.target?.unit &&
+              h.target?.unit !== "yes_no" &&
+              h.target?.unit !== "boolean" &&
+              h.target?.unit !== "times";
 
             return (
               <div
@@ -179,7 +182,7 @@ export default function AgendaPage() {
                     className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-inner"
                     style={{ backgroundColor: `${h.color}20`, color: h.color, border: `1px solid ${h.color}40` }}
                   >
-                    {h.icon || h.category?.icon || '🏃'}
+                    {h.icon || h.category?.icon || "🏃"}
                   </div>
 
                   <div>
@@ -189,27 +192,27 @@ export default function AgendaPage() {
                       </span>
                       {(() => {
                         const isAugmentedTask = h.isAugmentedRevision;
-                        console.log("🚀 ~ AgendaPage ~ isAugmentedTask:", h.isAugmentedRevision)
+                        console.log("🚀 ~ AgendaPage ~ isAugmentedTask:", h.isAugmentedRevision);
 
-                        if (h.title?.startsWith('[R1')) {
+                        if (h.title?.startsWith("[R1")) {
                           return (
                             <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-amber-500 text-white shadow-xs flex items-center gap-1">
                               ⚡ 1st Revision (R1)
                             </span>
                           );
-                        } else if (h.title?.startsWith('[R2')) {
+                        } else if (h.title?.startsWith("[R2")) {
                           return (
                             <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-purple-600 text-white shadow-xs flex items-center gap-1">
                               ⚡ 2nd Revision (R2)
                             </span>
                           );
-                        } else if (h.title?.startsWith('[R3')) {
+                        } else if (h.title?.startsWith("[R3")) {
                           return (
                             <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-600 text-white shadow-xs flex items-center gap-1">
                               ⚡ 3rd Revision (R3)
                             </span>
                           );
-                        } else if (h.isStudyTask && isAugmentedTask && h.frequency?.mode === 'once') {
+                        } else if (h.isStudyTask && isAugmentedTask && h.frequency?.mode === "once") {
                           return (
                             <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                               📖 1st Read
@@ -224,19 +227,23 @@ export default function AgendaPage() {
                         }
                         return null;
                       })()}
-                      <h4 className={`font-black text-sm sm:text-base ${isDone ? 'line-through opacity-60' : textTitle}`}>
+                      <h4
+                        className={`font-black text-sm sm:text-base ${isDone ? "line-through opacity-60" : textTitle}`}
+                      >
                         {h.title}
                       </h4>
                     </div>
 
                     <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-1 font-bold flex-wrap">
                       {isNumeric ? (
-                        <span className={`px-2 py-0.5 rounded-md text-[11px] font-black border ${
-                          loggedVal > 0
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                            : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
-                        }`}>
-                          Logged: {loggedVal} / {h.target?.value || 1} {h.target?.unit || 'times'}
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-black border ${
+                            loggedVal > 0
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                              : "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20"
+                          }`}
+                        >
+                          Logged: {loggedVal} / {h.target?.value || 1} {h.target?.unit || "times"}
                         </span>
                       ) : (
                         <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-[11px] font-black">
@@ -260,7 +267,7 @@ export default function AgendaPage() {
 
                 {/* Toggle Checkbox & Delete Buttons */}
                 <div className="flex items-center gap-1 sm:gap-2">
-                  {h.type !== 'habit' && (
+                  {h.type !== "habit" && (
                     <button
                       type="button"
                       disabled={saving || deletingId === h._id}
@@ -270,26 +277,34 @@ export default function AgendaPage() {
                       className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                       title="Delete Task & Topic Data"
                     >
-                      {deletingId === h._id ? <Loader2 size={16} className="animate-spin text-rose-500" /> : <Trash2 size={16} />}
+                      {deletingId === h._id ? (
+                        <Loader2 size={16} className="animate-spin text-rose-500" />
+                      ) : (
+                        <Trash2 size={16} />
+                      )}
                     </button>
                   )}
 
-                  {selectedDate < new Date().toISOString().split('T')[0] && (
+                  {selectedDate < new Date().toISOString().split("T")[0] && (
                     <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 italic pr-1">
                       Past date (read-only)
                     </span>
                   )}
                   <button
                     type="button"
-                    disabled={saving || selectedDate < new Date().toISOString().split('T')[0]}
+                    disabled={saving || selectedDate < new Date().toISOString().split("T")[0]}
                     onClick={() => handleItemClick(h, selectedDate)}
-                    title={selectedDate < new Date().toISOString().split('T')[0] ? 'Backdate editing is disabled' : 'Log completion'}
+                    title={
+                      selectedDate < new Date().toISOString().split("T")[0]
+                        ? "Backdate editing is disabled"
+                        : "Log completion"
+                    }
                     className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all ${
-                      selectedDate < new Date().toISOString().split('T')[0]
-                        ? 'opacity-60 cursor-not-allowed bg-slate-200 dark:bg-slate-800 text-slate-400'
+                      selectedDate < new Date().toISOString().split("T")[0]
+                        ? "opacity-60 cursor-not-allowed bg-slate-200 dark:bg-slate-800 text-slate-400"
                         : isDone
-                        ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
-                        : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400'
+                          ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
+                          : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400"
                     }`}
                   >
                     {togglingId === `${h._id}_${selectedDate}` ? (

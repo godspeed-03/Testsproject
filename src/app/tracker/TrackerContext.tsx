@@ -772,9 +772,11 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     return true;
   });
 
-  // Sort agenda: One-time tasks → Other tasks → Habits
-  // Within each group: items with no time first, then sorted morning→night
-  // Same time → alphabetical by title
+  // Sort agenda:
+  // 1. Primary: Tasks (type !== 'habit') first, Habits (type === 'habit') second
+  // 2. Secondary: Items with scheduled reminder time first (morning -> night, e.g. 06:00 -> 22:00)
+  // 3. Items without scheduled time at the end of their respective group
+  // 4. Alphabetical tie-breaker
   const getItemTime = (h: any): string | null => {
     if (h.reminders && h.reminders[0] && h.reminders[0].enabled !== false && h.reminders[0].time) {
       return h.reminders[0].time; // "HH:MM" format
@@ -782,21 +784,13 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     return null;
   };
 
-  const getGroupPriority = (h: any): number => {
-    const isOnce = h.frequency?.mode === 'once' || (h.type === 'task' && !h.frequency?.mode);
-    const isHabitType = h.type === 'habit';
-    if (isOnce) return 0;        // One-time tasks first
-    if (!isHabitType) return 1;   // Other recurring tasks
-    return 2;                     // Habits last
-  };
-
   const todayItems = [...todayItemsUnsorted].sort((a, b) => {
-    // 1. Group priority: one-time tasks → recurring tasks → habits
-    const groupA = getGroupPriority(a);
-    const groupB = getGroupPriority(b);
-    if (groupA !== groupB) return groupA - groupB;
+    // 1. Group: Tasks first (0), Habits second (1)
+    const isHabitA = a.type === 'habit' ? 1 : 0;
+    const isHabitB = b.type === 'habit' ? 1 : 0;
+    if (isHabitA !== isHabitB) return isHabitA - isHabitB;
 
-    // 2. Within group: items WITH time first (morning→night), no-time items last
+    // 2. Time: Items WITH time come first, sorted chronologically (morning -> night)
     const timeA = getItemTime(a);
     const timeB = getItemTime(b);
     const hasTimeA = timeA !== null;
@@ -808,7 +802,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       return timeA!.localeCompare(timeB!);
     }
 
-    // 3. Same time or both no time → alphabetical by title
+    // 3. Alphabetical tie-breaker
     return (a.title || '').localeCompare(b.title || '');
   });
 

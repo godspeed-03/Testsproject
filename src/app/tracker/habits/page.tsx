@@ -40,7 +40,21 @@ export default function HabitsPage() {
   const textMuted = 'text-slate-500 dark:text-slate-400';
 
   const todayIso = new Date().toISOString().split('T')[0];
-  const habitList = habits.filter((h: any) => h.type === 'habit');
+  const habitList = [...habits.filter((h: any) => h.type === 'habit')].sort((a: any, b: any) => {
+    const getReminderTime = (item: any): string | null => {
+      if (item.reminders && item.reminders[0] && item.reminders[0].enabled !== false && item.reminders[0].time) {
+        return item.reminders[0].time;
+      }
+      return null;
+    };
+    const timeA = getReminderTime(a);
+    const timeB = getReminderTime(b);
+
+    if (timeA && !timeB) return -1;
+    if (!timeA && timeB) return 1;
+    if (timeA && timeB && timeA !== timeB) return timeA.localeCompare(timeB);
+    return (a.title || '').localeCompare(b.title || '');
+  });
 
   const getMonthDaysForOffset = (offsetMonths: number = 0) => {
     const today = new Date();

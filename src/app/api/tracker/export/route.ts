@@ -7,6 +7,10 @@ import TestLog from '@/models/TestLog';
 import TopicRevision from '@/models/TopicRevision';
 import HabitItem from '@/models/HabitItem';
 import CheckList from '@/models/CheckList';
+import DailySnapshot from '@/models/DailySnapshot';
+import MonthlySnapshot from '@/models/MonthlySnapshot';
+import ConsistencySnapshot from '@/models/ConsistencySnapshot';
+import AllTimeSnapshot from '@/models/AllTimeSnapshot';
 import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
 import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
 
@@ -19,12 +23,18 @@ export async function GET() {
 
     const todayStr = new Date().toISOString().split('T')[0];
     const userFilter = { $or: [{ userId }, { userId: '000000000000000000000000' }] };
+
+    // Fetch all model data
     const habits = await HabitItem.find(userFilter).lean();
     const lists = await CheckList.find(userFilter).lean();
     const syllabus = await SyllabusItem.find(userFilter).lean();
     const testLogs = await TestLog.find(userFilter).sort({ createdAt: -1 }).lean();
     const topicRevisions = await TopicRevision.find(userFilter).lean();
     const dbRuleSets = await SyllabusRuleSet.find(userFilter).lean();
+    const dailySnapshots = await DailySnapshot.find(userFilter).lean();
+    const monthlySnapshots = await MonthlySnapshot.find(userFilter).lean();
+    const consistencySnapshots = await ConsistencySnapshot.find(userFilter).lean();
+    const allTimeSnapshot = await AllTimeSnapshot.findOne(userFilter).lean();
 
     const formattedHabits = habits.map((h: any) => ({
       ...h,
@@ -83,12 +93,44 @@ export async function GET() {
       };
     });
 
+    const formattedRuleSets = dbRuleSets.map((r: any) => ({
+      id: r._id.toString(),
+      name: r.name,
+      category: r.category,
+      rules: r.rules || []
+    }));
+
+    const formattedDailySnapshots = dailySnapshots.map((d: any) => ({
+      ...d,
+      _id: undefined
+    }));
+
+    const formattedMonthlySnapshots = monthlySnapshots.map((m: any) => ({
+      ...m,
+      _id: undefined
+    }));
+
+    const formattedConsistencySnapshots = consistencySnapshots.map((c: any) => ({
+      ...c,
+      _id: undefined
+    }));
+
+    const formattedAllTimeSnapshot = allTimeSnapshot ? {
+      ...allTimeSnapshot,
+      _id: undefined
+    } : null;
+
     return NextResponse.json({
       habits: formattedHabits,
       lists: formattedLists,
       topicRevisions: formattedTopicRevisions,
       syllabusList: formattedSyllabus,
       testLogs: formattedTestLogs,
+      ruleSets: formattedRuleSets,
+      dailySnapshots: formattedDailySnapshots,
+      monthlySnapshots: formattedMonthlySnapshots,
+      consistencySnapshots: formattedConsistencySnapshots,
+      allTimeSnapshot: formattedAllTimeSnapshot,
       exportedAt: new Date().toISOString()
     });
   } catch (error: any) {

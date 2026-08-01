@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -105,6 +105,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     handleOpenCreateModal,
     getFilteredCategorySubjects
   } = useTracker();
+
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [activeEmojiTab, setActiveEmojiTab] = useState('all');
 
   useEffect(() => {
     const handleOpen = () => {
@@ -286,26 +289,27 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
       {/* CREATE / EDIT ITEM MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in overflow-y-auto">
-          <div className={`w-full max-w-xl p-6 rounded-3xl border ${cardBg} shadow-2xl space-y-5 my-8`}>
-            <div className="flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in">
+          <div className={`w-full max-w-xl max-h-[92vh] flex flex-col p-5 sm:p-6 rounded-3xl border ${cardBg} shadow-2xl space-y-4 bg-white/95 dark:bg-slate-900/95`}>
+            {/* Modal Header */}
+            <div className="flex items-center justify-between shrink-0 pb-1 border-b border-slate-100 dark:border-slate-800/80">
               <div>
-                <h3 className={`text-xl font-black ${textTitle}`}>
+                <h3 className={`text-lg sm:text-xl font-black tracking-tight ${textTitle}`}>
                   {editingHabitId ? 'Edit Habit / Task' : 'Create New Tracker Item'}
                 </h3>
-                <p className={`text-xs ${textMuted}`}>Define schedule, target goals, and syllabus categories.</p>
+                <p className={`text-xs ${textMuted} mt-0.5`}>Define schedule, target goals, and syllabus categories.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
-                className="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
-            {/* Type Selector Tabs */}
-            <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+            {/* Type Selector Segmented Tabs */}
+            <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 shrink-0">
               {[
                 { id: 'habit', label: 'Recurring Habit', icon: '🔥' },
                 { id: 'task', label: 'One-time Task', icon: '📝' },
@@ -326,7 +330,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   }}
                   className={`py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
                     createType === t.id
-                      ? 'bg-indigo-600 text-white shadow-xs'
+                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
@@ -336,9 +340,10 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               ))}
             </div>
 
-            <form onSubmit={handleCreateSubmit} className="space-y-4 text-xs">
+            {/* Scrollable Form Body */}
+            <form onSubmit={handleCreateSubmit} className="flex-1 overflow-y-auto pr-1 space-y-4 text-xs scrollbar-thin">
               {createType === 'list' ? (
-                <div className="space-y-3">
+                <div className="space-y-3 pt-1">
                   <div>
                     <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Checklist Name</label>
                     <input
@@ -347,7 +352,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       placeholder="e.g., Mains Paper 1 Revision Topics"
                       value={formTitle}
                       onChange={(e) => setFormTitle(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
                     />
                   </div>
                 </div>
@@ -355,9 +360,12 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 <>
                   {/* Task / Habit Mode selection (Only for One-Time Tasks) */}
                   {createType === 'task' && formFrequencyMode === 'once' && (
-                    <div className="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 space-y-3">
+                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-indigo-500/5 border border-indigo-500/20 space-y-3 shadow-xs">
                       <div className="flex items-center justify-between">
-                        <span className="font-black text-indigo-700 dark:text-indigo-300">Link to UPSC Syllabus Matrix?</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">🎓</span>
+                          <span className="font-black text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm">Link to UPSC Syllabus Matrix?</span>
+                        </div>
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input
                             type="checkbox"
@@ -377,7 +385,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
                       {formIsStudyTask && (
                         <div className="space-y-3 pt-1">
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
                               <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Subject</label>
                               <ShadcnSelect
@@ -411,18 +419,17 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                   const autoTitle = formSubject && val ? `${formSubject}: ${val}` : (val || formSubject);
                                   if (autoTitle) setFormTitle(autoTitle);
                                 }}
-                                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold outline-none focus:border-indigo-500"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold outline-none focus:border-indigo-500"
                               />
                             </div>
                           </div>
 
                           {/* Augmented Revision SRS Toggle */}
-                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-500/20">
+                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-indigo-500/20">
                             <div>
-                              <span className="font-extrabold text-slate-800 dark:text-slate-200 block text-xs">
+                              <span className="font-black text-slate-800 dark:text-slate-200 block text-xs">
                                 Spaced Repetition SRS (R1, R2, R3)?
                               </span>
-
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer shrink-0 ml-3">
                               <input
@@ -439,17 +446,148 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     </div>
                   )}
 
-                  {/* Title & Category */}
+                  {/* Title & Icon Input */}
                   <div className={createType === 'habit' ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-1 sm:grid-cols-2 gap-3'}>
                     <div>
                       <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Title</label>
-                      <input
-                        type="text"
-                        placeholder={createType === 'habit' ? 'e.g., Daily Answer Writing / Running' : 'Task Title'}
-                        value={formTitle}
-                        onChange={(e) => setFormTitle(e.target.value)}
-                        className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
-                      />
+
+                      <div className="relative">
+                        <div className="flex items-center gap-1.5">
+                          {/* Default Icon button on left of title */}
+                          <button
+                            type="button"
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            title="Click to select icon & color"
+                            className="h-10 px-3 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-lg flex items-center justify-center gap-1 hover:border-indigo-500 transition-all shrink-0 active:scale-95 shadow-2xs"
+                            style={{ borderColor: formColor || undefined }}
+                          >
+                            <span>{formIcon || '🏃'}</span>
+                            <span className="text-[9px] text-slate-400">▾</span>
+                          </button>
+
+                          {/* Title Input */}
+                          <input
+                            type="text"
+                            placeholder={createType === 'habit' ? 'e.g., Daily Answer Writing / Running' : 'Task Title'}
+                            value={formTitle}
+                            onChange={(e) => setFormTitle(e.target.value)}
+                            className="flex-1 h-10 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+                          />
+                        </div>
+
+                        {/* Floating Popover: Icon & Theme Color Selector */}
+                        {showEmojiPicker && (
+                          <div className="absolute top-full left-0 mt-1.5 w-80 sm:w-[420px] max-w-[calc(100vw-2.5rem)] p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-indigo-500/30 shadow-2xl space-y-3 animate-fade-in z-50">
+                            {/* Popover Header */}
+                            <div className="flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2">
+                              <span>Customize Icon & Theme Color</span>
+                              <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker(false)}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+                              >
+                                ✕
+                              </button>
+                            </div>
+
+                            {/* Theme Color Picker Section */}
+                            <div className="space-y-1.5">
+                              <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Theme Color Palette</div>
+                              <div className="flex items-center justify-between gap-1.5 bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-100 dark:border-slate-800 flex-wrap">
+                                {['#6366F1', '#10B981', '#F59E0B', '#F43F5E', '#8B5CF6', '#06B6D4', '#EC4899', '#3B82F6', '#14B8A6', '#F97316'].map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    onClick={() => setFormColor(c)}
+                                    className={`w-6 h-6 rounded-full transition-all ${
+                                      formColor === c
+                                        ? 'scale-125 ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-md'
+                                        : 'hover:scale-110 opacity-70 hover:opacity-100'
+                                    }`}
+                                    style={{ backgroundColor: c }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Category Filter Tabs */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Select Icon</span>
+                                <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+                                  {[
+                                    { id: 'all', label: 'All', icon: '✨' },
+                                    { id: 'study', label: 'Study', icon: '📚' },
+                                    { id: 'sports', label: 'Sports', icon: '🏃' },
+                                    { id: 'health', label: 'Health', icon: '🥗' },
+                                    { id: 'tools', label: 'Tools', icon: '🎯' }
+                                  ].map((tab) => (
+                                    <button
+                                      key={tab.id}
+                                      type="button"
+                                      onClick={() => setActiveEmojiTab(tab.id)}
+                                      className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1 ${
+                                        activeEmojiTab === tab.id
+                                          ? 'bg-indigo-600 text-white shadow-xs'
+                                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                      }`}
+                                    >
+                                      <span>{tab.icon}</span>
+                                      <span>{tab.label}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Categorized Emoji Grid */}
+                              <div className="grid grid-cols-10 sm:grid-cols-12 gap-1.5 max-h-44 overflow-y-auto p-2 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 scrollbar-thin">
+                                {(() => {
+                                  const sets: Record<string, string[]> = {
+                                    study: [
+                                      '📚', '✍️', '📖', '📝', '💡', '🎓', '🧠', '🔬', '🧪', '📐', '💻', '📊',
+                                      '📑', '🗞️', '🖋️', '🏛️', '🌍', '⚖️', '🎒', '📜', '🧾', '📂', '📋', '📌'
+                                    ],
+                                    sports: [
+                                      '🏃', '🏃‍♀️', '🏋️', '🧘', '🚴', '⚽', '🏊', '🚶', '🎾', '🏀', '🏐', '🥊',
+                                      '🥋', '🧗', '🏸', '⛳', '🛹', '🚵', '🥇', '🏆', '🎯', '💪', '👟', '🎽'
+                                    ],
+                                    health: [
+                                      '💧', '🍏', '🥗', '😴', '💊', '🍎', '☀️', '🌙', '☕', '🍵', '🥑', '🥦',
+                                      '🍳', '🧘‍♀️', '🧼', '🛀', '🩺', '❤️', '🌿', '🌱', '🍇', '🍌', '🥛', '🧘‍♂️'
+                                    ],
+                                    tools: [
+                                      '🔥', '🎯', '⏰', '📅', '✨', '🚀', '⏱️', '⚡', '🔔', '⭐', '💡', '📈',
+                                      '⚙️', '🔑', '🎨', '🎵', '🎧', '💰', '🛒', '🚗', '✈️', '🌴', '🏠', '📱'
+                                    ]
+                                  };
+
+                                  const iconsToDisplay = activeEmojiTab === 'all'
+                                    ? Object.values(sets).flat()
+                                    : (sets[activeEmojiTab] || []);
+
+                                  return iconsToDisplay.map((emoji, i) => (
+                                    <button
+                                      key={i}
+                                      type="button"
+                                      onClick={() => {
+                                        setFormIcon(emoji);
+                                        setShowEmojiPicker(false);
+                                      }}
+                                      className={`w-7 h-7 rounded-lg text-base flex items-center justify-center transition-all ${
+                                        formIcon === emoji
+                                          ? 'bg-indigo-600 text-white font-black scale-110 shadow-md'
+                                          : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
+                                      }`}
+                                    >
+                                      {emoji}
+                                    </button>
+                                  ));
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {createType === 'task' && (
@@ -460,7 +598,6 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                           onChange={(val: string) => {
                             setFormCategory({ id: val.toLowerCase(), label: val, icon: '📚', color: '#6366F1' });
                             
-                            // Find subjects belonging to this selected category
                             const matchedSubjects = (syllabusItems || [])
                               .filter((item: any) => {
                                 const itemCat = String(item.category || '').trim();
@@ -510,10 +647,10 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                               setFormIsStudyTask(false);
                             }
                           }}
-                          className={`py-1.5 rounded-lg font-bold border transition-all text-center ${
+                          className={`py-2 rounded-xl font-black text-xs border transition-all text-center ${
                             formFrequencyMode === m.id
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xs'
-                              : 'bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20'
+                              : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
                           }`}
                         >
                           {m.label}
@@ -548,7 +685,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     )}
 
                     {formFrequencyMode === 'monthly' && (
-                      <div className="flex items-center justify-between gap-3 pt-1.5 p-2.5 rounded-xl bg-slate-100/70 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800">
+                      <div className="flex items-center justify-between gap-3 pt-1.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                         <label className="font-extrabold text-slate-700 dark:text-slate-300 text-xs">Repeat on Day of Month:</label>
                         <div className="w-40">
                           <ShadcnSelect
@@ -573,7 +710,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         min="1"
                         value={formTargetVal}
                         onChange={(e) => setFormTargetVal(Number(e.target.value))}
-                        className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
                       />
                     </div>
 
@@ -597,14 +734,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                           placeholder="e.g. Quizzes, MCQs"
                           value={formCustomUnit}
                           onChange={(e) => setFormCustomUnit(e.target.value)}
-                          className="w-full mt-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold outline-none"
+                          className="w-full mt-2 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold outline-none"
                         />
                       )}
                     </div>
                   </div>
 
                   {/* Start Date & Reminders */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Scheduled Date</label>
                       <ShadcnDatePicker
@@ -639,11 +776,12 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 </>
               )}
 
-              <div className="pt-3 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
+              {/* Footer CTAs */}
+              <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800/80 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2.5 rounded-xl font-extrabold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                  className="px-5 py-2.5 rounded-xl font-extrabold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
                 >
                   Cancel
                 </button>
@@ -651,7 +789,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-6 py-2.5 rounded-xl font-extrabold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 transition-all flex items-center gap-2"
+                  className="px-6 py-2.5 rounded-xl font-black text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   <span>{editingHabitId ? 'Save Changes' : 'Create Item'}</span>

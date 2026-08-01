@@ -5,6 +5,7 @@ import { Clock, Printer, Target, FileCode, Loader2, Table as TableIcon, Layers, 
 
 interface MasterRoutineTableProps {
   onOpenCodeEditor?: () => void;
+  onConfigLoaded?: (config: any) => void;
 }
 
 const DAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -34,8 +35,7 @@ export function getCellStyle(theme?: string) {
 }
 
 /**
- * Normalizes any JSON input (legacy single config, array of tables, or { tables: [...] })
- * into a standard array of table objects for dynamic rendering.
+ * Normalizes any JSON input into a standard array of table objects for dynamic rendering.
  */
 export function normalizeRoutineTables(configData: any): any[] {
   if (!configData) return [];
@@ -50,7 +50,7 @@ export function normalizeRoutineTables(configData: any): any[] {
     return configData;
   }
 
-  // Case 3: Legacy single routine config with timeSlots / satakGoals
+  // Case 3: Single routine config with timeSlots / satakGoals
   const tables: any[] = [];
 
   if (configData.timeSlots || configData.cells || configData.title) {
@@ -191,7 +191,7 @@ function GridMatrixTable({ table }: { table: any }) {
 }
 
 /**
- * Single Custom Dynamic Table Component
+ * Custom Dynamic Table Component
  */
 function CustomTable({ table }: { table: any }) {
   const columns: string[] = table.columns || table.headers || [];
@@ -280,7 +280,7 @@ function SatakGoalsTable({ table }: { table: any }) {
   );
 }
 
-export default function MasterRoutineTable({ onOpenCodeEditor }: MasterRoutineTableProps) {
+export default function MasterRoutineTable({ onOpenCodeEditor, onConfigLoaded }: MasterRoutineTableProps) {
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -293,6 +293,7 @@ export default function MasterRoutineTable({ onOpenCodeEditor }: MasterRoutineTa
           const data = await res.json();
           if (data.routineConfig) {
             setConfig(data.routineConfig);
+            onConfigLoaded?.(data.routineConfig);
             return;
           }
         }
@@ -300,7 +301,10 @@ export default function MasterRoutineTable({ onOpenCodeEditor }: MasterRoutineTa
         const saved = localStorage.getItem('upsc_master_routine_config');
         if (saved) {
           const parsed = JSON.parse(saved);
-          if (parsed) setConfig(parsed);
+          if (parsed) {
+            setConfig(parsed);
+            onConfigLoaded?.(parsed);
+          }
         }
       } catch (err) {
         console.error('Failed to load routine config:', err);
@@ -351,36 +355,42 @@ export default function MasterRoutineTable({ onOpenCodeEditor }: MasterRoutineTa
       )}
 
       {/* Sequentially Render Every Table in the JSON Array */}
-      {tables.map((table: any, idx: number) => (
-        <div key={table.id || idx} className="space-y-3">
-          {table.title && (
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
-                  <TableIcon size={18} className="text-amber-500" />
-                  {table.title}
-                </h3>
-                {table.subtitle && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {table.subtitle}
-                  </p>
-                )}
-              </div>
-              <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-                Table #{idx + 1}
-              </span>
-            </div>
-          )}
+      {tables.map((table: any, idx: number) => {
+        // Skip repeating the title/subtitle for Table 1 if it's identical to main header
+        const isTable1 = idx === 0;
+        const showHeader = !isTable1 || (table.title && table.title !== config?.title);
 
-          {table.type === 'custom_table' || table.columns ? (
-            <CustomTable table={table} />
-          ) : table.type === 'satak_goals' || table.satakGoals ? (
-            <SatakGoalsTable table={table} />
-          ) : (
-            <GridMatrixTable table={table} />
-          )}
-        </div>
-      ))}
+        return (
+          <div key={table.id || idx} className="space-y-3">
+            {showHeader && table.title && (
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <TableIcon size={18} className="text-amber-500" />
+                    {table.title}
+                  </h3>
+                  {table.subtitle && (
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {table.subtitle}
+                    </p>
+                  )}
+                </div>
+                <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                  Table #{idx + 1}
+                </span>
+              </div>
+            )}
+
+            {table.type === 'custom_table' || table.columns ? (
+              <CustomTable table={table} />
+            ) : table.type === 'satak_goals' || table.satakGoals ? (
+              <SatakGoalsTable table={table} />
+            ) : (
+              <GridMatrixTable table={table} />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

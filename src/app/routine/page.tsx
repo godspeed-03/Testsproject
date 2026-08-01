@@ -7,6 +7,10 @@ import TimetableCodeEditorModal from '@/components/TimetableCodeEditorModal';
 
 export default function RoutinePage() {
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const [loadedConfig, setLoadedConfig] = useState<any>(null);
+
+  const displayTitle = loadedConfig?.title || 'Master Routine & Schedule';
+  const displaySubtitle = loadedConfig?.subtitle || 'Personalized daily schedule, weekly study timetable & strategic roadmap.';
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
@@ -14,10 +18,10 @@ export default function RoutinePage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100">
-              Master Routine & Schedule
+              {displayTitle}
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Personalized daily schedule, weekly study timetable & strategic roadmap.
+              {displaySubtitle}
             </p>
           </div>
 
@@ -30,7 +34,10 @@ export default function RoutinePage() {
           </button>
         </div>
 
-        <MasterRoutineTable onOpenCodeEditor={() => setShowCodeModal(true)} />
+        <MasterRoutineTable
+          onOpenCodeEditor={() => setShowCodeModal(true)}
+          onConfigLoaded={(cfg) => setLoadedConfig(cfg)}
+        />
 
         <TimetableCodeEditorModal
           isOpen={showCodeModal}

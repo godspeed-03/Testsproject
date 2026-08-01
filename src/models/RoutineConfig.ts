@@ -19,7 +19,7 @@ const RoutineConfigSchema: Schema = new Schema<IRoutineConfig>(
   {
     userId: { type: String, required: true, index: true },
     title: { type: String, default: 'Master Routine & Schedule' },
-    subtitle: { type: String, default: '4:00 AM wake-up schedule, 86.5h weekly output timetable & Satak Goals roadmap.' },
+    subtitle: { type: String, default: 'Personalized daily schedule, weekly study timetable & strategic roadmap.' },
     timeSlots: { type: Schema.Types.Mixed, default: [] },
     cells: { type: Schema.Types.Mixed, default: [] },
     metrics: { type: Schema.Types.Mixed, default: {} },

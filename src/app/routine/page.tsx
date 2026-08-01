@@ -17,7 +17,7 @@ export default function RoutinePage() {
               Master Routine & Schedule
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              4:00 AM wake-up schedule, 86.5h weekly output timetable & Satak Goals roadmap.
+              Personalized daily schedule, weekly study timetable & strategic roadmap.
             </p>
           </div>
 

@@ -30,6 +30,38 @@ import {
 import ShadcnDatePicker from '@/components/ui/ShadcnDatePicker';
 import ShadcnSelect, { SelectOption } from '@/components/ui/ShadcnSelect';
 
+export function isHabitScheduledForDate(h: any, dateIso: string): boolean {
+  if (!h) return true;
+  if (h.startDate && h.startDate > dateIso) return false;
+  if (h.endDate && h.endDate < dateIso) return false;
+
+  const mode = h.frequency?.mode || 'daily';
+  if (mode === 'daily') return true;
+
+  if (mode === 'once') {
+    return h.startDate === dateIso;
+  }
+
+  if (mode === 'specific_days') {
+    const selDateObj = new Date(dateIso + 'T00:00:00');
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const currentDayName = dayNames[selDateObj.getDay()];
+    const activeDays = h.frequency?.days || [];
+    if (activeDays.length > 0 && !activeDays.includes(currentDayName)) {
+      return false;
+    }
+    return true;
+  }
+
+  if (mode === 'monthly') {
+    const selDateObj = new Date(dateIso + 'T00:00:00');
+    const targetDay = h.frequency?.monthlyDay || 1;
+    return selDateObj.getDate() === targetDay;
+  }
+
+  return true;
+}
+
 export default function TrackerPage() {
   const [activeTab, setActiveTab] = useState<'today' | 'habits' | 'calendar' | 'stats' | 'lists' | 'timer'>('today');
 
@@ -235,6 +267,10 @@ export default function TrackerPage() {
     const todayStr = new Date().toISOString().split('T')[0];
     if (date < todayStr) {
       alert('Backdating is disabled: You cannot edit or log completion for past dates.');
+      return;
+    }
+    if (!isHabitScheduledForDate(h, date)) {
+      alert('This habit is not scheduled for this date.');
       return;
     }
     if (h.type === 'task' || h.type === 'event') {
@@ -516,36 +552,8 @@ export default function TrackerPage() {
       const matchType = typeFilter === 'ALL' || (typeFilter === 'task' ? (h.type === 'task' || h.type === 'event') : h.type === typeFilter);
       if (!matchSearch || !matchType) return false;
 
-      // 2. Start Date Constraint (Do not show items before their start date)
-      if (h.startDate && h.startDate > selectedDate) return false;
-
-      // 3. End Date Constraint (Do not show items past their end date)
-      if (h.endDate && h.endDate < selectedDate) return false;
-
-      // 4. Recurrence / Frequency Mode Check
-      const mode = h.frequency?.mode || 'daily';
-      const selDateObj = new Date(selectedDate + 'T00:00:00');
-
-      if (mode === 'once') {
-        return h.startDate === selectedDate;
-      }
-
-      if (mode === 'specific_days') {
-        const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const currentDayName = dayNames[selDateObj.getDay()];
-        const activeDays = h.frequency?.days || [];
-        if (activeDays.length > 0 && !activeDays.includes(currentDayName)) {
-          return false;
-        }
-      }
-
-      if (mode === 'monthly') {
-        const targetDay = h.frequency?.monthlyDay || 1;
-        const currentDayNum = selDateObj.getDate();
-        if (currentDayNum !== targetDay) return false;
-      }
-
-      return true;
+      // 2. Schedule & Recurrence Check
+      return isHabitScheduledForDate(h, selectedDate);
     });
   }, [habits, searchQuery, typeFilter, selectedDate]);
 
@@ -943,7 +951,22 @@ export default function TrackerPage() {
                             {weekDays.map((w) => {
                               const todayStr = new Date().toISOString().split('T')[0];
                               const isPast = w.iso < todayStr;
+                              const isScheduled = isHabitScheduledForDate(h, w.iso);
                               const isDone = (h.history || []).some((hist: any) => hist.date === w.iso && hist.status === 'done');
+
+                              if (!isScheduled) {
+                                return (
+                                  <div
+                                    key={w.iso}
+                                    title={`Off-Day: Not scheduled for ${w.dayName}`}
+                                    className="p-2 sm:p-3 rounded-xl flex flex-col items-center justify-center gap-1 border border-dashed border-slate-200 dark:border-slate-800/60 bg-slate-100/30 dark:bg-slate-950/20 text-slate-300 dark:text-slate-700 cursor-not-allowed select-none opacity-40"
+                                  >
+                                    <span className="text-[10px] uppercase font-extrabold text-slate-400 dark:text-slate-600">{w.dayName}</span>
+                                    <span className="text-[10px] font-bold text-slate-400/60 dark:text-slate-600/60">Off</span>
+                                  </div>
+                                );
+                              }
+
                               return (
                                 <button
                                   key={w.iso}
@@ -1896,10 +1919,24 @@ export default function TrackerPage() {
                     const todayStr = new Date().toISOString().split('T')[0];
                     const isToday = iso === todayStr;
                     const isPast = iso < todayStr;
+                    const isScheduled = isHabitScheduledForDate(selectedHabitForDetail, iso);
                     const hist = (selectedHabitForDetail.history || []).find((h: any) => h.date === iso);
                     const isDone = hist?.status === 'done';
                     const value = hist?.value || 0;
                     const target = selectedHabitForDetail.target?.value || 1;
+
+                    if (!isScheduled) {
+                      return (
+                        <div
+                          key={iso}
+                          title="Off-Day (Not Scheduled)"
+                          className="aspect-square rounded-xl p-1.5 flex flex-col items-center justify-between text-xs font-black border border-dashed border-slate-200 dark:border-slate-800/60 bg-slate-100/20 dark:bg-slate-950/20 text-slate-300 dark:text-slate-700 opacity-40 cursor-not-allowed select-none"
+                        >
+                          <span className="text-[10px] font-extrabold opacity-50">{dayNum}</span>
+                          <span className="text-[9px] font-bold uppercase opacity-50">Off</span>
+                        </div>
+                      );
+                    }
 
                     return (
                       <div

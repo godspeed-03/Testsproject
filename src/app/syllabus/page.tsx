@@ -15,7 +15,6 @@ import {
   BookOpen,
   Filter,
   Settings,
-  Edit3,
   Square,
   CheckSquare,
   Sparkles,
@@ -40,6 +39,7 @@ export default function SyllabusPage() {
   const [bulkMilestoneShort, setBulkMilestoneShort] = useState("");
   const [bulkSaving, setBulkSaving] = useState(false);
   const [showBulkAddPanel, setShowBulkAddPanel] = useState(false);
+  const [expandedRuleSubjectIds, setExpandedRuleSubjectIds] = useState<string[]>([]);
 
   const cardBg = "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80";
   const textTitle = "text-slate-900 dark:text-slate-100";
@@ -205,6 +205,12 @@ export default function SyllabusPage() {
     setSelectedSubjectIds([]);
     setBulkMilestoneLabel("");
     setBulkMilestoneShort("");
+  };
+
+  const toggleExpandedRules = (subjectId: string) => {
+    setExpandedRuleSubjectIds((current) =>
+      current.includes(subjectId) ? current.filter((id) => id !== subjectId) : [...current, subjectId],
+    );
   };
 
   const normalizeBulkMilestoneLabel = (label: string) => label.trim().replace(/\s+/g, " ");
@@ -511,16 +517,6 @@ export default function SyllabusPage() {
 
                       <button
                         type="button"
-                        onClick={() => setEditingSubjectRules(s)}
-                        className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-[10px] sm:text-xs rounded-xl font-black flex items-center gap-1 transition-all"
-                        title="Edit Rules for this Subject"
-                      >
-                        <Edit3 size={12} className="text-amber-500" />
-                        <span className="hidden sm:inline">Edit Rules</span>
-                      </button>
-
-                      <button
-                        type="button"
                         onClick={() => setSelectedSubjectModal(s)}
                         className="px-2.5 sm:px-3 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[10px] sm:text-xs rounded-xl font-extrabold flex items-center gap-1 sm:gap-1.5 transition-all"
                       >
@@ -544,8 +540,8 @@ export default function SyllabusPage() {
                   </div>
 
                   {/* Milestone Pills — rendered dynamically from DB */}
-                  <div className="grid grid-cols-4 sm:grid-cols-6 md:flex md:flex-wrap gap-1.5 sm:gap-2 pt-1">
-                    {rulesList.map((m) => {
+                  <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
+                    {rulesList.slice(0, expandedRuleSubjectIds.includes(s.id) ? rulesList.length : 5).map((m) => {
                       const isDone = !!m.completed;
                       const isToggling = togglingKey === `${s.id}_${m.key}`;
                       return (
@@ -570,6 +566,26 @@ export default function SyllabusPage() {
                         </button>
                       );
                     })}
+
+                    {rulesList.length > 5 && !expandedRuleSubjectIds.includes(s.id) && (
+                      <button
+                        type="button"
+                        onClick={() => toggleExpandedRules(s.id)}
+                        className="px-2 sm:px-3 py-1.5 rounded-lg sm:rounded-xl text-[9px] sm:text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-slate-800 font-black transition-all flex items-center justify-center gap-1 shrink-0"
+                      >
+                        +{rulesList.length - 5} more
+                      </button>
+                    )}
+
+                    {rulesList.length > 5 && expandedRuleSubjectIds.includes(s.id) && (
+                      <button
+                        type="button"
+                        onClick={() => toggleExpandedRules(s.id)}
+                        className="px-2 sm:px-3 py-1.5 rounded-lg sm:rounded-xl text-[9px] sm:text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-950 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 border border-slate-200 dark:border-slate-800 font-black transition-all flex items-center justify-center gap-1 shrink-0"
+                      >
+                        Show less
+                      </button>
+                    )}
 
                     <button
                       type="button"

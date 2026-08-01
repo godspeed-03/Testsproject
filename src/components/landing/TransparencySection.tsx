@@ -80,8 +80,8 @@ export default function TransparencySection() {
               <Mail size={14} className="text-slate-400" />
               <span>
                 User Support Email:{" "}
-                <a href="mailto:satyam2001anand@gmail.com" className="text-slate-800 font-bold underline">
-                  satyam2001anand@gmail.com
+                <a href="mailto:byt.satysm@gmail.com" className="text-slate-800 font-bold underline">
+                  byt.satysm@gmail.com
                 </a>
               </span>
             </div>

@@ -70,7 +70,7 @@ export default function LoginPage() {
           </Link>
           <span className="text-slate-300 dark:text-slate-700">•</span>
           <a
-            href="mailto:satyam2001anand@gmail.com"
+            href="mailto:byt.satysm@gmail.com"
             className="hover:text-[#7C3AED] dark:hover:text-violet-400 underline transition-colors"
           >
             Support

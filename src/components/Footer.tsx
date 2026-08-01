@@ -62,7 +62,7 @@ export default function Footer() {
           </Link>
 
           <a
-            href="mailto:satyam2001anand@gmail.com"
+            href="mailto:byt.satysm@gmail.com"
             className="hover:text-[#7C3AED] dark:hover:text-violet-400 transition-colors flex items-center gap-1.5 font-medium"
           >
             <Mail size={14} />

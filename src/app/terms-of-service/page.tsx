@@ -147,8 +147,8 @@ export default function TermsOfServicePage() {
                 <li>You must provide accurate account information when registering or interacting with the service.</li>
                 <li>
                   Notify us immediately at{" "}
-                  <a href="mailto:satyam2001anand@gmail.com" className="text-amber-600 dark:text-amber-400 underline">
-                    satyam2001anand@gmail.com
+                  <a href="mailto:byt.satysm@gmail.com" className="text-amber-600 dark:text-amber-400 underline">
+                    byt.satysm@gmail.com
                   </a>{" "}
                   if you suspect unauthorized access to your account.
                 </li>
@@ -262,10 +262,10 @@ export default function TermsOfServicePage() {
               <div>
                 <p className="text-slate-500 dark:text-slate-400">User Support Email:</p>
                 <a
-                  href="mailto:satyam2001anand@gmail.com"
+                  href="mailto:byt.satysm@gmail.com"
                   className="text-amber-600 dark:text-amber-400 font-bold text-sm hover:underline"
                 >
-                  satyam2001anand@gmail.com
+                  byt.satysm@gmail.com
                 </a>
               </div>
               <div>

@@ -33,8 +33,7 @@ export function getWeekKey(d: Date = new Date()): string {
 
 export async function getEffectiveUserId(userId?: string): Promise<string> {
   if (userId && userId !== '000000000000000000000000') return userId;
-  const sample = await HabitItem.findOne({});
-  return sample?.userId || userId || '000000000000000000000000';
+  return userId || '000000000000000000000000';
 }
 
 /**

@@ -470,18 +470,17 @@ export default function AnalyticsPage() {
               <BarChart3 size={14} /> Weekly Velocity
             </button>
 
-            <div className="relative group inline-block">
-              <button
+            <button
                 type="button"
-                disabled
-                className="px-3.5 py-1.5 rounded-xl text-xs font-black text-slate-400 dark:text-slate-500 opacity-60 cursor-not-allowed flex items-center gap-1.5"
+                onClick={() => setActiveTab("consistency")}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTab === "consistency"
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
               >
                 <Activity size={14} /> Consistency Engine v3
               </button>
-              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block px-2.5 py-1 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[10px] font-bold whitespace-nowrap shadow-md z-50 pointer-events-none transition-all">
-                Coming Soon
-              </div>
-            </div>
           </div>
 
           <button

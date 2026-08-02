@@ -36,8 +36,7 @@ export function getMonthName(monthKey: string): string {
 
 export async function getEffectiveUserId(userId?: string): Promise<string> {
   if (userId && userId !== '000000000000000000000000') return userId;
-  const sample = await HabitItem.findOne({});
-  return sample?.userId || userId || '000000000000000000000000';
+  return userId || '000000000000000000000000';
 }
 
 // 1. Recalculate Atomic DailySnapshot
@@ -49,19 +48,12 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
   const monthName = getMonthName(monthKey);
 
   // Fetch all habits & topic revisions dynamically from DB using effective user ID
-  let habits = await HabitItem.find({ userId: effectiveUserId });
-  if (habits.length === 0) {
-    habits = await HabitItem.find({});
-  }
-
-  let topicRevisions = await TopicRevision.find({ userId: effectiveUserId });
-  if (topicRevisions.length === 0) {
-    topicRevisions = await TopicRevision.find({});
-  }
+  const habits = await HabitItem.find({ userId: effectiveUserId });
+  const topicRevisions = await TopicRevision.find({ userId: effectiveUserId });
 
   // Separate Habits & Tasks: Include all routines/habits in habitItems unless marked as one-time
-  const habitItems = habits.filter((h) => !(h as any).isOneTime);
-  const taskItems = habits.filter((h) => h.type === 'task' && h.frequency?.mode !== 'once' && !(h as any).isOneTime);
+  const habitItems = habits.filter((h) => h.frequency?.mode !== 'once');
+  const taskItems = habits.filter((h) => h.type === 'task' && h.frequency?.mode !== 'once');
 
   // A. Daily Habit Score
   let habitSchedCount = 0;
@@ -127,10 +119,7 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
   const categoryMap: Record<string, { due: number; done: number; missed: number; topicsRead: number }> = {};
   const subjectMap: Record<string, { due: number; done: number; missed: number; topicsRead: number; category: string }> = {};
 
-  let syllabusItems = await SyllabusItem.find({ userId: effectiveUserId });
-  if (syllabusItems.length === 0) {
-    syllabusItems = await SyllabusItem.find({});
-  }
+  const syllabusItems = await SyllabusItem.find({ userId: effectiveUserId });
 
   // Initialize Categories from live DB records (SyllabusItems + TopicRevisions only)
   const dynamicCategories = Array.from(
@@ -352,12 +341,8 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
     });
   });
 
-  let habitItems = await HabitItem.find({ userId: effectiveUserId });
-  if (habitItems.length === 0) {
-    habitItems = await HabitItem.find({});
-  }
-  // Exclude one-time tasks from habit breakdown
-  const activeHabitItems = habitItems.filter((h) => !(h as any).isOneTime);
+  const habitItems = await HabitItem.find({ userId: effectiveUserId });
+  const activeHabitItems = habitItems.filter((h) => h.frequency?.mode !== 'once');
 
   const habitBreakdown = activeHabitItems.map((habitObj) => {
     const hId = habitObj._id.toString();
@@ -381,15 +366,8 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
   // C. Aggregate Category Breakdown
   const catAggMap: Record<string, { due: number; done: number; missed: number; topics: number }> = {};
   
-  let syllabusItems = await SyllabusItem.find({ userId: effectiveUserId });
-  if (syllabusItems.length === 0) {
-    syllabusItems = await SyllabusItem.find({});
-  }
-
-  let topicRevisions = await TopicRevision.find({ userId: effectiveUserId });
-  if (topicRevisions.length === 0) {
-    topicRevisions = await TopicRevision.find({});
-  }
+  const syllabusItems = await SyllabusItem.find({ userId: effectiveUserId });
+  const topicRevisions = await TopicRevision.find({ userId: effectiveUserId });
 
   const allDbCategories = Array.from(
     new Set([
@@ -544,11 +522,8 @@ export async function recalculateAllTimeSnapshot(userId: string) {
     });
   });
 
-  let habitItems = await HabitItem.find({ userId: effectiveUserId });
-  if (habitItems.length === 0) {
-    habitItems = await HabitItem.find({});
-  }
-  const activeHabitItems = habitItems.filter((h) => !(h as any).isOneTime);
+  const habitItems = await HabitItem.find({ userId: effectiveUserId });
+  const activeHabitItems = habitItems.filter((h) => h.frequency?.mode !== 'once');
 
   const habitBreakdown = activeHabitItems.map((habitObj) => {
     const hId = habitObj._id.toString();
@@ -571,15 +546,8 @@ export async function recalculateAllTimeSnapshot(userId: string) {
   // Aggregate Category Breakdown across all months
   const catMap: Record<string, { due: number; done: number; missed: number; topics: number }> = {};
   
-  let syllabusItems = await SyllabusItem.find({ userId: effectiveUserId });
-  if (syllabusItems.length === 0) {
-    syllabusItems = await SyllabusItem.find({});
-  }
-
-  let topicRevisions = await TopicRevision.find({ userId: effectiveUserId });
-  if (topicRevisions.length === 0) {
-    topicRevisions = await TopicRevision.find({});
-  }
+  const syllabusItems = await SyllabusItem.find({ userId: effectiveUserId });
+  const topicRevisions = await TopicRevision.find({ userId: effectiveUserId });
 
   const allDbCategories = Array.from(
     new Set([

@@ -51,19 +51,19 @@ export default function AgendaPage() {
           </div>
 
           {/* Search & Type Filters */}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-56">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search tasks..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 outline-none w-44 sm:w-56"
+                className="pl-8 pr-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 outline-none w-full"
               />
             </div>
 
-            <div className="w-36">
+            <div className="w-full sm:w-36">
               <ShadcnSelect
                 value={typeFilter}
                 onChange={(val: string) => setTypeFilter(val as any)}
@@ -84,7 +84,7 @@ export default function AgendaPage() {
               <button
                 type="button"
                 onClick={handleGoToToday}
-                className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 text-xs font-black hover:bg-indigo-500/20 transition-all"
+                className="px-2.5 py-1 rounded-lg bg-accent-light text-accent-primary border border-accent-primary/30 text-xs font-black hover:opacity-90 transition-all"
               >
                 Jump to Today
               </button>
@@ -108,8 +108,8 @@ export default function AgendaPage() {
                 let cardBgClass = "";
                 if (isSel) {
                   cardBgClass = w.isToday
-                    ? "bg-indigo-600 text-white font-black shadow-lg ring-2 ring-amber-400 scale-105"
-                    : "bg-indigo-600 text-white font-black shadow-lg ring-2 ring-indigo-500/50 scale-105";
+                    ? "bg-accent-gradient text-white font-black shadow-lg ring-2 ring-amber-400 scale-105"
+                    : "bg-accent-gradient text-white font-black shadow-lg scale-105";
                 } else if (w.isToday) {
                   cardBgClass =
                     "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-2 border-amber-500 font-extrabold shadow-xs hover:bg-amber-500/25";
@@ -126,10 +126,10 @@ export default function AgendaPage() {
                     key={w.iso}
                     type="button"
                     onClick={() => setSelectedDate(w.iso)}
-                    className={`p-2.5 rounded-xl text-center transition-all flex flex-col items-center gap-1 ${cardBgClass}`}
+                    className={`py-1.5 px-2 rounded-xl text-center transition-all flex flex-col items-center gap-0.5 ${cardBgClass}`}
                   >
                     <span className="text-[10px] uppercase font-extrabold">{w.dayName}</span>
-                    <span className="text-base sm:text-lg font-black">{w.dayNum}</span>
+                    <span className="text-sm sm:text-base font-black font-display">{w.dayNum}</span>
                   </button>
                 );
               })}
@@ -173,7 +173,7 @@ export default function AgendaPage() {
             return (
               <div
                 key={h._id}
-                className={`p-4 rounded-xl border ${cardBg} flex items-center justify-between gap-4 transition-all hover:border-indigo-500/50 shadow-xs`}
+                className={`p-4 rounded-2xl border ${cardBg} flex items-center justify-between gap-4 transition-all hover:border-accent-primary hover:shadow-neon-glow shadow-xs`}
               >
                 <div className="flex items-center gap-3.5">
                   {/* Icon Badge */}
@@ -226,7 +226,7 @@ export default function AgendaPage() {
                         return null;
                       })()}
                       <h4
-                        className={`font-black text-sm sm:text-base ${isDone ? "line-through opacity-60" : textTitle}`}
+                        className={`font-black font-display text-sm sm:text-base truncate max-w-[180px] sm:max-w-none ${isDone ? "line-through opacity-60" : textTitle}`}
                       >
                         {h.title}
                       </h4>

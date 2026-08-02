@@ -70,12 +70,12 @@ export default function TestsPage() {
   };
 
   const CATEGORY_BADGE: Record<string, string> = {
-    GS1: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800',
-    GS2: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800',
-    GS3: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800',
-    GS4: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-800',
-    CSAT: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/60 dark:text-cyan-300 dark:border-cyan-800',
-    Maths: 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/60 dark:text-rose-300 dark:border-rose-800',
+    GS1: 'bg-accent-primary/10 text-accent-primary border border-accent-primary/30',
+    GS2: 'bg-accent-primary/10 text-accent-primary border border-accent-primary/30',
+    GS3: 'bg-accent-primary/10 text-accent-primary border border-accent-primary/30',
+    GS4: 'bg-accent-primary/10 text-accent-primary border border-accent-primary/30',
+    CSAT: 'bg-accent-primary/15 text-accent-primary border border-accent-primary/40 font-black',
+    Maths: 'bg-accent-primary/10 text-accent-primary border border-accent-primary/30',
   };
 
   return (
@@ -95,7 +95,7 @@ export default function TestsPage() {
           <button
             type="button"
             onClick={() => setShowAddModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs sm:text-sm px-4.5 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all shrink-0 active:scale-95 self-start sm:self-auto cursor-pointer"
+            className="bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs sm:text-sm px-4.5 py-2.5 rounded-xl flex items-center gap-2 shadow-lg transition-all shrink-0 active:scale-95 self-start sm:self-auto cursor-pointer"
           >
             <Plus size={18} /> Log Test Score
           </button>
@@ -120,7 +120,7 @@ export default function TestsPage() {
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="px-4.5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs sm:text-sm inline-flex items-center gap-2 shadow-md shadow-indigo-600/20 transition-all active:scale-95 cursor-pointer"
+              className="px-4.5 py-2.5 rounded-xl bg-accent-gradient hover:opacity-90 text-white font-black text-xs sm:text-sm inline-flex items-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer"
             >
               <Plus size={16} /> Log Your First Test
             </button>

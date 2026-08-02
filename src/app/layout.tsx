@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Orbitron } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -9,6 +9,12 @@ const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-inter"
+});
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  weight: ["600", "700", "800", "900"],
+  variable: "--font-orbitron"
 });
 
 export const viewport: Viewport = {
@@ -106,23 +112,32 @@ export const metadata: Metadata = {
   }
 };
 
+import { AccentThemeProvider } from "@/context/AccentThemeContext";
+
 export default function RootLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("h-full", "antialiased", inter.className, inter.variable)} suppressHydrationWarning>
+    <html lang="en" className={cn("h-full", "antialiased", inter.className, inter.variable, orbitron.variable)} suppressHydrationWarning>
       <head>
         <meta name="google-site-verification" content="BBC_-UN0nPiBk5hGBTmMDhj7ryHNoMVGZ9viAgJQWAQ" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta name="twitter:card" content="summary_large_image" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("upsc_tracker_accent_theme")||"neon-teal";var r=document.documentElement;r.classList.add("theme-"+t);r.setAttribute("data-accent-theme",t);}catch(e){}`
+          }}
+        />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans" suppressHydrationWarning>
-        <Navbar />
-        <main className="flex-1 flex flex-col">{children}</main>
-        <Footer />
+        <AccentThemeProvider>
+          <Navbar />
+          <main className="flex-1 flex flex-col">{children}</main>
+          <Footer />
+        </AccentThemeProvider>
       </body>
     </html>
   );

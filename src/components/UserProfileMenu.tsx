@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChevronDown, PlusCircle, Upload, Download } from 'lucide-react';
 import LogoutButton from './LogoutButton';
 import ImportDataModal from './dashboard/ImportDataModal';
@@ -15,13 +15,27 @@ interface UserProfileMenuProps {
   };
 }
 
+import { Palette, Check } from 'lucide-react';
+import { useAccentTheme } from '@/context/AccentThemeContext';
+
 export default function UserProfileMenu({ user }: UserProfileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const { accentTheme, setAccentTheme, themes } = useAccentTheme();
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'));
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   const handleOpenCreate = () => {
     setIsOpen(false);
@@ -153,6 +167,48 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
                 <Download size={15} className="text-emerald-500" />
                 <span>{exporting ? 'Exporting...' : 'Export Backup (JSON)'}</span>
               </button>
+            </div>
+
+            {/* Theme Accent Picker */}
+            <div className="py-2 px-3 border-b border-slate-100 dark:border-slate-800 space-y-1.5">
+              <div className="flex items-center justify-between text-[11px] font-black text-slate-600 dark:text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <Palette size={13} className="text-emerald-500" /> Theme Accent
+                </span>
+                <span className="uppercase text-[9px] tracking-wider text-slate-400 font-extrabold">{accentTheme}</span>
+              </div>
+              <div className="flex items-center justify-between gap-1 pt-1">
+                {themes.map((t) => {
+                  const isSel = accentTheme === t.id;
+                  const hex = isDark ? (t.darkHex || t.colorHex) : (t.lightHex || t.colorHex);
+                  const glow = isDark ? (t.darkGlow || t.colorGlow) : (t.lightGlow || t.colorGlow);
+                  const darkText = isDark ? !!t.darkTextInDark : false;
+
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setAccentTheme(t.id)}
+                      className={`w-5 h-5 rounded-full flex items-center justify-center transition-all cursor-pointer relative ${
+                        isSel ? 'scale-115' : 'hover:scale-110 opacity-80 hover:opacity-100'
+                      }`}
+                      style={{
+                        backgroundColor: hex,
+                        boxShadow: isSel ? `0 0 10px ${glow}, 0 0 2px ${hex}` : 'none',
+                      }}
+                      title={`${t.name} (${isDark ? 'Dark Neon' : 'Light Vibrant'})`}
+                      aria-label={`Select ${t.name} theme`}
+                    >
+                      {isSel && (
+                        <Check
+                          size={11}
+                          className={darkText ? 'text-slate-950 font-black' : 'text-white font-black drop-shadow-xs'}
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="py-1 px-1">

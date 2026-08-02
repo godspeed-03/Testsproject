@@ -98,13 +98,13 @@ export async function GET(req: Request) {
         let itemScore = d.overallScore;
         if (habitIdFilter) {
           const match = (d.habitBreakdown || []).find((h: any) => h.habitId === habitIdFilter);
-          itemScore = match ? match.score : d.overallScore;
+          itemScore = match ? match.score : 0;
         } else if (categoryFilter) {
           const match = ((d as any).categoryBreakdown || []).find((c: any) => (c.category || c.subject) === categoryFilter);
-          itemScore = match ? match.score : d.overallScore;
+          itemScore = match ? match.score : 0;
         } else if (subjectFilter) {
           const match = (d.subjectBreakdown || []).find((s: any) => s.subject === subjectFilter);
-          itemScore = match ? match.score : d.overallScore;
+          itemScore = match ? match.score : 0;
         }
 
         return {
@@ -182,13 +182,13 @@ export async function GET(req: Request) {
       let itemScore = m.overallScore;
       if (habitIdFilter) {
         const match = (m.habitBreakdown || []).find((h: any) => h.habitId === habitIdFilter);
-        itemScore = match ? match.score : m.overallScore;
+        itemScore = match ? match.score : 0;
       } else if (categoryFilter) {
         const match = ((m as any).categoryBreakdown || []).find((c: any) => (c.category || c.subject) === categoryFilter);
-        itemScore = match ? match.score : m.overallScore;
+        itemScore = match ? match.score : 0;
       } else if (subjectFilter) {
         const match = (m.subjectBreakdown || []).find((s: any) => s.subject === subjectFilter);
-        itemScore = match ? match.score : m.overallScore;
+        itemScore = match ? match.score : 0;
       }
 
       return {

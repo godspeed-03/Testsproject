@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Target, Menu, X, RotateCcw, Calendar, BookOpen, FileText, Clock, Zap, Plus } from 'lucide-react';
 import UserProfileMenu from './UserProfileMenu';
+import ThemeToggle from './ThemeToggle';
 import BrandLogoIcon from './BrandLogoIcon';
 
 interface NavbarClientProps {
@@ -44,7 +45,7 @@ export default function NavbarClient({ user }: NavbarClientProps) {
           <div className="flex items-center gap-6">
             <Link href={logoTarget} className="flex items-center gap-2.5 group">
               <BrandLogoIcon size="md" className="group-hover:scale-105" />
-              <span className="font-bold text-base tracking-tight text-slate-900 dark:text-slate-100">
+              <span className="font-extrabold font-display text-base tracking-tight text-slate-900 dark:text-slate-100">
                 UPSC Tracker
               </span>
             </Link>
@@ -60,7 +61,7 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                       href={link.href}
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
                         isActive
-                          ? 'bg-violet-50 text-[#7C3AED] dark:bg-violet-950/60 dark:text-violet-300 border border-violet-200 dark:border-violet-800/80 shadow-2xs'
+                          ? 'bg-accent-gradient text-white shadow-2xs'
                           : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                       }`}
                     >
@@ -73,7 +74,8 @@ export default function NavbarClient({ user }: NavbarClientProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <ThemeToggle />
             {user ? (
               <UserProfileMenu user={user} />
             ) : (

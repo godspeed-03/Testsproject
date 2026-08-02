@@ -310,14 +310,17 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
   const mKey = monthKey || getMonthKey();
   const monthName = getMonthName(mKey);
 
-  const dailyDocs = await DailySnapshot.find({ userId: effectiveUserId, monthKey: mKey });
-  if (dailyDocs.length === 0) {
-    // If no daily docs exist yet, trigger recalculate for today first
+  // A. Re-run V4 daily calculation for all recorded daily snapshots in this month to purge legacy default scores
+  const existingDailyDocs = await DailySnapshot.find({ userId: effectiveUserId, monthKey: mKey });
+  if (existingDailyDocs.length === 0) {
     await recalculateDailySnapshot(effectiveUserId);
-    return await MonthlySnapshot.findOne({ userId: effectiveUserId, monthKey: mKey });
+  } else {
+    for (const d of existingDailyDocs) {
+      await recalculateDailySnapshot(effectiveUserId, d.studyDayKey);
+    }
   }
 
-  // A. Average Scores across days with data
+  const dailyDocs = await DailySnapshot.find({ userId: effectiveUserId, monthKey: mKey }).sort({ studyDayKey: 1 });
   const daysWithData = dailyDocs.length;
   const sumOverall = dailyDocs.reduce((acc, d) => acc + d.overallScore, 0);
   const sumHabit = dailyDocs.reduce((acc, d) => acc + d.habitScore, 0);
@@ -496,10 +499,10 @@ export async function recalculateAllTimeSnapshot(userId: string) {
     weightedRevisionSum += m.revisionScore * weight;
   });
 
-  const overallScore = totalDays > 0 ? Math.round(weightedOverallSum / totalDays) : 100;
-  const habitScore = totalDays > 0 ? Math.round(weightedHabitSum / totalDays) : 100;
-  const taskScore = totalDays > 0 ? Math.round(weightedTaskSum / totalDays) : 100;
-  const revisionScore = totalDays > 0 ? Math.round(weightedRevisionSum / totalDays) : 100;
+  const overallScore = totalDays > 0 ? Math.round(weightedOverallSum / totalDays) : 0;
+  const habitScore = totalDays > 0 ? Math.round(weightedHabitSum / totalDays) : 0;
+  const taskScore = totalDays > 0 ? Math.round(weightedTaskSum / totalDays) : 0;
+  const revisionScore = totalDays > 0 ? Math.round(weightedRevisionSum / totalDays) : 0;
 
   // Aggregate Habit Breakdown across all months
   const habitMap: Record<string, { title: string; category: string; sched: number; comp: number; streakCurrent: number; streakBest: number }> = {};

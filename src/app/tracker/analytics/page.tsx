@@ -408,7 +408,19 @@ export default function AnalyticsPage() {
 
   if (scope === "habit") {
     const selHabit = drilledHabitId ? data?.habits?.find((h) => h.habitId === drilledHabitId) : null;
-    activeScore = selHabit ? selHabit.score : data?.habitScore || 0;
+    if (selHabit) {
+      activeScore = selHabit.score;
+    } else if (data?.habits && data.habits.length > 0) {
+      const totalSched = data.habits.reduce((acc, h) => acc + (h.scheduledDays || 0), 0);
+      if (totalSched === 0) {
+        activeScore = 0;
+      } else {
+        const totalComp = data.habits.reduce((acc, h) => acc + (h.completedDays || 0), 0);
+        activeScore = Math.round((totalComp / totalSched) * 100);
+      }
+    } else {
+      activeScore = data?.habitScore || 0;
+    }
     activeTitle = selHabit ? `${selHabit.title} Execution` : "Habits Overall Execution";
     activeSubtitle = selHabit
       ? `${selHabit.completedDays} of ${selHabit.scheduledDays} Days Completed • ${selHabit.streakCurrent}d Current Streak`
@@ -417,14 +429,42 @@ export default function AnalyticsPage() {
     const selCat = drilledCategory
       ? data?.categories?.find((c) => (c.category || c.subject) === drilledCategory)
       : null;
-    activeScore = selCat ? selCat.score : data?.revisionScore || 0;
+    if (selCat) {
+      activeScore = selCat.score;
+    } else if (data?.categories && data.categories.length > 0) {
+      const totalDue = data.categories.reduce((acc, c) => acc + (c.revisionsDue || 0), 0);
+      if (totalDue === 0) {
+        activeScore = 0;
+      } else {
+        const totalDone = data.categories.reduce((acc, c) => acc + (c.revisionsDone || 0), 0);
+        const totalMissed = data.categories.reduce((acc, c) => acc + (c.revisionsMissed || 0), 0);
+        const rawCredit = ((totalDone * 1.0 - totalMissed * 1.3) / totalDue) * 100;
+        activeScore = Math.max(0, Math.min(100, Math.round(rawCredit)));
+      }
+    } else {
+      activeScore = 0;
+    }
     activeTitle = selCat ? `${selCat.category || selCat.subject} Retention` : "Category-wise Spaced Revision Retention";
     activeSubtitle = selCat
       ? `${selCat.revisionsDone} Done / ${selCat.revisionsDue} Due • ${selCat.topicsRead || 0} Topics Read`
       : "Aggregated SRS retention score across syllabus categories.";
   } else if (scope === "subject") {
     const selSubj = drilledSubject ? data?.subjects?.find((s) => s.subject === drilledSubject) : null;
-    activeScore = selSubj ? selSubj.score : data?.revisionScore || 0;
+    if (selSubj) {
+      activeScore = selSubj.score;
+    } else if (data?.subjects && data.subjects.length > 0) {
+      const totalDue = data.subjects.reduce((acc, s) => acc + (s.revisionsDue || 0), 0);
+      if (totalDue === 0) {
+        activeScore = 0;
+      } else {
+        const totalDone = data.subjects.reduce((acc, s) => acc + (s.revisionsDone || 0), 0);
+        const totalMissed = data.subjects.reduce((acc, s) => acc + (s.revisionsMissed || 0), 0);
+        const rawCredit = ((totalDone * 1.0 - totalMissed * 1.3) / totalDue) * 100;
+        activeScore = Math.max(0, Math.min(100, Math.round(rawCredit)));
+      }
+    } else {
+      activeScore = 0;
+    }
     activeTitle = selSubj ? `${selSubj.subject} Retention` : "Syllabus Matrix Subjects Retention";
     activeSubtitle = selSubj
       ? `Category: ${selSubj.category || "GS"} • ${selSubj.revisionsDone} Done / ${selSubj.revisionsDue} Due`
@@ -463,7 +503,7 @@ export default function AnalyticsPage() {
               onClick={() => setActiveTab("velocity")}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
                 activeTab === "velocity"
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                  ? "bg-accent-gradient text-white shadow-md"
                   : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
@@ -475,7 +515,7 @@ export default function AnalyticsPage() {
                 onClick={() => setActiveTab("consistency")}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
                   activeTab === "consistency"
-                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                    ? "bg-accent-gradient text-white shadow-md"
                     : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 }`}
               >
@@ -487,7 +527,7 @@ export default function AnalyticsPage() {
             type="button"
             onClick={handleRecalculate}
             disabled={recalculating}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all shrink-0 active:scale-95 cursor-pointer"
+            className="bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all shrink-0 active:scale-95 cursor-pointer"
           >
             <RotateCcw size={14} className={recalculating ? "animate-spin" : ""} />
             <span>{recalculating ? "Calculating..." : "Recalculate DB"}</span>
@@ -499,49 +539,58 @@ export default function AnalyticsPage() {
       {activeTab === "velocity" && (
         <div className="space-y-6 animate-in fade-in-50 duration-300">
           {/* Top 4 KPI Cards */}
+          {/* Top 4 KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-            <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 space-y-1">
-              <div className="flex items-center justify-between text-indigo-600 dark:text-indigo-400">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-primary/50 transition-all">
+              <div className="flex items-center justify-between text-accent-primary">
                 <span className="text-xs font-extrabold uppercase tracking-wider">Weekly Total</span>
-                <Clock size={16} />
+                <div className="w-7 h-7 rounded-lg bg-accent-light flex items-center justify-center">
+                  <Clock size={15} />
+                </div>
               </div>
-              <p className={`text-2xl sm:text-3xl font-black ${textTitle}`}>
-                {weeklyDoc?.weeklyTotalHours ?? 0} <span className="text-sm font-bold text-slate-500">hrs</span>
+              <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>
+                {weeklyDoc?.weeklyTotalHours ?? 0} <span className="text-xs font-bold text-slate-500 font-sans">hrs</span>
               </p>
               <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                 <TrendingUp size={12} /> Live DB Logged
               </p>
             </div>
 
-            <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-900/60 space-y-1">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-amber-500/50 transition-all">
               <div className="flex items-center justify-between text-amber-600 dark:text-amber-400">
                 <span className="text-xs font-extrabold uppercase tracking-wider">Daily Avg</span>
-                <Zap size={16} />
+                <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                  <Zap size={15} />
+                </div>
               </div>
-              <p className={`text-2xl sm:text-3xl font-black ${textTitle}`}>
-                {weeklyDoc?.dailyAverageHours ?? 0} <span className="text-sm font-bold text-slate-500">hrs/day</span>
+              <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>
+                {weeklyDoc?.dailyAverageHours ?? 0} <span className="text-xs font-bold text-slate-500 font-sans">hrs/day</span>
               </p>
               <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Target: 8.0 hrs/day</p>
             </div>
 
-            <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/60 space-y-1">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-emerald-500/50 transition-all">
               <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400">
                 <span className="text-xs font-extrabold uppercase tracking-wider">Consistency</span>
-                <Award size={16} />
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <Award size={15} />
+                </div>
               </div>
-              <p className={`text-2xl sm:text-3xl font-black ${textTitle}`}>{weeklyDoc?.consistencyPct ?? 0}%</p>
+              <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>{weeklyDoc?.consistencyPct ?? 0}%</p>
               <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">2+ Day Habit Velocity 🔥</p>
             </div>
 
-            <div className="p-4 sm:p-5 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-100 dark:border-purple-900/60 space-y-1">
-              <div className="flex items-center justify-between text-purple-600 dark:text-purple-400">
+            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-secondary/50 transition-all">
+              <div className="flex items-center justify-between text-accent-secondary">
                 <span className="text-xs font-extrabold uppercase tracking-wider">Tasks & Habits</span>
-                <CheckCircle size={16} />
+                <div className="w-7 h-7 rounded-lg bg-accent-secondary-light flex items-center justify-center">
+                  <CheckCircle size={15} />
+                </div>
               </div>
-              <p className={`text-2xl sm:text-3xl font-black ${textTitle}`}>
-                {weeklyDoc?.totalTasksDone ?? 0} <span className="text-sm font-bold text-slate-500">completed</span>
+              <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>
+                {weeklyDoc?.totalTasksDone ?? 0} <span className="text-xs font-bold text-slate-500 font-sans">completed</span>
               </p>
-              <p className="text-[11px] font-bold text-purple-700 dark:text-purple-400">7-Day Completion Logs</p>
+              <p className="text-[11px] font-bold text-accent-secondary">7-Day Completion Logs</p>
             </div>
           </div>
 
@@ -567,7 +616,7 @@ export default function AnalyticsPage() {
                       onClick={() => setVelocityMetric("hours")}
                       className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
                         velocityMetric === "hours"
-                          ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs"
+                          ? "bg-accent-primary text-white shadow-2xs"
                           : "text-slate-500 dark:text-slate-400"
                       }`}
                     >
@@ -578,7 +627,7 @@ export default function AnalyticsPage() {
                       onClick={() => setVelocityMetric("tasks")}
                       className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
                         velocityMetric === "tasks"
-                          ? "bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-400 shadow-2xs"
+                          ? "bg-accent-secondary text-white shadow-2xs"
                           : "text-slate-500 dark:text-slate-400"
                       }`}
                     >
@@ -586,7 +635,7 @@ export default function AnalyticsPage() {
                     </button>
                   </div>
 
-                  <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-black">
+                  <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-accent-tertiary text-white border border-accent-tertiary/30 text-xs font-black">
                     Past 7 Days
                   </span>
                 </div>
@@ -640,7 +689,7 @@ export default function AnalyticsPage() {
                               },
                             },
                           },
-                          colors: velocityMetric === "hours" ? ["#818cf8"] : ["#34d399"],
+                          colors: [velocityMetric === "hours" ? "var(--primary-accent, var(--accent))" : "var(--accent-secondary)"],
                           dataLabels: {
                             enabled: true,
                             formatter: (val: number) =>
@@ -648,7 +697,7 @@ export default function AnalyticsPage() {
                             style: {
                               fontSize: "11px",
                               fontWeight: "800",
-                              colors: [velocityMetric === "hours" ? "#6366f1" : "#10b981"],
+                              colors: [velocityMetric === "hours" ? "var(--primary-accent, var(--accent))" : "var(--accent-secondary)"],
                             },
                             offsetY: -22,
                           },
@@ -709,7 +758,7 @@ export default function AnalyticsPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className={`font-black text-base ${textTitle} flex items-center gap-2`}>
-                    <PieChart size={18} className="text-indigo-600" /> Distribution
+                    <PieChart size={18} className="text-accent-primary" /> Distribution
                   </h4>
 
                   {/* Distribution Switcher: Subjects vs Habits */}
@@ -719,7 +768,7 @@ export default function AnalyticsPage() {
                       onClick={() => setDistributionMode("subject")}
                       className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
                         distributionMode === "subject"
-                          ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-2xs"
+                          ? "bg-accent-primary text-white shadow-2xs"
                           : "text-slate-500 dark:text-slate-400"
                       }`}
                     >
@@ -731,7 +780,7 @@ export default function AnalyticsPage() {
                       onClick={() => setDistributionMode("habit")}
                       className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
                         distributionMode === "habit"
-                          ? "bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-2xs"
+                          ? "bg-accent-secondary text-white shadow-2xs"
                           : "text-slate-500 dark:text-slate-400"
                       }`}
                     >
@@ -748,22 +797,25 @@ export default function AnalyticsPage() {
                     (distributionMode === "subject"
                       ? weeklyDoc?.subjectDistribution || []
                       : weeklyDoc?.habitDistribution || []
-                    ).map((item: any) => (
-                      <div key={item.subject} className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className={`font-bold ${textTitle} truncate pr-2`}>{item.subject}</span>
-                          <span className="font-black shrink-0">
-                            {item.hours} ({item.pct}%)
-                          </span>
+                    ).map((item: any) => {
+                      const barColorClass = distributionMode === "subject" ? "bg-accent-primary" : "bg-accent-secondary";
+                      return (
+                        <div key={item.subject} className="space-y-1">
+                          <div className="flex justify-between text-xs">
+                            <span className={`font-bold ${textTitle} truncate pr-2`}>{item.subject}</span>
+                            <span className="font-black shrink-0">
+                              {item.hours} ({item.pct}%)
+                            </span>
+                          </div>
+                          <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                            <div className={`h-full rounded-full ${barColorClass}`} style={{ width: `${item.pct}%` }} />
+                          </div>
                         </div>
-                        <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                          <div className={`h-full rounded-full ${item.color}`} style={{ width: `${item.pct}%` }} />
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
-                    <div className="p-6 text-center text-xs font-bold text-slate-400 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-                      No {distributionMode} data logged for this period.
+                    <div className="p-8 text-center text-xs text-slate-400 font-bold italic">
+                      No distribution data recorded for this week.
                     </div>
                   )}
                 </div>
@@ -772,8 +824,8 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Full Width Live Sync Banner matching design reference */}
-          <div className="p-4 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 flex items-center gap-3 text-indigo-700 dark:text-indigo-300 text-xs font-bold shadow-2xs">
-            <Sparkles size={18} className="text-indigo-600 dark:text-indigo-400 shrink-0 animate-pulse" />
+          <div className="p-4 rounded-2xl bg-accent-primary/10 border border-accent-primary/20 flex items-center gap-3 text-accent-primary text-xs font-bold shadow-2xs">
+            <Sparkles size={18} className="text-accent-primary shrink-0 animate-pulse" />
             <span>
               Automatic analytics calculations update live after every study block logged in the Focus Timer or Agenda!
             </span>
@@ -805,7 +857,7 @@ export default function AnalyticsPage() {
                       onClick={() => setTimeRange("month")}
                       className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${
                         timeRange === "month"
-                          ? "bg-purple-600 text-white shadow-sm"
+                          ? "bg-accent-gradient shadow-neon-glow"
                           : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                       }`}
                     >
@@ -817,7 +869,7 @@ export default function AnalyticsPage() {
                       onClick={() => setTimeRange("alltime")}
                       className={`px-4 py-1.5 rounded-xl text-xs font-black transition-all ${
                         timeRange === "alltime"
-                          ? "bg-purple-600 text-white shadow-sm"
+                          ? "bg-accent-gradient shadow-neon-glow"
                           : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                       }`}
                     >
@@ -1000,14 +1052,14 @@ export default function AnalyticsPage() {
                         />
                         <defs>
                           <linearGradient id="v3Grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#4F46E5" />
-                            <stop offset="100%" stopColor="#10B981" />
+                            <stop offset="0%" stopColor="var(--accent-start, var(--accent))" />
+                            <stop offset="100%" stopColor="var(--accent-end, var(--accent))" />
                           </linearGradient>
                         </defs>
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
                         {loading ? (
-                          <Loader2 size={24} className="animate-spin text-indigo-500" />
+                          <Loader2 size={24} className="animate-spin text-accent-primary" />
                         ) : (
                           <>
                             <span className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 leading-none">
@@ -1041,7 +1093,7 @@ export default function AnalyticsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className={`font-black text-base ${textTitle} flex items-center gap-2`}>
-                      <TrendingUp size={18} className="text-indigo-500" />
+                      <TrendingUp size={18} className="text-accent-primary" />
                       {timeRange === "month" ? "Daily Progression Trend" : "Monthly Progression Trend"}
                     </h3>
                     <p className={`text-xs ${textMuted}`}>
@@ -1058,8 +1110,8 @@ export default function AnalyticsPage() {
                       <AreaChart data={data.trend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <defs>
                           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
-                            <stop offset="95%" stopColor="#6366F1" stopOpacity={0.0} />
+                            <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.45} />
+                            <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.0} />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" opacity={0.5} />
@@ -1085,14 +1137,24 @@ export default function AnalyticsPage() {
                             fontWeight: "800",
                           }}
                         />
-                        <Area
-                          type="monotone"
-                          dataKey="overallScore"
-                          stroke="#6366F1"
-                          strokeWidth={3}
-                          fillOpacity={1}
-                          fill="url(#areaGrad)"
-                        />
+                        {(() => {
+                          const trendDataKey =
+                            scope === "habit" && !drilledHabitId
+                              ? "habitScore"
+                              : (scope === "category" || scope === "subject") && !drilledCategory && !drilledSubject
+                                ? "revisionScore"
+                                : "overallScore";
+                          return (
+                            <Area
+                              type="monotone"
+                              dataKey={trendDataKey}
+                              stroke="var(--accent)"
+                              strokeWidth={3.5}
+                              fillOpacity={1}
+                              fill="url(#areaGrad)"
+                            />
+                          );
+                        })()}
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>

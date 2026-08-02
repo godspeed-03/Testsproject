@@ -23,14 +23,14 @@ export default function ChecklistPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className={`text-lg sm:text-xl font-black ${textTitle}`}>Checklists & Task Notebooks</h2>
+          <h2 className={`text-lg sm:text-xl font-black font-display ${textTitle}`}>Checklists & Task Notebooks</h2>
           <p className={`text-xs ${textMuted}`}>Create customizable lists, study topics, and exam packing checklists.</p>
         </div>
 
         <button
           type="button"
           onClick={() => handleOpenCreateModal('list')}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all shrink-0 active:scale-95"
+          className="bg-accent-gradient text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-accent/20 transition-all shrink-0 active:scale-95"
         >
           <Plus size={16} /> New Checklist
         </button>
@@ -38,13 +38,13 @@ export default function ChecklistPage() {
 
       {lists.length === 0 ? (
         <div className={`p-10 rounded-2xl border ${cardBg} text-center space-y-3`}>
-          <ListTodo size={32} className="text-indigo-500 mx-auto" />
+          <ListTodo size={32} className="text-accent-primary mx-auto" />
           <h4 className={`font-black text-base ${textTitle}`}>No Checklists Created Yet</h4>
           <p className={`text-xs ${textMuted}`}>Keep track of revision topics, books to read, or exam day checklists.</p>
           <button
             type="button"
             onClick={() => handleOpenCreateModal('list')}
-            className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs inline-block"
+            className="px-4 py-2 rounded-xl bg-accent-gradient text-white font-bold text-xs inline-block"
           >
             Create First Checklist
           </button>
@@ -84,7 +84,7 @@ export default function ChecklistPage() {
                       className={`p-2.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${
                         item.completed
                           ? 'bg-slate-100/50 dark:bg-slate-950/50 border-slate-200/50 dark:border-slate-800/50 opacity-60'
-                          : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-indigo-500/50'
+                          : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-accent-primary/50'
                       }`}
                     >
                       {item.completed ? (
@@ -109,12 +109,12 @@ export default function ChecklistPage() {
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleAddListItem(list._id);
                     }}
-                    className="flex-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold outline-none focus:border-indigo-500"
+                    className="flex-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold outline-none focus:border-accent-primary"
                   />
                   <button
                     type="button"
                     onClick={() => handleAddListItem(list._id)}
-                    className="p-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs"
+                    className="p-2 rounded-xl bg-accent-gradient text-white font-bold text-xs"
                   >
                     <PlusCircle size={16} />
                   </button>

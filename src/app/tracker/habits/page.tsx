@@ -136,7 +136,7 @@ export default function HabitsPage() {
               onClick={() => setGlobalViewMode('month')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
                 globalViewMode === 'month'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  ? 'bg-accent-gradient text-white shadow-md'
                   : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
@@ -147,7 +147,7 @@ export default function HabitsPage() {
               onClick={() => setGlobalViewMode('week')}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 ${
                 globalViewMode === 'week'
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  ? 'bg-accent-gradient text-white shadow-md'
                   : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
@@ -158,7 +158,7 @@ export default function HabitsPage() {
           <button
             type="button"
             onClick={() => handleOpenCreateModal('habit')}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all shrink-0 active:scale-95"
+            className="bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all shrink-0 active:scale-95"
           >
             <Plus size={16} /> New Habit
           </button>
@@ -177,7 +177,7 @@ export default function HabitsPage() {
           <button
             type="button"
             onClick={() => handleOpenCreateModal('habit')}
-            className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs inline-block"
+            className="px-4 py-2 rounded-xl bg-accent-gradient text-white font-bold text-xs inline-block"
           >
             Create Habit Now
           </button>
@@ -319,7 +319,7 @@ export default function HabitsPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-7 sm:grid-cols-10 md:grid-cols-14 gap-1.5">
+                    <div className="grid grid-cols-7 sm:grid-cols-10 md:grid-cols-16 gap-1">
                       {monthDays.map((d) => {
                         const scheduled = isHabitScheduledForDate(h, d.iso);
                         const hist = (h.history || []).find((entry: any) => entry.date === d.iso);
@@ -332,13 +332,13 @@ export default function HabitsPage() {
                         if (!scheduled) {
                           cellStyle = 'bg-slate-100/50 dark:bg-slate-950/30 text-slate-300 dark:text-slate-700 border border-dashed border-slate-200 dark:border-slate-800 opacity-50';
                         } else if (isDone) {
-                          cellStyle = 'bg-emerald-500 text-white font-black shadow-md shadow-emerald-500/20 border border-emerald-400';
+                          cellStyle = 'bg-emerald-500 text-white font-black shadow-xs shadow-emerald-500/20 border border-emerald-400';
                         } else if (isPast) {
-                          cellStyle = 'bg-rose-500 text-white font-black shadow-md shadow-rose-500/20 border border-rose-400';
+                          cellStyle = 'bg-rose-500 text-white font-black shadow-xs shadow-rose-500/20 border border-rose-400';
                         } else if (isToday) {
-                          cellStyle = 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/20 border border-indigo-400';
+                          cellStyle = 'bg-accent-gradient text-white font-black shadow-xs shadow-accent/20 border border-accent-primary';
                         } else {
-                          cellStyle = 'bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-indigo-500';
+                          cellStyle = 'bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-accent-primary';
                         }
 
                         return (
@@ -347,13 +347,13 @@ export default function HabitsPage() {
                             type="button"
                             disabled={!scheduled || (isPast && !isDone) || saving}
                             onClick={() => handleItemClick(h, d.iso)}
-                            className={`p-2 rounded-xl text-center transition-all flex items-center justify-center min-h-[38px] ${cellStyle}`}
+                            className={`py-1 px-1 rounded-lg text-center transition-all flex items-center justify-center min-h-[28px] ${cellStyle}`}
                             title={`${d.iso}: ${isDone ? 'Completed' : isPast ? 'Missed' : scheduled ? 'Scheduled' : 'Off'}`}
                           >
                             {togglingId === `${h._id}_${d.iso}` ? (
-                              <Loader2 size={12} className="animate-spin text-white" />
+                              <Loader2 size={10} className="animate-spin text-white" />
                             ) : (
-                              <span className="text-xs font-black">{d.dayNum}</span>
+                              <span className="text-[11px] font-black font-display">{d.dayNum}</span>
                             )}
                           </button>
                         );
@@ -368,7 +368,7 @@ export default function HabitsPage() {
                         <button
                           type="button"
                           onClick={() => setHabitWeekOffsets((prev: any) => ({ ...prev, [h._id]: 0 }))}
-                          className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                          className="text-accent-primary hover:underline"
                         >
                           Reset Week
                         </button>
@@ -401,11 +401,11 @@ export default function HabitsPage() {
                           } else if (val > 0) {
                             cardStyle = 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-2 border-amber-500 font-extrabold';
                           } else if (w.isToday) {
-                            cardStyle = 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/20 border border-indigo-400';
+                            cardStyle = 'bg-accent-gradient text-white font-black shadow-md shadow-accent/20 border border-accent-primary';
                           } else if (isPast) {
                             cardStyle = 'bg-rose-500 text-white font-black shadow-md shadow-rose-500/20 border border-rose-400';
                           } else {
-                            cardStyle = 'bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-indigo-500';
+                            cardStyle = 'bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-accent-primary';
                           }
 
                           return (

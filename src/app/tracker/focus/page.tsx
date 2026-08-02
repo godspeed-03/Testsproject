@@ -340,7 +340,7 @@ export default function FocusPage() {
 
               {/* Center Content */}
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-                <span className="text-2xl sm:text-3xl md:text-4xl font-black tracking-tight text-slate-900 dark:text-white font-sans tabular-nums">
+                <span className="text-2xl sm:text-3xl md:text-4xl font-black font-display tracking-tight text-slate-900 dark:text-white tabular-nums">
                   {displayTime}
                 </span>
                 <div className="mt-2 sm:mt-3 flex flex-col items-center gap-1">
@@ -426,7 +426,7 @@ export default function FocusPage() {
               className={`px-6 sm:px-8 py-3 sm:py-3.5 rounded-2xl font-black text-xs sm:text-sm text-white shadow-lg transition-all flex items-center gap-2 active:scale-95 cursor-pointer ${
                 timerRunning
                   ? "bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/30 hover:shadow-amber-500/40"
-                  : "bg-gradient-to-r from-indigo-600 to-violet-600 shadow-indigo-600/30 hover:shadow-indigo-600/40"
+                  : "bg-accent-gradient hover:opacity-90 shadow-md"
               }`}
             >
               {timerRunning ? <Pause size={16} /> : <Play size={16} />}

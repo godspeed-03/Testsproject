@@ -149,7 +149,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className={`text-2xl sm:text-3xl font-black tracking-tight ${textTitle}`}>
+            <h1 className={`text-2xl sm:text-3xl font-black font-display tracking-tight ${textTitle}`}>
               Habit & Task Module
             </h1>
             <p className={`text-xs sm:text-sm ${textMuted} mt-1`}>
@@ -161,16 +161,47 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             <button
               type="button"
               onClick={() => handleOpenCreateModal('task')}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl flex items-center gap-2 shadow-lg shadow-indigo-500/20 transition-all shrink-0 active:scale-95 cursor-pointer"
+              className="bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl flex items-center gap-2 shadow-lg transition-all shrink-0 active:scale-95 cursor-pointer"
             >
               <Plus size={18} /> New Habit or Task
             </button>
           </div>
         </div>
 
+        {/* Mobile Horizontal Pill Navigation Bar (<768px) */}
+        <div className="md:hidden overflow-x-auto flex items-center gap-2 pb-1 scrollbar-none -mx-1 px-1">
+          {navTabs.map((tab) => {
+            const Icon = tab.icon;
+            const active = pathname === tab.href || (pathname === '/tracker' && tab.href === '/tracker/agenda');
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-black transition-all ${
+                  active
+                    ? 'bg-accent-gradient text-white shadow-neon-glow'
+                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800'
+                }`}
+              >
+                <Icon size={15} />
+                <span>{tab.label}</span>
+                {tab.badge !== undefined && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                      active ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+
         {/* Sidebar + Content Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6">
-          <aside className="md:col-span-4 lg:col-span-3 space-y-4">
+          <aside className="hidden md:block md:col-span-4 lg:col-span-3 space-y-4">
             {/* Sidebar Route Tabs Navigation */}
             <div className={`p-3 rounded-2xl border ${cardBg} space-y-1.5 shadow-xs`}>
               {navTabs.map((tab) => {
@@ -182,7 +213,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     href={tab.href}
                     className={`w-full flex items-center justify-between px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
                       active
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                        ? 'bg-accent-gradient text-white shadow-neon-glow'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                     }`}
                   >
@@ -261,7 +292,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     </div>
                     <div className="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-emerald-500 to-indigo-500 transition-all duration-500"
+                        className="h-full bg-accent-quaternary transition-all duration-500"
                         style={{
                           width: `${todayItems.length > 0 ? (doneCount / todayItems.length) * 100 : 0}%`
                         }}
@@ -269,7 +300,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     </div>
                     <div className="flex justify-between text-xs font-bold pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
                       <span className={textMuted}>Hours Read Today</span>
-                      <span className="text-indigo-600 dark:text-indigo-400 font-black">
+                      <span className="text-accent-quaternary font-black">
                         {formatHoursAndMins(totalTodayLoggedHours)}
                       </span>
                     </div>
@@ -336,7 +367,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   }}
                   className={`py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
                     createType === t.id
-                      ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-600/30'
+                      ? 'bg-accent-secondary text-white shadow-md'
                       : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
                   }`}
                 >
@@ -534,7 +565,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                       onClick={() => setActiveEmojiTab(tab.id)}
                                       className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1 ${
                                         activeEmojiTab === tab.id
-                                          ? 'bg-indigo-600 text-white shadow-xs'
+                                          ? 'bg-accent-gradient shadow-neon-glow'
                                           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                                       }`}
                                     >
@@ -581,7 +612,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                       }}
                                       className={`w-7 h-7 rounded-lg text-base flex items-center justify-center transition-all ${
                                         formIcon === emoji
-                                          ? 'bg-indigo-600 text-white font-black scale-110 shadow-md'
+                                          ? 'bg-accent-gradient text-white font-black scale-110 shadow-md'
                                           : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
                                       }`}
                                     >
@@ -597,29 +628,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     </div>
 
                     {createType === 'task' && (
-                      <div>
-                        <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Syllabus Category</label>
+                      <div className="space-y-2">
+                        <label className="font-extrabold block text-slate-700 dark:text-slate-300">Category & Subject</label>
                         <ShadcnSelect
-                          value={typeof formCategory === 'string' ? formCategory : formCategory?.label || 'Study'}
+                          value={formSubject}
                           onChange={(val: string) => {
-                            setFormCategory({ id: val.toLowerCase(), label: val, icon: '📚', color: '#6366F1' });
-                            
-                            const matchedSubjects = (syllabusItems || [])
-                              .filter((item: any) => {
-                                const itemCat = String(item.category || '').trim();
-                                return itemCat.toLowerCase() === val.toLowerCase() ||
-                                       itemCat.toLowerCase().includes(val.toLowerCase()) ||
-                                       val.toLowerCase().includes(itemCat.toLowerCase());
-                              })
-                              .map((item: any) => item.subject)
-                              .filter(Boolean);
-
-                            const newSubject = matchedSubjects.length > 0 ? Array.from(new Set(matchedSubjects))[0] : (syllabusSubjects[0] || '');
-                            if (newSubject) {
-                              setFormSubject(newSubject);
-                              const autoTitle = formTopic ? `${newSubject}: ${formTopic}` : newSubject;
-                              setFormTitle(autoTitle);
-                            }
+                            setFormSubject(val);
+                            const autoTitle = formTopic ? `${val}: ${formTopic}` : val;
+                            setFormTitle(autoTitle);
                           }}
                           options={categories.map((c: string) => ({ value: c, label: c }))}
                         />
@@ -632,7 +648,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     <div className="flex items-center justify-between">
                       <label className="font-extrabold block text-slate-700 dark:text-slate-300">Recurrence Pattern</label>
                       {formIsStudyTask && (
-                        <span className="text-2xs font-extrabold text-indigo-600 dark:text-indigo-400">
+                        <span className="text-2xs font-extrabold text-accent-primary">
                           ⚡ One-Time required for Syllabus Link
                         </span>
                       )}
@@ -655,7 +671,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                           }}
                           className={`py-2 rounded-xl font-black text-xs border transition-all text-center ${
                             formFrequencyMode === m.id
-                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20'
+                              ? 'bg-accent-gradient text-white border-accent-primary shadow-md shadow-accent/20'
                               : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
                           }`}
                         >
@@ -716,7 +732,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         min="1"
                         value={formTargetVal}
                         onChange={(e) => setFormTargetVal(Number(e.target.value))}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-accent-primary"
                       />
                     </div>
 
@@ -767,7 +783,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             onChange={(e) => setFormEnableReminder(e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                          <div className="w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-accent-primary"></div>
                         </label>
                         <div className="flex-1">
                           <ShadcnTimePicker
@@ -795,7 +811,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-6 py-2.5 rounded-xl font-black text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl font-black text-white bg-accent-gradient shadow-lg shadow-accent/30 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
                   <span>{editingHabitId ? 'Save Changes' : 'Create Item'}</span>
@@ -814,8 +830,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3.5">
                 <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-md shrink-0 ring-4 ring-indigo-500/10"
-                  style={{ backgroundColor: `${progressModalHabit.color || '#6366f1'}18`, color: progressModalHabit.color || '#6366f1' }}
+                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-md shrink-0 ring-4 ring-accent-primary/10"
+                  style={{ backgroundColor: `${progressModalHabit.color || 'var(--accent)'}18`, color: progressModalHabit.color || 'var(--accent)' }}
                 >
                   {progressModalHabit.icon || '🏃'}
                 </div>
@@ -838,12 +854,12 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             </div>
 
             {/* Current Logged Till Now Status Card */}
-            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-indigo-500/10 border border-indigo-500/20 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-extrabold text-indigo-700 dark:text-indigo-300">
-                <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            <div className="p-3.5 rounded-2xl bg-accent-light border border-accent-primary/20 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-extrabold text-accent-primary">
+                <div className="w-2 h-2 rounded-full bg-accent-primary animate-pulse" />
                 <span>Logged Till Now Today</span>
               </div>
-              <span className="px-3 py-1 rounded-xl bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-black text-xs shadow-xs border border-indigo-500/20">
+              <span className="px-3 py-1 rounded-xl bg-white dark:bg-slate-800 text-accent-primary font-black text-xs shadow-xs border border-accent-primary/20">
                 {existingModalVal} {progressModalHabit.target?.unit || 'hours'}
               </span>
             </div>
@@ -856,7 +872,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   onClick={() => setProgressModalMode('add')}
                   className={`py-2 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 ${
                     progressModalMode === 'add'
-                      ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-md shadow-indigo-500/10 font-black'
+                      ? 'bg-accent-gradient text-white shadow-md shadow-accent/10 font-black'
                       : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                   }`}
                 >
@@ -868,7 +884,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   onClick={() => setProgressModalMode('replace')}
                   className={`py-2 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 ${
                     progressModalMode === 'replace'
-                      ? 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-md shadow-indigo-500/10 font-black'
+                      ? 'bg-accent-gradient text-white shadow-md shadow-accent/10 font-black'
                       : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                   }`}
                 >
@@ -898,7 +914,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     onChange={(e) => setProgressModalValue(Math.max(0, Number(e.target.value)))}
                     className="w-32 text-center text-4xl font-black bg-transparent text-slate-900 dark:text-slate-100 outline-none focus:scale-105 transition-transform"
                   />
-                  <span className="text-2xs font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mt-0.5">
+                  <span className="text-2xs font-black text-accent-primary uppercase tracking-widest mt-0.5">
                     {progressModalHabit.target?.unit || 'hours'}
                   </span>
                 </div>
@@ -921,7 +937,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     onClick={() => setProgressModalValue(preset)}
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-black border transition-all ${
                       progressModalValue === preset
-                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/30 scale-105'
+                        ? 'bg-accent-gradient text-white border-accent-primary shadow-md shadow-accent/30 scale-105'
                         : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >

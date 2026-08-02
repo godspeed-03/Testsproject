@@ -19,7 +19,7 @@ export default function ShadcnDatePicker({
   disablePastDates = false,
   placeholder,
   isClearable = false,
-  alignRight = true,
+  alignRight = false,
 }: ShadcnDatePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -95,21 +95,26 @@ export default function ShadcnDatePicker({
 
   const formattedDisplay = !selectedDate && placeholder ? placeholder : format(parsedDate, 'PP');
 
+  // Intelligent positioning: on mobile screens (max-sm), align left to prevent bleeding off-screen to the left
+  const popoverPositionClass = alignRight
+    ? 'right-0 sm:right-0 max-sm:left-0 max-sm:right-auto'
+    : 'left-0';
+
   return (
-    <div className="relative inline-block w-full" ref={popoverRef}>
+    <div className="relative inline-block w-full z-30" ref={popoverRef}>
       <div className="flex items-center gap-1.5 w-full">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs transition-all outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 cursor-pointer truncate"
+          className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-900 text-slate-900 dark:text-slate-100 font-black text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs transition-all outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary cursor-pointer truncate active:scale-95"
         >
           <div className="flex items-center gap-2 truncate">
-            <CalendarDays size={16} className="text-purple-600 dark:text-purple-400 shrink-0" />
-            <span className={`truncate ${!selectedDate ? 'text-slate-400 dark:text-slate-500 font-medium' : ''}`}>
+            <CalendarDays size={16} className="text-accent-primary shrink-0" />
+            <span className={`truncate font-bold ${!selectedDate ? 'text-slate-400 dark:text-slate-500 font-medium' : ''}`}>
               {formattedDisplay}
             </span>
           </div>
-          <ChevronDown size={15} className={`text-slate-400 transition-transform shrink-0 ${isOpen ? 'rotate-180 text-purple-500' : ''}`} />
+          <ChevronDown size={15} className={`text-slate-400 transition-transform shrink-0 ${isOpen ? 'rotate-180 text-accent-primary' : ''}`} />
         </button>
 
         {(isClearable || placeholder) && selectedDate && (
@@ -119,7 +124,7 @@ export default function ShadcnDatePicker({
               onSelectDate('');
               setIsOpen(false);
             }}
-            className="px-2.5 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 text-[10px] font-bold rounded-xl shrink-0 cursor-pointer"
+            className="px-2.5 py-2.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 text-[10px] font-black rounded-xl shrink-0 cursor-pointer active:scale-95"
             title="Clear Date"
           >
             Clear
@@ -128,17 +133,17 @@ export default function ShadcnDatePicker({
       </div>
 
       {isOpen && (
-        <div className={`absolute ${alignRight ? 'right-0' : 'left-0'} mt-1.5 z-50 w-72 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 space-y-3 animate-scale-up`}>
-          <div className="flex items-center justify-between gap-1 border-b border-slate-200 dark:border-slate-800 pb-2">
+        <div className={`absolute ${popoverPositionClass} mt-1.5 z-[9999] w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 space-y-3 animate-scale-up glass-panel`}>
+          <div className="flex items-center justify-between gap-1 border-b border-slate-200 dark:border-slate-800 pb-2.5">
             <button
               type="button"
               onClick={() => {
                 onSelectDate(todayStr);
                 setIsOpen(false);
               }}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-colors cursor-pointer ${
+              className={`px-3 py-1 rounded-xl text-[11px] font-black transition-all cursor-pointer ${
                 selectedDate === todayStr
-                  ? 'bg-purple-600 text-white shadow-2xs'
+                  ? 'bg-accent-gradient text-white shadow-xs'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
@@ -151,7 +156,7 @@ export default function ShadcnDatePicker({
                   changeDateByDays(-1);
                   setIsOpen(false);
                 }}
-                className="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                className="px-3 py-1 rounded-xl text-[11px] font-black bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
               >
                 Yesterday
               </button>
@@ -162,33 +167,33 @@ export default function ShadcnDatePicker({
                 changeDateByDays(1);
                 setIsOpen(false);
               }}
-              className="px-2.5 py-1 rounded-lg text-[11px] font-extrabold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              className="px-3 py-1 rounded-xl text-[11px] font-black bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             >
               Tomorrow
             </button>
           </div>
 
-          <div className="flex items-center justify-between px-1">
+          <div className="flex items-center justify-between px-1 font-black">
             <button
               type="button"
               onClick={handlePrevMonth}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
             >
               <ChevronLeft size={16} />
             </button>
-            <span className="font-extrabold text-xs text-purple-700 dark:text-purple-300">
+            <span className="font-black text-xs font-display text-accent-primary">
               {monthNames[viewMonth]} {viewYear}
             </span>
             <button
               type="button"
               onClick={handleNextMonth}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
             >
               <ChevronRight size={16} />
             </button>
           </div>
 
-          <div className="grid grid-cols-7 text-center text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+          <div className="grid grid-cols-7 text-center text-[10px] font-black text-slate-400 uppercase tracking-wider font-display">
             <span>Su</span>
             <span>Mo</span>
             <span>Tu</span>
@@ -198,7 +203,7 @@ export default function ShadcnDatePicker({
             <span>Sa</span>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 text-center">
+          <div className="grid grid-cols-7 gap-1 text-center font-black">
             {Array.from({ length: firstDayOfWeek }).map((_, i) => (
               <div key={`empty-${i}`} />
             ))}
@@ -221,11 +226,11 @@ export default function ShadcnDatePicker({
                     onSelectDate(dateVal);
                     setIsOpen(false);
                   }}
-                  className={`h-8 w-8 rounded-lg text-xs font-extrabold flex items-center justify-center transition-all cursor-pointer ${
+                  className={`h-8 w-8 rounded-xl text-xs font-black flex items-center justify-center transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-purple-600 text-white font-black shadow-2xs scale-105'
+                      ? 'bg-accent-gradient text-white font-black shadow-xs scale-105'
                       : isToday
-                      ? 'border border-purple-500 text-purple-700 dark:text-purple-300 font-bold hover:bg-purple-500/10'
+                      ? 'border border-accent-primary text-accent-primary font-black hover:bg-accent-primary/10'
                       : disablePastDates && isPast
                       ? 'opacity-30 cursor-not-allowed text-slate-400 dark:text-slate-600'
                       : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'

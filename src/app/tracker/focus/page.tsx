@@ -224,7 +224,7 @@ export default function FocusPage() {
 
         <div className="relative z-10 p-6 sm:p-8 space-y-6">
           {/* Task Selector */}
-          <div className="bg-slate-100/80 dark:bg-white/5 backdrop-blur-sm rounded-2xl border border-slate-200/80 dark:border-white/10 p-4 space-y-2">
+          <div className="bg-slate-100/80 dark:bg-white/5 backdrop-blur-sm rounded-2xl border border-slate-200/80 dark:border-white/10 p-4 space-y-2 relative z-40">
             <label className="font-black text-[10px] uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
               <BookOpen size={12} className="text-indigo-600 dark:text-indigo-400" />
               Active Study Task

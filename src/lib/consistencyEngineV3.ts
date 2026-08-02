@@ -109,7 +109,7 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
       subject: h.subject || h.category?.label || 'General',
       scheduled: isScheduled,
       done: isDone,
-      score: isScheduled ? (isDone ? 100 : 0) : 0
+      score: isScheduled ? (isDone ? 100 : 0) : 100
     });
   });
 

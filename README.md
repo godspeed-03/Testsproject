@@ -327,7 +327,7 @@ Revision scoring uses asymmetric weights to heavily reward on-time completion wh
 
 $$S_{\text{Revision}} = \text{clamp}\left(0, 100, \left( \frac{N_{\text{done}} \times 1.0 - N_{\text{missed}} \times 1.3}{N_{\text{due}}} \right) \times 100 \right)$$
 
-#### 2.5 3-Tier Snapshot Pipeline
+#### 2.5 3-Tier Snapshot Pipeline & Item-Specific Off-Day Trend Filtering
 ```mermaid
 flowchart TD
     Habits["HabitItem History"] --> Daily["DailySnapshot (per study day)"]
@@ -344,6 +344,9 @@ flowchart TD
         NeedFocus["NEEDS FOCUS (< 60%)"]
     end
 ```
+
+* **Item-Specific Inactive Date Filtering**: When drilling down into a specific Habit (e.g. `Gym`), Category (e.g. `GS1` / `MATHS`), or Subject (e.g. `Polity`), dates with no scheduled revisions, habits, or readings are omitted from the trend graph array. This prevents artificial score drops on off-days while accurately plotting 100% completion on active days.
+* **Global Loading State Parity**: All API calls, habit toggles, focus timer logs, and list modifications provide immediate UI visual feedback using animated `Loader2` spinners, header sync pills (`Syncing to DB...`), and skeleton placeholders to guarantee zero UI freezing.
 
 ---
 

@@ -85,25 +85,58 @@ export async function GET(req: Request) {
         }
       }
 
-      const trend = dailyDocs.map((d) => {
+      // Build filtered trend array (omit non-scheduled/inactive dates for item-specific scope)
+      let rawTrend = dailyDocs;
+      
+      if (habitIdFilter) {
+        const activeDays = dailyDocs.filter((d) => {
+          const match = (d.habitBreakdown || []).find((h: any) => h.habitId === habitIdFilter);
+          return match ? (match.scheduled || match.done) : false;
+        });
+        if (activeDays.length > 0) rawTrend = activeDays;
+      } else if (categoryFilter) {
+        const activeDays = dailyDocs.filter((d) => {
+          const match = ((d as any).categoryBreakdown || []).find((c: any) => (c.category || c.subject) === categoryFilter);
+          return match ? (
+            (match.revisionsDue || 0) > 0 ||
+            (match.revisionsDone || 0) > 0 ||
+            (match.revisionsMissed || 0) > 0 ||
+            (match.topicsReadToday || 0) > 0
+          ) : false;
+        });
+        if (activeDays.length > 0) rawTrend = activeDays;
+      } else if (subjectFilter) {
+        const activeDays = dailyDocs.filter((d) => {
+          const match = (d.subjectBreakdown || []).find((s: any) => s.subject === subjectFilter);
+          return match ? (
+            (match.revisionsDue || 0) > 0 ||
+            (match.revisionsDone || 0) > 0 ||
+            (match.revisionsMissed || 0) > 0 ||
+            (match.topicsReadToday || 0) > 0
+          ) : false;
+        });
+        if (activeDays.length > 0) rawTrend = activeDays;
+      }
+
+      const trend = rawTrend.map((d) => {
         let itemScore = d.overallScore;
         if (habitIdFilter) {
           const match = (d.habitBreakdown || []).find((h: any) => h.habitId === habitIdFilter);
-          itemScore = match ? match.score : 0;
+          itemScore = match ? (match.done ? 100 : (match.scheduled ? 0 : 100)) : 100;
         } else if (categoryFilter) {
           const match = ((d as any).categoryBreakdown || []).find((c: any) => (c.category || c.subject) === categoryFilter);
-          itemScore = match ? match.score : 0;
+          itemScore = match ? match.score : overallScore;
         } else if (subjectFilter) {
           const match = (d.subjectBreakdown || []).find((s: any) => s.subject === subjectFilter);
-          itemScore = match ? match.score : 0;
+          itemScore = match ? match.score : overallScore;
         }
 
         return {
           studyDayKey: d.studyDayKey,
           overallScore: itemScore,
-          habitScore: d.habitScore,
-          taskScore: d.taskScore,
-          revisionScore: d.revisionScore
+          habitScore: d.habitScore >= 0 ? d.habitScore : itemScore,
+          taskScore: d.taskScore >= 0 ? d.taskScore : itemScore,
+          revisionScore: d.revisionScore >= 0 ? d.revisionScore : itemScore
         };
       });
 

@@ -22,7 +22,7 @@ export default function AddTestModal({
   onAddTest,
   isLight,
   cardBg = 'bg-white dark:bg-slate-900',
-  inputBg = 'bg-slate-50 dark:bg-slate-950 focus:bg-white dark:focus:bg-slate-900',
+  inputBg = 'bg-slate-50 dark:bg-slate-950',
   textTitle = 'text-slate-900 dark:text-slate-100',
   textMuted = 'text-slate-700 dark:text-slate-300',
 }: AddTestModalProps) {
@@ -114,22 +114,20 @@ export default function AddTestModal({
   };
 
   const modalContent = (
-    <div className={`fixed inset-0 z-[999999] overflow-y-auto ${isLight ? 'bg-slate-900/40' : 'bg-slate-950/85'} backdrop-blur-md px-3 sm:px-4 py-6 text-center animate-fade-in`}>
-      <span className="inline-block h-screen align-middle" aria-hidden="true">&#8203;</span>
-
-      <div className={`inline-block w-full max-w-xl text-left align-middle transition-all transform ${cardBg} rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto`}>
+    <div className="fixed inset-0 z-[999999] overflow-y-auto bg-slate-950/80 backdrop-blur-md px-3 sm:px-4 py-6 text-center animate-fade-in flex items-center justify-center">
+      <div className="inline-block w-full max-w-xl text-left align-middle transition-all transform bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto glass-panel">
         
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/90 flex justify-between items-center">
+        <div className="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 flex items-center justify-center shrink-0">
-              <Award size={22} />
+            <div className="w-11 h-11 rounded-2xl bg-purple-500/10 text-purple-500 border border-purple-500/20 flex items-center justify-center shrink-0 shadow-inner">
+              <Award size={24} />
             </div>
             <div>
-              <h3 className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-slate-100">
+              <h3 className="font-black font-display text-base sm:text-xl text-slate-900 dark:text-slate-100">
                 Log Mock Test Score
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Record marks, benchmark clearance & error analysis</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">Record marks, benchmark clearance & error analysis</p>
             </div>
           </div>
 
@@ -137,33 +135,33 @@ export default function AddTestModal({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-xl transition-colors cursor-pointer"
+            className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-rose-500/10 hover:text-rose-500 text-slate-400 flex items-center justify-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700/60 active:scale-95"
           >
             <X size={18} />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="p-4 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+        <div className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
           
           {/* Live Score Preview Banner */}
           {score !== '' && (
-            <div className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 text-xs font-bold ${
+            <div className={`p-4 rounded-2xl border flex items-center justify-between gap-3 text-xs font-black shadow-sm ${
               isTargetCleared 
-                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-800 dark:text-emerald-300' 
-                : 'bg-amber-500/10 border-amber-500/20 text-amber-800 dark:text-amber-300'
+                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300' 
+                : 'bg-amber-500/15 border-amber-500/30 text-amber-700 dark:text-amber-300'
             }`}>
               <div className="flex items-center gap-2">
-                {isTargetCleared ? <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-500" /> : <AlertTriangle size={16} className="text-amber-600 dark:text-amber-500" />}
+                {isTargetCleared ? <CheckCircle2 size={18} className="text-emerald-500" /> : <AlertTriangle size={18} className="text-amber-500" />}
                 <span>
                   {numScore} / {numMax} Marks ({percent}%)
-                  {benchmarkCutoff && ` • Target Cut-off: ${numCutoff}`}
+                  {benchmarkCutoff && ` • Cut-off Target: ${numCutoff}`}
                 </span>
               </div>
 
-              <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+              <span className={`px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider ${
                 isTargetCleared 
-                  ? 'bg-emerald-600 text-white shadow-xs' 
+                  ? 'bg-emerald-500 text-white shadow-xs' 
                   : 'bg-amber-500 text-slate-950 shadow-xs'
               }`}>
                 {isTargetCleared ? 'TARGET CLEARED' : 'BELOW TARGET'}
@@ -171,24 +169,24 @@ export default function AddTestModal({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm">
+          <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm font-bold">
             {/* Test Name & Date Row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
-                <label className="block mb-1.5 font-bold text-xs text-slate-800 dark:text-slate-200">Test Series / Mock Name *</label>
+                <label className="block mb-1.5 font-black text-slate-700 dark:text-slate-300">Test Series / Mock Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Vision IAS Abhyaas Test 1"
                   value={testName}
                   onChange={(e) => setTestName(e.target.value)}
-                  className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-3.5 py-2.5 outline-none font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all`}
+                  className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-4 py-3 outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all shadow-inner"
                 />
               </div>
 
               <div>
-                <label className="block mb-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                  <Calendar size={13} className="text-purple-600 dark:text-purple-400" /> Test Date
+                <label className="block mb-1.5 font-black text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Calendar size={13} className="text-accent-primary" /> Test Date
                 </label>
                 <ShadcnDatePicker
                   selectedDate={testDate}
@@ -200,22 +198,22 @@ export default function AddTestModal({
 
             {/* Free-text Subject / Topic Combination */}
             <div>
-              <label className="block mb-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                <BookOpen size={13} className="text-purple-600 dark:text-purple-400" /> Subject(s) / Covered Topics
+              <label className="block mb-1.5 font-black text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                <BookOpen size={13} className="text-accent-primary" /> Subject(s) / Covered Topics
               </label>
               <input
                 type="text"
                 placeholder="e.g. Polity + Modern History, Full Length GS1, CSAT Quant"
                 value={subjectName}
                 onChange={(e) => setSubjectName(e.target.value)}
-                className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-3.5 py-2.5 outline-none font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all`}
+                className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-4 py-3 outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all shadow-inner"
               />
             </div>
 
             {/* Scores, Benchmark, Duration */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <div>
-                <label className="block mb-1.5 font-bold text-xs text-slate-800 dark:text-slate-200">Score Obtained *</label>
+                <label className="block mb-1.5 font-black text-slate-700 dark:text-slate-300">Score *</label>
                 <input
                   type="number"
                   step="0.5"
@@ -223,25 +221,25 @@ export default function AddTestModal({
                   placeholder="e.g. 108.5"
                   value={score}
                   onChange={(e) => setScore(e.target.value)}
-                  className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-3 py-2 outline-none font-bold text-xs border border-slate-300 dark:border-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20`}
+                  className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl px-3 py-2.5 outline-none font-bold text-xs border border-slate-200 dark:border-slate-800 focus:border-accent-primary"
                 />
               </div>
 
               <div>
-                <label className="block mb-1.5 font-bold text-xs text-slate-800 dark:text-slate-200">Total Marks *</label>
+                <label className="block mb-1.5 font-black text-slate-700 dark:text-slate-300">Total Marks *</label>
                 <input
                   type="number"
                   required
                   placeholder="e.g. 200"
                   value={maxScore}
                   onChange={(e) => setMaxScore(e.target.value)}
-                  className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-3 py-2 outline-none font-bold text-xs border border-slate-300 dark:border-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20`}
+                  className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl px-3 py-2.5 outline-none font-bold text-xs border border-slate-200 dark:border-slate-800 focus:border-accent-primary"
                 />
               </div>
 
               <div>
-                <label className="block mb-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                  <Target size={13} className="text-purple-600 dark:text-purple-400" /> Cut-off Target
+                <label className="block mb-1.5 font-black text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Target size={13} className="text-accent-primary" /> Cut-off Target
                 </label>
                 <input
                   type="number"
@@ -249,35 +247,35 @@ export default function AddTestModal({
                   placeholder="e.g. 95"
                   value={benchmarkCutoff}
                   onChange={(e) => setBenchmarkCutoff(e.target.value)}
-                  className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-3 py-2 outline-none font-bold text-xs border border-slate-300 dark:border-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20`}
+                  className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl px-3 py-2.5 outline-none font-bold text-xs border border-slate-200 dark:border-slate-800 focus:border-accent-primary"
                 />
               </div>
 
               <div>
-                <label className="block mb-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                  <Clock size={13} className="text-purple-600 dark:text-purple-400" /> Duration (Mins)
+                <label className="block mb-1.5 font-black text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Clock size={13} className="text-accent-primary" /> Mins
                 </label>
                 <input
                   type="number"
                   placeholder="e.g. 120"
                   value={durationMins}
                   onChange={(e) => setDurationMins(e.target.value)}
-                  className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-3 py-2 outline-none font-bold text-xs border border-slate-300 dark:border-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20`}
+                  className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl px-3 py-2.5 outline-none font-bold text-xs border border-slate-200 dark:border-slate-800 focus:border-accent-primary"
                 />
               </div>
             </div>
 
             {/* Toggleable Question & Mistake Breakdown */}
-            <div className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-2xs">
+            <div className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xs">
               <button
                 type="button"
                 onClick={() => setShowBreakdown(!showBreakdown)}
-                className="w-full px-3.5 py-2.5 bg-slate-100/70 dark:bg-slate-800/40 hover:bg-slate-200/70 dark:hover:bg-slate-800 text-left flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
+                className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 text-left flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 transition-colors cursor-pointer"
               >
                 <span className="flex items-center gap-2">
                   🎯 Detailed Question & Error Analysis (Optional)
                   {attempted > 0 && (
-                    <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-700 dark:text-purple-300 text-[10px] font-extrabold">
+                    <span className="px-2.5 py-0.5 rounded-lg bg-purple-500/20 text-purple-600 dark:text-purple-300 text-[10px] font-black">
                       Accuracy: {accuracyPct}%
                     </span>
                   )}
@@ -286,10 +284,10 @@ export default function AddTestModal({
               </button>
 
               {showBreakdown && (
-                <div className="p-3.5 space-y-3 bg-slate-50/80 dark:bg-slate-950/50 border-t border-slate-200 dark:border-slate-800 text-xs">
+                <div className="p-4 space-y-3 bg-slate-50/50 dark:bg-slate-950/40 border-t border-slate-200 dark:border-slate-800 text-xs font-bold">
                   <div className="grid grid-cols-3 gap-2.5">
                     <div>
-                      <label className="block mb-1 font-bold text-[11px] text-emerald-700 dark:text-emerald-400">
+                      <label className="block mb-1 font-black text-[11px] text-emerald-600 dark:text-emerald-400">
                         ✓ Correct Qs
                       </label>
                       <input
@@ -297,12 +295,12 @@ export default function AddTestModal({
                         placeholder="e.g. 58"
                         value={correctCount}
                         onChange={(e) => setCorrectCount(e.target.value)}
-                        className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 outline-none font-bold border border-slate-300 dark:border-slate-800 focus:border-emerald-500`}
+                        className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-emerald-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block mb-1 font-bold text-[11px] text-rose-700 dark:text-rose-400">
+                      <label className="block mb-1 font-black text-[11px] text-rose-600 dark:text-rose-400">
                         ✗ Incorrect Qs
                       </label>
                       <input
@@ -310,57 +308,57 @@ export default function AddTestModal({
                         placeholder="e.g. 18"
                         value={incorrectCount}
                         onChange={(e) => setIncorrectCount(e.target.value)}
-                        className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 outline-none font-bold border border-slate-300 dark:border-slate-800 focus:border-rose-500`}
+                        className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-rose-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block mb-1 font-bold text-[11px] text-slate-700 dark:text-slate-300">
-                        - Unattempted Qs
+                      <label className="block mb-1 font-black text-[11px] text-slate-600 dark:text-slate-400">
+                        - Unattempted
                       </label>
                       <input
                         type="number"
                         placeholder="e.g. 24"
                         value={unattemptedCount}
                         onChange={(e) => setUnattemptedCount(e.target.value)}
-                        className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 outline-none font-bold border border-slate-300 dark:border-slate-800 focus:border-slate-500`}
+                        className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-slate-500"
                       />
                     </div>
                   </div>
 
                   <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
-                    <label className="block mb-1 font-bold text-[11px] text-slate-700 dark:text-slate-300">
+                    <label className="block mb-1 font-black text-[11px] text-slate-700 dark:text-slate-300">
                       Mistake Category Breakdown (%)
                     </label>
                     <div className="grid grid-cols-3 gap-2.5">
                       <div>
-                        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">Conceptual Errors %</span>
+                        <span className="text-[10px] font-black text-amber-600 dark:text-amber-400">Conceptual Errors %</span>
                         <input
                           type="number"
                           placeholder="e.g. 40"
                           value={concept}
                           onChange={(e) => setConcept(e.target.value)}
-                          className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 rounded-xl px-2.5 py-1.5 outline-none font-bold border border-slate-300 dark:border-slate-800`}
+                          className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 rounded-xl px-2.5 py-1.5 outline-none font-bold border border-slate-200 dark:border-slate-800"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-purple-700 dark:text-purple-400">Silly Mistakes %</span>
+                        <span className="text-[10px] font-black text-purple-600 dark:text-purple-400">Silly Mistakes %</span>
                         <input
                           type="number"
                           placeholder="e.g. 35"
                           value={silly}
                           onChange={(e) => setSilly(e.target.value)}
-                          className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 rounded-xl px-2.5 py-1.5 outline-none font-bold border border-slate-300 dark:border-slate-800`}
+                          className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 rounded-xl px-2.5 py-1.5 outline-none font-bold border border-slate-200 dark:border-slate-800"
                         />
                       </div>
                       <div>
-                        <span className="text-[10px] font-bold text-sky-700 dark:text-sky-400">Time Pressure %</span>
+                        <span className="text-[10px] font-black text-sky-600 dark:text-sky-400">Time Pressure %</span>
                         <input
                           type="number"
                           placeholder="e.g. 25"
                           value={timeP}
                           onChange={(e) => setTimeP(e.target.value)}
-                          className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 rounded-xl px-2.5 py-1.5 outline-none font-bold border border-slate-300 dark:border-slate-800`}
+                          className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 rounded-xl px-2.5 py-1.5 outline-none font-bold border border-slate-200 dark:border-slate-800"
                         />
                       </div>
                     </div>
@@ -371,29 +369,29 @@ export default function AddTestModal({
 
             {/* Weak Areas / Focus Tags */}
             <div>
-              <label className="block mb-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                <Tag size={13} className="text-purple-600 dark:text-purple-400" /> Weak Areas / Focus Tags (Comma Separated)
+              <label className="block mb-1.5 font-black text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                <Tag size={13} className="text-accent-primary" /> Weak Areas / Focus Tags (Comma Separated)
               </label>
               <input
                 type="text"
                 placeholder="e.g. Art & Culture PYQs, Real Analysis Calculation Speed"
                 value={weakAreas}
                 onChange={(e) => setWeakAreas(e.target.value)}
-                className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-3.5 py-2.5 outline-none font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all`}
+                className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-4 py-3 outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-accent-primary transition-all shadow-inner"
               />
             </div>
 
             {/* Key Takeaways & Notes */}
             <div>
-              <label className="block mb-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1">
-                <Lightbulb size={13} className="text-purple-600 dark:text-purple-400" /> Key Takeaways & Action Plan
+              <label className="block mb-1.5 font-black text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                <Lightbulb size={13} className="text-accent-primary" /> Key Takeaways & Action Plan
               </label>
               <textarea
                 rows={2}
-                placeholder="e.g. Need to revise Constitutional Bodies articles; improve speed in CSAT Quant Ratio questions."
+                placeholder="e.g. Need to revise Constitutional Bodies articles; improve speed in CSAT Quant questions."
                 value={takeaway}
                 onChange={(e) => setTakeaway(e.target.value)}
-                className={`w-full ${inputBg} text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl px-3.5 py-2.5 outline-none font-semibold text-xs sm:text-sm border border-slate-300 dark:border-slate-800 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 resize-none transition-all`}
+                className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-4 py-3 outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-accent-primary transition-all shadow-inner resize-none"
               />
             </div>
 
@@ -403,14 +401,14 @@ export default function AddTestModal({
                 type="button"
                 onClick={onClose}
                 disabled={loading}
-                className="px-4 py-2.5 text-slate-700 dark:text-slate-300 font-extrabold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-xs cursor-pointer"
+                className="px-5 py-2.5 text-slate-700 dark:text-slate-300 font-black hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-xs cursor-pointer active:scale-95"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white rounded-xl font-extrabold shadow-lg shadow-purple-600/20 transition-all flex items-center gap-2 text-xs cursor-pointer active:scale-95"
+                className="px-6 py-2.5 bg-accent-gradient text-white disabled:opacity-50 rounded-xl font-black shadow-lg transition-all flex items-center gap-2 text-xs cursor-pointer active:scale-95"
               >
                 {loading ? (
                   <>

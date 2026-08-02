@@ -146,6 +146,25 @@ export const AccentThemeProvider = ({ children }: { children: React.ReactNode })
     const themeClass = `theme-${themeId}`;
     root.classList.add(themeClass);
     root.setAttribute('data-accent-theme', themeId);
+
+    // Dynamically update mobile browser & PWA status bar theme-color
+    if (typeof document !== 'undefined') {
+      const isDark = root.classList.contains('dark');
+      const themeObj = ThemeOptionList.find((t) => t.id === themeId);
+      const headerColor = isDark
+        ? '#020617'
+        : (themeObj?.colorHex || '#FFFFFF');
+
+      const metaTags = document.querySelectorAll('meta[name="theme-color"]');
+      if (metaTags.length > 0) {
+        metaTags.forEach((meta) => meta.setAttribute('content', headerColor));
+      } else {
+        const meta = document.createElement('meta');
+        meta.setAttribute('name', 'theme-color');
+        meta.setAttribute('content', headerColor);
+        document.head.appendChild(meta);
+      }
+    }
   };
 
   useEffect(() => {

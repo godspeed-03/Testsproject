@@ -404,9 +404,8 @@ export async function GET(req: Request) {
       ])
     );
 
-    const categories = Array.from(
-      new Set(syllabusItems.map((s: any) => s.category).filter(Boolean))
-    );
+    const dbCategories = syllabusItems.map((s: any) => String(s.category || '').trim()).filter(Boolean);
+    const categories = Array.from(new Set(dbCategories));
 
     return NextResponse.json({ habits, lists, syllabusSubjects, syllabusItems, categories });
   } catch (error: any) {

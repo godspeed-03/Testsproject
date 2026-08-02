@@ -422,7 +422,32 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
                       {formIsStudyTask && (
                         <div className="space-y-3 pt-1">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Category</label>
+                              <ShadcnSelect
+                                value={typeof formCategory === 'string' ? formCategory : (formCategory?.label || '')}
+                                onChange={(val: string) => {
+                                  const newCatObj = { id: val.toLowerCase(), label: val, icon: '📚', color: '#6366F1' };
+                                  setFormCategory(newCatObj);
+                                  const matchedSubjects = (syllabusItems || [])
+                                    .filter((item: any) => {
+                                      const itemCat = String(item.category || '').trim();
+                                      return itemCat.toLowerCase() === val.trim().toLowerCase();
+                                    })
+                                    .map((item: any) => item.subject)
+                                    .filter(Boolean);
+
+                                  const nextSubject = matchedSubjects.length > 0 ? matchedSubjects[0] : '';
+                                  setFormSubject(nextSubject);
+
+                                  const autoTitle = nextSubject && formTopic ? `${nextSubject}: ${formTopic}` : (nextSubject || formTopic);
+                                  if (autoTitle) setFormTitle(autoTitle);
+                                }}
+                                options={categories.map((c: string) => ({ value: c, label: c }))}
+                              />
+                            </div>
+
                             <div>
                               <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Subject</label>
                               <ShadcnSelect
@@ -484,7 +509,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   )}
 
                   {/* Title & Icon Input */}
-                  <div className={createType === 'habit' ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-1 sm:grid-cols-2 gap-3'}>
+                  <div className={createType === 'habit' || !formIsStudyTask ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'grid grid-cols-1 gap-3'}>
                     <div>
                       <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Title</label>
 
@@ -627,17 +652,15 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       </div>
                     </div>
 
-                    {createType === 'task' && (
+                    {!formIsStudyTask && (
                       <div className="space-y-2">
-                        <label className="font-extrabold block text-slate-700 dark:text-slate-300">Category & Subject</label>
+                        <label className="font-extrabold block text-slate-700 dark:text-slate-300">Category</label>
                         <ShadcnSelect
-                          value={formSubject}
+                          value={typeof formCategory === 'string' ? formCategory : (formCategory?.label || 'General')}
                           onChange={(val: string) => {
-                            setFormSubject(val);
-                            const autoTitle = formTopic ? `${val}: ${formTopic}` : val;
-                            setFormTitle(autoTitle);
+                            setFormCategory({ id: val.toLowerCase(), label: val, icon: '📌', color: '#6366F1' });
                           }}
-                          options={categories.map((c: string) => ({ value: c, label: c }))}
+                          options={['General', 'Study', 'Health', 'Personal', 'Work'].map((c: string) => ({ value: c, label: c }))}
                         />
                       </div>
                     )}
@@ -744,6 +767,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         options={[
                           { value: 'yes_no', label: 'Mark Done (Yes / No)' },
                           { value: 'hours', label: 'Hours' },
+                          { value: 'minutes', label: 'Minutes' },
                           { value: 'times', label: 'Times' },
                           { value: 'pages', label: 'Pages' },
                           { value: 'answers', label: 'Answers' },

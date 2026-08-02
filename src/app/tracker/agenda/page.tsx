@@ -217,11 +217,7 @@ export default function AgendaPage() {
                             </span>
                           );
                         } else {
-                          return (
-                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 flex items-center gap-1">
-                              📚 Topic Task
-                            </span>
-                          );
+                          return null;
                         }
                         return null;
                       })()}

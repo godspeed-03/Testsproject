@@ -431,9 +431,20 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormTitle('');
     setFormDescription('');
     setFormTopic('');
-    setFormSubject(syllabusSubjects.length > 0 ? syllabusSubjects[0] : '');
+    const initialCategoryLabel = categories.length > 0 ? categories[0] : '';
+    setFormCategory({ id: initialCategoryLabel.toLowerCase(), label: initialCategoryLabel, icon: '📚', color: '#6366F1' });
+    const matchedSubjects = initialCategoryLabel
+      ? (syllabusItems || [])
+          .filter((item: any) => {
+            const itemCat = String(item.category || '').trim();
+            return itemCat.toLowerCase() === initialCategoryLabel.toLowerCase();
+          })
+          .map((item: any) => item.subject)
+          .filter(Boolean)
+      : [];
+    const initialSubject = matchedSubjects.length > 0 ? matchedSubjects[0] : '';
+    setFormSubject(initialSubject);
     setFormPriority('medium');
-    setFormCategory({ id: 'study', label: categories[0] || 'GS1', icon: '📚', color: '#6366F1' });
     setFormFrequencyMode(type === 'task' ? 'once' : 'daily');
     setFormFrequencyDays(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
     setFormMonthlyDay(1);
@@ -452,21 +463,15 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     const selectedCat = typeof formCategory === 'string' ? formCategory : (formCategory?.label || '');
     if (!selectedCat) return syllabusSubjects;
 
-    const matched = syllabusItems
+    const matched = (syllabusItems || [])
       .filter((item: any) => {
         const itemCat = String(item.category || '').trim();
-        return itemCat.toLowerCase() === selectedCat.toLowerCase() ||
-               itemCat.toLowerCase().includes(selectedCat.toLowerCase()) ||
-               selectedCat.toLowerCase().includes(itemCat.toLowerCase());
+        return itemCat.toLowerCase() === selectedCat.trim().toLowerCase();
       })
       .map((item: any) => item.subject)
       .filter(Boolean);
 
-    if (matched.length > 0) {
-      return Array.from(new Set(matched));
-    }
-
-    return syllabusSubjects;
+    return Array.from(new Set(matched));
   };
 
   const handleOpenCreateModal = (type: 'habit' | 'task' | 'list' = 'task') => {

@@ -93,7 +93,7 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
       subject: h.subject || h.category?.label || 'General',
       scheduled: isScheduled,
       done: isDone,
-      score: isScheduled ? (isDone ? 100 : 0) : 100
+      score: isScheduled ? (isDone ? 100 : 0) : 0
     });
   });
 
@@ -208,7 +208,7 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
     totalRevDone += data.done;
     totalRevMissed += data.missed;
 
-    let catScore = 100;
+    let catScore = 0;
     if (data.due > 0) {
       const rawCredit = (data.done * W_DONE - data.missed * W_MISS) / data.due * 100;
       catScore = Math.max(0, Math.min(100, Math.round(rawCredit)));
@@ -228,7 +228,7 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
   const subjectBreakdown: any[] = [];
   Object.keys(subjectMap).forEach((subj) => {
     const data = subjectMap[subj];
-    let subjScore = 100;
+    let subjScore = 0;
     if (data.due > 0) {
       const rawCredit = (data.done * W_DONE - data.missed * W_MISS) / data.due * 100;
       subjScore = Math.max(0, Math.min(100, Math.round(rawCredit)));
@@ -245,7 +245,7 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
     });
   });
 
-  let revisionScore = 100;
+  let revisionScore = 0;
   if (totalRevDue > 0) {
     const overallRevCredit = (totalRevDone * W_DONE - totalRevMissed * W_MISS) / totalRevDue * 100;
     revisionScore = Math.max(0, Math.min(100, Math.round(overallRevCredit)));
@@ -272,13 +272,13 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
     scoreSum += 0.3 * revisionScore;
   }
 
-  let finalOverallScore = 100;
+  let finalOverallScore = 0;
   if (weightSum > 0) {
     finalOverallScore = Math.round(scoreSum / weightSum);
   }
 
-  const finalHabitScore = habitScore >= 0 ? habitScore : 100;
-  const finalTaskScore = taskScore >= 0 ? taskScore : 100;
+  const finalHabitScore = habitScore >= 0 ? habitScore : 0;
+  const finalTaskScore = taskScore >= 0 ? taskScore : 0;
 
   // Upsert DailySnapshot
   const dailyDoc = await DailySnapshot.findOneAndUpdate(
@@ -347,7 +347,7 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
   const habitBreakdown = activeHabitItems.map((habitObj) => {
     const hId = habitObj._id.toString();
     const item = habitAggMap[hId] || { title: habitObj.title, category: (habitObj as any).category?.label || habitObj.subject || 'General', sched: 0, comp: 0 };
-    const score = item.sched > 0 ? Math.round((item.comp / item.sched) * 100) : 100;
+    const score = item.sched > 0 ? Math.round((item.comp / item.sched) * 100) : 0;
 
     return {
       habitId: hId,
@@ -395,7 +395,7 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
 
   const categoryBreakdown = Object.keys(catAggMap).map((cat) => {
     const data = catAggMap[cat];
-    let catScore = 100;
+    let catScore = 0;
     if (data.due > 0) {
       const credit = (data.done * W_DONE - data.missed * W_MISS) / data.due * 100;
       catScore = Math.max(0, Math.min(100, Math.round(credit)));
@@ -429,7 +429,7 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
 
   const subjectBreakdown = Object.keys(subjAggMap).map((subj) => {
     const data = subjAggMap[subj];
-    let subjScore = 100;
+    let subjScore = 0;
     if (data.due > 0) {
       const credit = (data.done * W_DONE - data.missed * W_MISS) / data.due * 100;
       subjScore = Math.max(0, Math.min(100, Math.round(credit)));
@@ -528,7 +528,7 @@ export async function recalculateAllTimeSnapshot(userId: string) {
   const habitBreakdown = activeHabitItems.map((habitObj) => {
     const hId = habitObj._id.toString();
     const item = habitMap[hId] || { title: habitObj.title, category: (habitObj as any).category?.label || habitObj.subject || 'General', sched: 0, comp: 0, streakCurrent: habitObj.streakCurrent || 0, streakBest: habitObj.streakBest || 0 };
-    const score = item.sched > 0 ? Math.round((item.comp / item.sched) * 100) : 100;
+    const score = item.sched > 0 ? Math.round((item.comp / item.sched) * 100) : 0;
     return {
       habitId: hId,
       title: habitObj.title,
@@ -574,7 +574,7 @@ export async function recalculateAllTimeSnapshot(userId: string) {
 
   const categoryBreakdown = Object.keys(catMap).map((cat) => {
     const data = catMap[cat];
-    let catScore = 100;
+    let catScore = 0;
     if (data.due > 0) {
       const credit = (data.done * W_DONE - data.missed * W_MISS) / data.due * 100;
       catScore = Math.max(0, Math.min(100, Math.round(credit)));
@@ -607,7 +607,7 @@ export async function recalculateAllTimeSnapshot(userId: string) {
 
   const subjectBreakdown = Object.keys(subjMap).map((subj) => {
     const data = subjMap[subj];
-    let subjScore = 100;
+    let subjScore = 0;
     if (data.due > 0) {
       const credit = (data.done * W_DONE - data.missed * W_MISS) / data.due * 100;
       subjScore = Math.max(0, Math.min(100, Math.round(credit)));

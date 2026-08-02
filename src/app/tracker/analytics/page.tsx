@@ -539,7 +539,7 @@ export default function AnalyticsPage() {
                 <CheckCircle size={16} />
               </div>
               <p className={`text-2xl sm:text-3xl font-black ${textTitle}`}>
-                {weeklyDoc?.totalTasksDone ?? 0} <span className="text-sm font-bold text-slate-500">done</span>
+                {weeklyDoc?.totalTasksDone ?? 0} <span className="text-sm font-bold text-slate-500">completed</span>
               </p>
               <p className="text-[11px] font-bold text-purple-700 dark:text-purple-400">7-Day Completion Logs</p>
             </div>

@@ -52,10 +52,10 @@ export async function GET(req: Request) {
     if (range === 'month') {
       const dailyDocs = await DailySnapshot.find({ userId: effectiveUserId, monthKey }).sort({ studyDayKey: 1 });
       const currentMonthDoc = monthlyDoc || {
-        overallScore: 100,
-        habitScore: 100,
-        taskScore: 100,
-        revisionScore: 100,
+        overallScore: 0,
+        habitScore: 0,
+        taskScore: 0,
+        revisionScore: 0,
         habitBreakdown: [],
         categoryBreakdown: [],
         subjectBreakdown: [],
@@ -135,10 +135,10 @@ export async function GET(req: Request) {
 
     // 2. ALL-TIME RANGE
     const currentAllTimeDoc = allTimeDoc || {
-      overallScore: 100,
-      habitScore: 100,
-      taskScore: 100,
-      revisionScore: 100,
+      overallScore: 0,
+      habitScore: 0,
+      taskScore: 0,
+      revisionScore: 0,
       habitBreakdown: [],
       categoryBreakdown: [],
       subjectBreakdown: [],

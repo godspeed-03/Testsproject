@@ -221,16 +221,19 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
       const entry = (h.history || []).find((e: any) => e.date === dKey);
       
       if (entry && (entry.status === 'done' || (entry.value && entry.value > 0))) {
-        dayTasksCount++;
+        // Task/habit count ONLY for completed items
         if (entry.status === 'done') {
+          dayTasksCount++;
           totalTasksDone++;
         }
 
-        // Track stats for actual Habits section
+        // Track stats for actual Habits section (includes partial progress for display)
         if (habitStatsMap[hId]) {
           const val = entry.value || 1;
           habitStatsMap[hId].totalValue += val;
-          habitStatsMap[hId].completedDays += 1;
+          if (entry.status === 'done') {
+            habitStatsMap[hId].completedDays += 1;
+          }
         }
 
         // Track study hours & subject distribution for Study Tasks / Time-based activities
@@ -277,17 +280,20 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
   const weeklyTotalHours = Number(weeklyData.reduce((acc, d) => acc + d.hours, 0).toFixed(1));
   const dailyAverageHours = Number((weeklyTotalHours / 7).toFixed(1));
   // Calculate Weekly Consistency Score based on Habit 2+ Days Consistency Rule in current 7 days
-  const totalHabitsCount = habits.length;
+  // Only count recurring habits/tasks (exclude one-time events and frequency.mode === 'once')
+  const recurringHabits = habits.filter((h) => h.frequency?.mode !== 'once' && h.type !== 'event');
+  const totalHabitsCount = recurringHabits.length;
   let consistentHabitsCount = 0;
   let consistencyPct = 0;
 
   if (totalHabitsCount > 0) {
-    habits.forEach((h) => {
+    recurringHabits.forEach((h) => {
       let completedDaysInWeek = 0;
       weeklyData.forEach((dayObj) => {
         const dKey = dayObj.dateKey;
         const entry = (h.history || []).find((e: any) => e.date === dKey);
-        if (entry && (entry.status === 'done' || (entry.value && entry.value > 0))) {
+        // Only count days where the task/habit was actually completed
+        if (entry && entry.status === 'done') {
           completedDaysInWeek++;
         }
       });

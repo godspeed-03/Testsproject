@@ -538,10 +538,17 @@ export default function AnalyticsPage() {
       {/* TAB 1: WEEKLY STUDY VELOCITY & DISTRIBUTION (SEPARATE ENGINE & API) */}
       {activeTab === "velocity" && (
         <div className="space-y-6 animate-in fade-in-50 duration-300">
-          {/* Top 4 KPI Cards */}
-          {/* Top 4 KPI Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-primary/50 transition-all">
+          {loading && !weeklyDoc ? (
+            <div className={`p-16 sm:p-20 rounded-2xl border ${cardBg} text-center space-y-4 shadow-xs`}>
+              <Loader2 size={36} className="animate-spin text-indigo-500 mx-auto" />
+              <p className={`text-sm font-black ${textTitle}`}>Loading Weekly Study Velocity...</p>
+              <p className={`text-xs ${textMuted}`}>Fetching study hours and subject distributions</p>
+            </div>
+          ) : (
+            <>
+              {/* Top 4 KPI Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+                <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-primary/50 transition-all">
               <div className="flex items-center justify-between text-accent-primary">
                 <span className="text-xs font-extrabold uppercase tracking-wider">Weekly Total</span>
                 <div className="w-7 h-7 rounded-lg bg-accent-light flex items-center justify-center">
@@ -830,6 +837,8 @@ export default function AnalyticsPage() {
               Automatic analytics calculations update live after every study block logged in the Focus Timer or Agenda!
             </span>
           </div>
+            </>
+          )}
         </div>
       )}
 

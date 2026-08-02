@@ -1,12 +1,14 @@
 'use client';
 
 import React from 'react';
-import { ListTodo, Plus, Trash2, PlusCircle, CheckSquare, Square } from 'lucide-react';
+import { ListTodo, Plus, Trash2, PlusCircle, CheckSquare, Square, Loader2 } from 'lucide-react';
 import { useTracker } from '../TrackerContext';
 
 export default function ChecklistPage() {
   const {
     lists,
+    saving,
+    deletingId,
     newListInput,
     setNewListInput,
     handleToggleListItem,
@@ -67,11 +69,12 @@ export default function ChecklistPage() {
 
                   <button
                     type="button"
+                    disabled={saving || deletingId === list._id}
                     onClick={() => handleDeleteList(list._id)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                    className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                     title="Delete Checklist"
                   >
-                    <Trash2 size={16} />
+                    {deletingId === list._id ? <Loader2 size={16} className="animate-spin text-rose-500" /> : <Trash2 size={16} />}
                   </button>
                 </div>
 
@@ -113,10 +116,11 @@ export default function ChecklistPage() {
                   />
                   <button
                     type="button"
+                    disabled={saving}
                     onClick={() => handleAddListItem(list._id)}
-                    className="p-2 rounded-xl bg-accent-gradient text-white font-bold text-xs"
+                    className="p-2 rounded-xl bg-accent-gradient text-white font-bold text-xs disabled:opacity-50"
                   >
-                    <PlusCircle size={16} />
+                    {saving ? <Loader2 size={16} className="animate-spin text-white" /> : <PlusCircle size={16} />}
                   </button>
                 </div>
               </div>

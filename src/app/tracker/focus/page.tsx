@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Clock, Play, Pause, RotateCcw, CheckCircle2, Flag, Zap, BookOpen, ListOrdered, Plus } from "lucide-react";
+import { Clock, Play, Pause, RotateCcw, CheckCircle2, Flag, Zap, BookOpen, ListOrdered, Plus, Loader2 } from "lucide-react";
 import { useTracker } from "../TrackerContext";
 import ShadcnSelect from "@/components/ui/ShadcnSelect";
 
@@ -16,6 +16,7 @@ interface SessionLap {
 export default function FocusPage() {
   const {
     habits,
+    saving,
     timerHabitId,
     setTimerHabitId,
     timerRunning,
@@ -448,13 +449,13 @@ export default function FocusPage() {
             <button
               type="button"
               onClick={handleSessionComplete}
-              disabled={timerElapsed === 0}
-              className="px-4 sm:px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white text-xs font-black flex items-center gap-1.5 shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/40 transition-all active:scale-95 disabled:opacity-20 cursor-pointer"
+              disabled={timerElapsed === 0 || saving}
+              className="px-4 sm:px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-500 text-white text-xs font-black flex items-center gap-1.5 shadow-lg shadow-emerald-600/25 hover:shadow-emerald-600/40 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
               title="Save Study Hours"
             >
-              <Plus size={15} />
-              <span className="hidden sm:inline">Save Session</span>
-              <span className="sm:hidden">Save</span>
+              {saving ? <Loader2 size={15} className="animate-spin text-white" /> : <Plus size={15} />}
+              <span className="hidden sm:inline">{saving ? "Saving..." : "Save Session"}</span>
+              <span className="sm:hidden">{saving ? "Saving" : "Save"}</span>
             </button>
 
             {/* Reset */}

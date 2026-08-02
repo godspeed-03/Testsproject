@@ -158,6 +158,12 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
           </div>
 
           <div className="flex items-center gap-2.5">
+            {saving && (
+              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-500/10 dark:bg-indigo-950/60 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 text-xs font-extrabold animate-pulse shadow-xs shrink-0">
+                <Loader2 size={14} className="animate-spin text-indigo-500 shrink-0" />
+                <span>Syncing to DB...</span>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => handleOpenCreateModal('task')}

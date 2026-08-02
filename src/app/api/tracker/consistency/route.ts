@@ -31,22 +31,13 @@ export async function GET(req: Request) {
     const habitIdFilter = searchParams.get('habitId');
     const subjectFilter = searchParams.get('subject');
 
-    // Check if snapshots exist; if not or if categoryBreakdown is missing/empty, trigger calculation pipeline
+    // Run calculation pipeline to guarantee fresh, 100% accurate live snapshots
+    const pipelineRes = await runFullConsistencyPipeline(effectiveUserId);
     let monthlyDoc = await MonthlySnapshot.findOne({ userId: effectiveUserId, monthKey });
-    let allTimeDoc = await AllTimeSnapshot.findOne({ userId: effectiveUserId });
-
-    if (
-      !monthlyDoc ||
-      !allTimeDoc ||
-      !monthlyDoc.categoryBreakdown ||
-      monthlyDoc.categoryBreakdown.length === 0 ||
-      !allTimeDoc.categoryBreakdown ||
-      allTimeDoc.categoryBreakdown.length === 0
-    ) {
-      const pipelineRes = await runFullConsistencyPipeline(effectiveUserId);
+    if (!monthlyDoc) {
       monthlyDoc = pipelineRes.monthly as any;
-      allTimeDoc = pipelineRes.allTime as any;
     }
+    let allTimeDoc = pipelineRes.allTime as any;
 
     // 1. THIS MONTH RANGE
     if (range === 'month') {

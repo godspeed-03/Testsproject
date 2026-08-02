@@ -8,6 +8,7 @@ import SyllabusItem from '@/models/SyllabusItem';
 import TopicRevision from '@/models/TopicRevision';
 import { processTopicTag } from '@/lib/topicRevisionEngine';
 import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
+import { runFullConsistencyPipeline } from '@/lib/consistencyEngineV3';
 
 function addDaysStr(dateStr: string, days: number): string {
   const d = new Date(dateStr);
@@ -489,6 +490,11 @@ export async function POST(req: Request) {
       // Recalculate current and best streaks dynamically from completed history & recurrence schedule
       recalculateHabitStreak(habit);
       await habit.save();
+
+      // Trigger live consistency pipeline update in background
+      runFullConsistencyPipeline(userId).catch((err) =>
+        console.error('Error auto-updating consistency pipeline after habit update:', err)
+      );
 
       // Synchronize TopicRevision & SyllabusItem status when tasks are toggled
       if (habit.isStudyTask || habit.subject || habit.topic || habit.title.includes(':')) {

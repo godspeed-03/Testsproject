@@ -63,24 +63,37 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
   let habitDoneCount = 0;
   const habitBreakdown: any[] = [];
 
-  habitItems.forEach((h) => {
+  habitItems.forEach((h: any) => {
     if (h.startDate && h.startDate > dayKey) return;
+    if (h.endDate && h.endDate < dayKey) return;
 
     // Check frequency
-    const mode = h.frequency?.mode || 'daily';
+    const mode = h.frequency?.mode || h.recurrence || 'daily';
     let isScheduled = true;
 
-    if (mode === 'specific_days' || mode === 'weekly') {
-      const days = h.frequency?.days || [];
+    if (mode === 'once') {
+      isScheduled = h.startDate === dayKey;
+    } else if (mode === 'specific_days' || mode === 'weekly') {
+      const days = h.frequency?.days || h.selectedDays || [];
       if (days.length > 0) {
-        const dayObj = new Date(dayKey);
-        const dayName = dayObj.toLocaleString('en-US', { weekday: 'short' });
-        isScheduled = days.some((d: string) => d.toLowerCase().startsWith(dayName.toLowerCase()));
+        const dayObj = new Date(dayKey + 'T00:00:00');
+        const dayShort = dayObj.toLocaleString('en-US', { weekday: 'short' }).toLowerCase();
+        const dayFull = dayObj.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+        isScheduled = days.some((d: string) => {
+          const lowerD = String(d).toLowerCase().trim();
+          return lowerD === dayShort || lowerD === dayFull || lowerD.startsWith(dayShort) || dayShort.startsWith(lowerD);
+        });
       }
     }
 
     const entry = (h.history || []).find((e: any) => e.date === dayKey);
-    const isDone = entry ? entry.status === 'done' : false;
+    const targetVal = h.target?.value;
+    const unit = h.target?.unit;
+    const isNumericGoal = typeof targetVal === 'number' && targetVal > 0 && unit !== 'yes_no' && unit !== 'boolean';
+    
+    const isDone = entry
+      ? (entry.status === 'done' || (isNumericGoal && typeof entry.value === 'number' && entry.value >= targetVal))
+      : false;
 
     if (isScheduled) {
       habitSchedCount++;
@@ -106,12 +119,14 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
   let taskSchedCount = 0;
   let taskDoneCount = 0;
 
-  taskItems.forEach((h) => {
+  taskItems.forEach((h: any) => {
     if (h.startDate && h.startDate > dayKey) return;
+    if (h.endDate && h.endDate < dayKey) return;
 
     taskSchedCount++;
     const entry = (h.history || []).find((e: any) => e.date === dayKey);
-    if (entry && entry.status === 'done') {
+    const isDone = entry ? entry.status === 'done' : false;
+    if (isDone) {
       taskDoneCount++;
     }
   });
@@ -122,7 +137,7 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
   const categoryMap: Record<string, { due: number; done: number; missed: number; topicsRead: number }> = {};
   const subjectMap: Record<string, { due: number; done: number; missed: number; topicsRead: number; category: string }> = {};
 
-  // Initialize Categories from live DB records (SyllabusItems + TopicRevisions only)
+  // Initialize Categories from live DB records
   const dynamicCategories = Array.from(
     new Set([
       ...topicRevisions.map((tr) => tr.category).filter(Boolean),
@@ -184,7 +199,7 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
           subjectMap[subj].done++;
         } else {
           // Check grace window
-          const schedDateObj = new Date(st.sched);
+          const schedDateObj = new Date(st.sched + 'T00:00:00');
           schedDateObj.setDate(schedDateObj.getDate() + REVISION_GRACE_DAYS);
           const graceIso = schedDateObj.toISOString().split('T')[0];
 
@@ -252,23 +267,19 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
     revisionScore = Math.max(0, Math.min(100, Math.round(overallRevCredit)));
   }
 
-  // D. Weighted Composite Overall Score (Redistribute if component has 0 scheduled)
-  let activeComponents = 0;
+  // D. Weighted Composite Overall Score
   let weightSum = 0;
   let scoreSum = 0;
 
   if (habitScore >= 0) {
-    activeComponents++;
     weightSum += 0.4;
     scoreSum += 0.4 * habitScore;
   }
   if (taskScore >= 0) {
-    activeComponents++;
     weightSum += 0.3;
     scoreSum += 0.3 * taskScore;
   }
   if (totalRevDue > 0) {
-    activeComponents++;
     weightSum += 0.3;
     scoreSum += 0.3 * revisionScore;
   }
@@ -311,16 +322,38 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
   const mKey = monthKey || getMonthKey();
   const monthName = getMonthName(mKey);
 
-  // A. Re-run V4 daily calculation for all recorded daily snapshots in this month to purge legacy default scores
-  const existingDailyDocs = await DailySnapshot.find({ userId: effectiveUserId, monthKey: mKey });
-  if (existingDailyDocs.length === 0) {
-    await recalculateDailySnapshot(effectiveUserId);
-  } else {
-    await Promise.all(existingDailyDocs.map((d) => recalculateDailySnapshot(effectiveUserId, d.studyDayKey)));
+  const todayKey = getStudyDayKey();
+  const currentMonthKeyStr = getMonthKey();
+  const [yearNum, monthNum] = mKey.split('-').map(Number);
+  const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
+
+  let maxDay = daysInMonth;
+  if (mKey === currentMonthKeyStr) {
+    const todayDayNum = Number(todayKey.split('-')[2]);
+    maxDay = Math.min(daysInMonth, todayDayNum);
   }
 
+  const dayKeysSet = new Set<string>();
+  for (let d = 1; d <= maxDay; d++) {
+    const dayStr = String(d).padStart(2, '0');
+    dayKeysSet.add(`${mKey}-${dayStr}`);
+  }
+
+  // Also include any extra dates in habit history for this month
+  const habitItems = await HabitItem.find({ userId: effectiveUserId }).lean();
+  habitItems.forEach((h: any) => {
+    (h.history || []).forEach((e: any) => {
+      if (e.date && e.date.startsWith(mKey)) {
+        dayKeysSet.add(e.date);
+      }
+    });
+  });
+
+  const sortedDayKeys = Array.from(dayKeysSet).sort();
+  await Promise.all(sortedDayKeys.map((dayKey) => recalculateDailySnapshot(effectiveUserId, dayKey)));
+
   const dailyDocs = await DailySnapshot.find({ userId: effectiveUserId, monthKey: mKey }).sort({ studyDayKey: 1 });
-  const daysWithData = dailyDocs.length;
+  const daysWithData = dailyDocs.length || 1;
   const sumOverall = dailyDocs.reduce((acc, d) => acc + d.overallScore, 0);
   const sumHabit = dailyDocs.reduce((acc, d) => acc + d.habitScore, 0);
   const sumTask = dailyDocs.reduce((acc, d) => acc + d.taskScore, 0);
@@ -331,7 +364,7 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
   const taskScore = Math.round(sumTask / daysWithData);
   const revisionScore = Math.round(sumRevision / daysWithData);
 
-  // B. Aggregate Habit Breakdown
+  // Aggregate Habit Breakdown across all days in month
   const habitAggMap: Record<string, { title: string; category: string; sched: number; comp: number }> = {};
   dailyDocs.forEach((d) => {
     (d.habitBreakdown || []).forEach((hb: any) => {
@@ -343,12 +376,11 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
     });
   });
 
-  const habitItems = await HabitItem.find({ userId: effectiveUserId });
-  const activeHabitItems = habitItems.filter((h) => h.frequency?.mode !== 'once');
+  const activeHabitItems = habitItems.filter((h: any) => h.frequency?.mode !== 'once');
 
-  const habitBreakdown = activeHabitItems.map((habitObj) => {
+  const habitBreakdown = activeHabitItems.map((habitObj: any) => {
     const hId = habitObj._id.toString();
-    const item = habitAggMap[hId] || { title: habitObj.title, category: (habitObj as any).category?.label || habitObj.subject || 'General', sched: 0, comp: 0 };
+    const item = habitAggMap[hId] || { title: habitObj.title, category: habitObj.category?.label || habitObj.subject || 'General', sched: 0, comp: 0 };
     const score = item.sched > 0 ? Math.round((item.comp / item.sched) * 100) : 0;
 
     return {
@@ -365,11 +397,10 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
     };
   });
 
-  // C. Aggregate Category Breakdown
+  // Aggregate Category Breakdown
   const catAggMap: Record<string, { due: number; done: number; missed: number; topics: number }> = {};
-  
-  const syllabusItems = await SyllabusItem.find({ userId: effectiveUserId });
-  const topicRevisions = await TopicRevision.find({ userId: effectiveUserId });
+  const syllabusItems = await SyllabusItem.find({ userId: effectiveUserId }).lean();
+  const topicRevisions = await TopicRevision.find({ userId: effectiveUserId }).lean();
 
   const allDbCategories = Array.from(
     new Set([
@@ -414,7 +445,7 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
     };
   });
 
-  // D. Aggregate Subject Breakdown
+  // Aggregate Subject Breakdown
   const subjAggMap: Record<string, { category: string; due: number; done: number; missed: number; topics: number }> = {};
   dailyDocs.forEach((d) => {
     (d.subjectBreakdown || []).forEach((sb: any) => {
@@ -506,7 +537,7 @@ export async function recalculateAllTimeSnapshot(userId: string) {
   // Aggregate Habit Breakdown across all months
   const habitMap: Record<string, { title: string; category: string; sched: number; comp: number; streakCurrent: number; streakBest: number }> = {};
   monthlyDocs.forEach((m) => {
-    (m.habitBreakdown || []).forEach((hb) => {
+    (m.habitBreakdown || []).forEach((hb: any) => {
       if (!habitMap[hb.habitId]) {
         habitMap[hb.habitId] = {
           title: hb.title,
@@ -524,12 +555,12 @@ export async function recalculateAllTimeSnapshot(userId: string) {
     });
   });
 
-  const habitItems = await HabitItem.find({ userId: effectiveUserId });
-  const activeHabitItems = habitItems.filter((h) => h.frequency?.mode !== 'once');
+  const habitItems = await HabitItem.find({ userId: effectiveUserId }).lean();
+  const activeHabitItems = habitItems.filter((h: any) => h.frequency?.mode !== 'once');
 
-  const habitBreakdown = activeHabitItems.map((habitObj) => {
+  const habitBreakdown = activeHabitItems.map((habitObj: any) => {
     const hId = habitObj._id.toString();
-    const item = habitMap[hId] || { title: habitObj.title, category: (habitObj as any).category?.label || habitObj.subject || 'General', sched: 0, comp: 0, streakCurrent: habitObj.streakCurrent || 0, streakBest: habitObj.streakBest || 0 };
+    const item = habitMap[hId] || { title: habitObj.title, category: habitObj.category?.label || habitObj.subject || 'General', sched: 0, comp: 0, streakCurrent: habitObj.streakCurrent || 0, streakBest: habitObj.streakBest || 0 };
     const score = item.sched > 0 ? Math.round((item.comp / item.sched) * 100) : 0;
     return {
       habitId: hId,
@@ -547,9 +578,8 @@ export async function recalculateAllTimeSnapshot(userId: string) {
 
   // Aggregate Category Breakdown across all months
   const catMap: Record<string, { due: number; done: number; missed: number; topics: number }> = {};
-  
-  const syllabusItems = await SyllabusItem.find({ userId: effectiveUserId });
-  const topicRevisions = await TopicRevision.find({ userId: effectiveUserId });
+  const syllabusItems = await SyllabusItem.find({ userId: effectiveUserId }).lean();
+  const topicRevisions = await TopicRevision.find({ userId: effectiveUserId }).lean();
 
   const allDbCategories = Array.from(
     new Set([
@@ -652,5 +682,3 @@ export async function runFullConsistencyPipeline(userId: string) {
   const allTime = await recalculateAllTimeSnapshot(userId);
   return { daily, monthly, allTime };
 }
-
-

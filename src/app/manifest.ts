@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Executive-level UPSC Civil Services preparation suite: automated syllabus tracking, spaced repetition revision engine, focus timer, and performance analytics.',
     start_url: '/tracker',
     display: 'standalone',
-    background_color: '#0F172A',
-    theme_color: '#7C3AED',
+    background_color: '#020617',
+    theme_color: '#020617',
     orientation: 'portrait',
     icons: [
       {

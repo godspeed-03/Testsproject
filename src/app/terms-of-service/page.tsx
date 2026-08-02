@@ -147,8 +147,8 @@ export default function TermsOfServicePage() {
                 <li>You must provide accurate account information when registering or interacting with the service.</li>
                 <li>
                   Notify us immediately at{" "}
-                  <a href="mailto:byt.satysm@gmail.com" className="text-amber-600 dark:text-amber-400 underline">
-                    byt.satysm@gmail.com
+                  <a href="mailto:satyam2001anand@gmail.com" className="text-amber-600 dark:text-amber-400 underline">
+                    satyam2001anand@gmail.com
                   </a>{" "}
                   if you suspect unauthorized access to your account.
                 </li>
@@ -217,7 +217,7 @@ export default function TermsOfServicePage() {
             <div className="space-y-3 text-xs text-slate-600 dark:text-slate-300">
               <p className="leading-relaxed">
                 <strong className="text-slate-800 dark:text-slate-200">Independent Preparation Platform:</strong> UPSC
-                tracker is an independent digital study tool created for UPSC Civil Services Examination aspirants. It
+                Tracker is an independent digital study tool created for UPSC Civil Services Examination aspirants. It
                 is not affiliated with, endorsed by, or sponsored by the Union Public Service Commission (UPSC) or any
                 government entity.
               </p>
@@ -262,10 +262,10 @@ export default function TermsOfServicePage() {
               <div>
                 <p className="text-slate-500 dark:text-slate-400">User Support Email:</p>
                 <a
-                  href="mailto:byt.satysm@gmail.com"
+                  href="mailto:satyam2001anand@gmail.com"
                   className="text-amber-600 dark:text-amber-400 font-bold text-sm hover:underline"
                 >
-                  byt.satysm@gmail.com
+                  satyam2001anand@gmail.com
                 </a>
               </div>
               <div>

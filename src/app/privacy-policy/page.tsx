@@ -108,10 +108,10 @@ export default function PrivacyPolicyPage() {
               <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 p-4 rounded-lg">
                 <span className="text-slate-500 dark:text-slate-400 block mb-1">Developer & Support Contact:</span>
                 <a
-                  href="mailto:byt.satysm@gmail.com"
+                  href="mailto:satyam2001anand@gmail.com"
                   className="text-emerald-600 dark:text-emerald-400 font-bold text-sm hover:underline"
                 >
-                  byt.satysm@gmail.com
+                  satyam2001anand@gmail.com
                 </a>
               </div>
               <div className="bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 p-4 rounded-lg">
@@ -199,8 +199,8 @@ export default function PrivacyPolicyPage() {
                 <span>
                   <strong>Support & Communication:</strong> Respond to your technical inquiries or account assistance
                   sent to{" "}
-                  <a href="mailto:byt.satysm@gmail.com" className="text-emerald-600 dark:text-emerald-400 underline">
-                    byt.satysm@gmail.com
+                  <a href="mailto:satyam2001anand@gmail.com" className="text-emerald-600 dark:text-emerald-400 underline">
+                    satyam2001anand@gmail.com
                   </a>
                   .
                 </span>
@@ -288,10 +288,10 @@ export default function PrivacyPolicyPage() {
                 <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
                   To request complete deletion of your account and associated study data, email our support team at{" "}
                   <a
-                    href="mailto:byt.satysm@gmail.com"
+                    href="mailto:satyam2001anand@gmail.com"
                     className="text-emerald-600 dark:text-emerald-400 underline font-semibold"
                   >
-                    byt.satysm@gmail.com
+                    satyam2001anand@gmail.com
                   </a>{" "}
                   with the subject line <strong>&quot;Data Deletion Request&quot;</strong>. Upon verification, your
                   account record and stored progress data will be permanently wiped from our database within 7 working
@@ -331,10 +331,10 @@ export default function PrivacyPolicyPage() {
               <div>
                 <p className="text-slate-500 dark:text-slate-400">Support Email:</p>
                 <a
-                  href="mailto:byt.satysm@gmail.com"
+                  href="mailto:satyam2001anand@gmail.com"
                   className="text-emerald-600 dark:text-emerald-400 font-bold text-sm hover:underline"
                 >
-                  byt.satysm@gmail.com
+                  satyam2001anand@gmail.com
                 </a>
               </div>
               <div>

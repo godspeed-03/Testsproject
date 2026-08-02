@@ -1,168 +1,122 @@
-# UPSC Tracker - Consistency Engine Documentation
+# UPSC Tracker — Analytics & Scoring Engine V4
 
-> **Version**: 2.0  
-> **Module**: Consistency Analytics & MongoDB Snapshot Engine  
-> **Location**: `/src/app/tracker/analytics` | `/src/app/api/tracker/consistency` | `/src/models/ConsistencySnapshot.ts`
-
----
-
-## 1. Executive Overview
-
-The **UPSC Consistency Engine** is an automated, database-backed performance analytics system designed to track, score, and archive an aspirant's preparation discipline. It synthesizes performance across:
-1. **Daily Habits** (e.g. Newspaper reading, Exercise, Mock tests)
-2. **Recurring Tasks** (e.g. Daily answer writing, CSAT practice)
-3. **Syllabus Revision Matrix** (7-Stage SRS Milestones for GS1–GS4, Optionals, and CSAT)
-
-Scores are calculated using a **fair assessment algorithm** that excludes dates prior to an item's creation, preventing artificial score depression. Snapshots are stored permanently in **MongoDB** on a **4:00 AM study-day schedule**.
+> **Version**: 4.0  
+> **Module**: Consistency Analytics & MongoDB Snapshot Pipeline  
+> **Engine**: `/src/lib/consistencyEngineV3.ts`  
+> **Weekly Engine**: `/src/lib/weeklyAnalyticsEngine.ts`  
+> **API**: `/src/app/api/tracker/consistency` | `/src/app/api/tracker/weekly-analytics`  
+> **Models**: `DailySnapshot` · `MonthlySnapshot` · `AllTimeSnapshot` · `WeeklyData`
 
 ---
 
-## 2. 4:00 AM Study-Day Reset Protocol
+## 1. Architecture — 3-Tier Snapshot Hierarchy
 
-In competitive exam preparation, late-night study sessions extending past midnight belong to the same academic day. The engine enforces a **4:00 AM Reset Boundary**.
-
-### Implementation Logic (`getStudyDayKey`)
-- If current time is between **12:00 AM and 03:59 AM**, the study day key maps to **yesterday's date**.
-- At **04:00 AM**, the new study day key initializes.
-
-```typescript
-function getStudyDayKey(d: Date = new Date()): string {
-  const adjusted = new Date(d);
-  if (adjusted.getHours() < 4) {
-    adjusted.setDate(adjusted.getDate() - 1);
-  }
-  const y = adjusted.getFullYear();
-  const m = String(adjusted.getMonth() + 1).padStart(2, '0');
-  const day = String(adjusted.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+```
+HabitItem.history[] ──┐
+TopicRevision.revisions[] ──┤──► DailySnapshot ──► MonthlySnapshot ──► AllTimeSnapshot
+SyllabusItem ──────────────┘         (per day)       (per month)        (per user)
 ```
 
----
-
-## 3. Consistency Scoring Logic
-
-### A. Fair Assessment Protection
-- Days occurring **before** a habit or task's `startDate` are ignored.
-- Users are never penalized for past days when a habit did not yet exist.
-
-### B. Weighted Score Weights (30-Day Moving Window)
-
-$$\text{Overall Score} = (0.40 \times \text{HabitScore}) + (0.30 \times \text{TaskScore}) + (0.30 \times \text{RevisionScore})$$
-
-| Component | Weight | Calculation Method |
-| :--- | :--- | :--- |
-| **Habit Execution** | **40%** | $\frac{\text{Completed Scheduled Days}}{\text{Total Scheduled Days (post-startDate)}} \times 100$ |
-| **Task Routine** | **30%** | $\frac{\text{Completed Recurring Task Days}}{\text{Total Scheduled Task Days}} \times 100$ |
-| **Revision Matrix** | **30%** | $\frac{\text{Logged Revisions Done}}{\max(1, \text{Total Revision Items})} \times 100$ |
-
-### C. Overall Till-Date Cumulative Score
-Calculates total discipline from Day 1 to Today across all logged MongoDB history:
-
-$$\text{TillDateScore} = \min\left(100, \text{Round}\left(\frac{\sum \text{Done Entries}}{\sum \text{Logged Days}} \times 100\right)\right)$$
+**Separate Pipeline**: `WeeklyData` calculates 7-day study velocity, subject/habit distribution independently.
 
 ---
 
-## 4. Database Schema Specification
+## 2. Study Day Boundary (4:00 AM Reset)
 
-### `ConsistencySnapshot` (`/src/models/ConsistencySnapshot.ts`)
+- **12:00 AM – 3:59 AM** → study day key = **yesterday**
+- **4:00 AM onwards** → study day key = **today**
 
-```typescript
-export interface IHabitBreakdownItem {
-  id: string;
-  title: string;
-  type: string;
-  icon?: string;
-  subject?: string;
-  category?: string;
-  score: number;
-  doneCount: number;
-  streakCurrent: number;
-  streakBest: number;
-}
-
-export interface ICategoryBreakdownItem {
-  category: string;
-  score: number;
-  totalDone: number;
-  habitsCount: number;
-}
-
-export interface IConsistencySnapshot extends Document {
-  userId: string;
-  studyDayKey: string;      // Unique key per study day e.g. "2026-08-01"
-  monthKey: string;         // e.g. "2026-08"
-  monthName: string;        // e.g. "August 2026"
-  overallScore: number;     // 30-Day weighted score
-  tillDateScore?: number;   // Till-date overall score
-  habitScore: number;
-  taskScore: number;
-  revisionScore: number;
-  totalDone: number;
-  habitBreakdown?: IHabitBreakdownItem[];
-  categoryBreakdown?: ICategoryBreakdownItem[];
-  calculatedAt: string;     // Timestamp e.g. "04:00 AM"
-  createdAt: Date;
-  updatedAt: Date;
-}
-```
+Late-night study sessions count as the same academic day.
 
 ---
 
-## 5. API Route Specification (`/api/tracker/consistency`)
+## 3. Scoring Algorithm
+
+### 3.1 Daily Composite Score
+
+$$\text{Overall} = \frac{0.40 \times \text{HabitScore} + 0.30 \times \text{TaskScore} + 0.30 \times \text{RevisionScore}}{\text{Sum of active weights}}$$
+
+**Dynamic Weight Redistribution**: If a component has no scheduled items (score = -1), its weight redistributes proportionally to active components.
+
+### 3.2 Habit Score (40% Weight)
+
+For each HabitItem where `frequency.mode ≠ 'once'` and `startDate ≤ studyDayKey`:
+
+| Frequency Mode | Scheduled Check |
+|:---|:---|
+| `daily` | Always scheduled |
+| `specific_days` / `weekly` | Today's weekday ∈ `frequency.days[]` |
+| `monthly` | Today's date == `frequency.monthlyDay` |
+
+$$\text{HabitScore} = \frac{\text{Completed Scheduled Items}}{\text{Total Scheduled Items}} \times 100$$
+
+**Fair Assessment**: Days before a habit's `startDate` are excluded.
+
+### 3.3 Task Score (30% Weight)
+
+Same as Habit Score but filtered to `type === 'task'` with recurring frequency.
+
+### 3.4 Revision Score (30% Weight) — Asymmetric Weighting
+
+| Constant | Value | Purpose |
+|:---|:---|:---|
+| `W_DONE` | 1.0 | Credit per completed revision |
+| `W_MISS` | 1.3 | Penalty per missed revision (30% harsher) |
+| `GRACE_DAYS` | 1 | Grace period before marking as missed |
+
+$$\text{RevisionScore} = \text{clamp}\left(0, 100, \frac{\text{done} \times 1.0 - \text{missed} \times 1.3}{\text{due}} \times 100\right)$$
+
+### 3.5 Monthly Aggregation
+
+- **Scores**: Simple average of all DailySnapshot scores in that month
+- **Habit Breakdown**: Aggregate scheduledDays / completedDays per habit across daily snapshots
+- **Category/Subject Breakdown**: Sum revisionsDue/Done/Missed across daily snapshots, recalculate score
+
+### 3.6 All-Time Aggregation
+
+- **Scores**: Weighted average across all MonthlySnapshots, weighted by `daysWithData`
+- **Breakdowns**: Same aggregation pattern across all months
+
+---
+
+## 4. Grade System
+
+| Score Range | Grade | Badge Color |
+|:---|:---|:---|
+| ≥ 90% | `S-TIER CONSISTENT` | Purple |
+| 75% – 89% | `A-TIER CONSISTENT` | Emerald |
+| 60% – 74% | `B-TIER STABLE` | Amber |
+| < 60% | `NEEDS FOCUS` | Rose |
+
+---
+
+## 5. API Reference
 
 ### `GET /api/tracker/consistency`
-Fetches current study day snapshot and MongoDB monthly aggregated archives.
 
-- **Response Body**:
-```json
-{
-  "todaySnapshot": {
-    "studyDayKey": "2026-08-01",
-    "monthKey": "2026-08",
-    "overallScore": 88,
-    "tillDateScore": 92,
-    "habitScore": 90,
-    "taskScore": 85,
-    "revisionScore": 88,
-    "totalDone": 142,
-    "calculatedAt": "04:00 AM"
-  },
-  "monthlyHistory": [
-    {
-      "monthKey": "2026-08",
-      "monthName": "August 2026",
-      "score": 88,
-      "totalDone": 142
-    }
-  ],
-  "tillDateScore": 92,
-  "habitBreakdown": [...],
-  "categoryBreakdown": [...]
-}
-```
+| Parameter | Type | Default | Description |
+|:---|:---|:---|:---|
+| `range` | `month \| alltime` | `month` | Time scope |
+| `monthKey` | `YYYY-MM` | Current month | Month filter |
+| `habitId` | `string` | — | Individual habit filter |
+| `category` | `string` | — | Category filter |
+| `subject` | `string` | — | Subject filter |
 
-### `POST /api/tracker/consistency`
-Triggers an immediate manual recalculation of consistency scores and upserts the `ConsistencySnapshot` document in MongoDB.
+### `POST /api/tracker/consistency/recalculate`
+
+Triggers: `DailySnapshot → MonthlySnapshot → AllTimeSnapshot` full pipeline.
+
+### `GET /api/tracker/weekly-analytics`
+
+Returns current 7-day study velocity data from `WeeklyData` collection.
 
 ---
 
-## 6. Frontend Analytics Controls & Visual UI
+## 6. MongoDB Collections
 
-Located in `/src/app/tracker/analytics/page.tsx`:
-
-1. **Month Navigator Pill (`< August 2026 >`)**:
-   - Stepper pill for toggling through authentic monthly database records.
-2. **Multi-View Filter Bar**:
-   - **Overall Till-Date**: Displays cumulative discipline from Day 1 to present.
-   - **Habit-Wise**: Select any habit to inspect its individual score, completion count, and streak.
-   - **Syllabus GS Subject**: Filter performance by `GS1`, `GS2`, `GS3`, `GS4`, `Maths`, `CSAT`, or `Current Affairs`.
-3. **Radial Score Gauge & Badges**:
-   - SVG circle gauge with color gradient (#6366F1 to #10B981).
-   - Grade Badges:
-     - `S-TIER ASPIRANT` ($\ge 90\%$)
-     - `A-TIER CONSISTENT` ($75\% - 89\%$)
-     - `B-TIER STEADY` ($60\% - 74\%$)
-     - `NEEDS FOCUS` ($< 60\%$)
-4. **Recharts Area Chart**:
-   - Visual trend line graph representing historical consistency score snapshots stored in MongoDB.
+| Collection | Key | Unique Index |
+|:---|:---|:---|
+| `dailysnapshots` | `userId + studyDayKey` | ✅ |
+| `monthlysnapshots` | `userId + monthKey` | ✅ |
+| `alltimesnapshots` | `userId` | ✅ |
+| `weeklydatas` | `userId + weekKey` | ✅ |

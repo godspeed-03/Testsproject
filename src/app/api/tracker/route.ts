@@ -11,11 +11,15 @@ import { sortSyllabusItems } from "@/lib/utils";
 
 async function cleanupCorruptedSyllabusItems(userId: string) {
   try {
-    const allSyllabus = await SyllabusItem.find({
-      $or: [{ userId }, { userId: "000000000000000000000000" }],
-    });
+    const userFilter = { $or: [{ userId }, { userId: "000000000000000000000000" }] };
+    const [allSyllabus, allTopicRevisions] = await Promise.all([
+      SyllabusItem.find(userFilter).lean(),
+      TopicRevision.find(userFilter, { topic: 1 }).lean(),
+    ]);
 
     const knownCategories = ["gs1", "gs2", "gs3", "gs4", "maths", "csat", "optional", "essay", "general", "study"];
+    const topicSet = new Set(allTopicRevisions.map((t: any) => t.topic?.trim().toLowerCase()).filter(Boolean));
+
     const toDeleteIds: string[] = [];
     const subjectMap = new Map<string, any[]>();
 
@@ -31,37 +35,21 @@ async function cleanupCorruptedSyllabusItems(userId: string) {
       subjectMap.get(sName)!.push(item);
     }
 
-    for (const [sName, items] of subjectMap.entries()) {
+    for (const [_, items] of subjectMap.entries()) {
       if (items.length > 1) {
         const validItems = items.filter((i) => knownCategories.some((k) => i.category?.toLowerCase().includes(k)));
-        if (validItems.length > 0) {
-          const keepId = validItems[0]._id.toString();
-          items.forEach((i) => {
-            if (i._id.toString() !== keepId) {
-              toDeleteIds.push(i._id.toString());
-            }
-          });
-        } else {
-          const keepId = items[0]._id.toString();
-          items.forEach((i) => {
-            if (i._id.toString() !== keepId) {
-              toDeleteIds.push(i._id.toString());
-            }
-          });
-        }
+        const keepId = (validItems.length > 0 ? validItems[0] : items[0])._id.toString();
+        items.forEach((i) => {
+          if (i._id.toString() !== keepId) {
+            toDeleteIds.push(i._id.toString());
+          }
+        });
       } else if (items.length === 1) {
         const item = items[0];
         const catLower = item.category?.trim().toLowerCase() || "";
         const isKnown = knownCategories.some((k) => catLower.includes(k));
-        if (!isKnown) {
-          const safeCat = item.category?.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-          const isTopic = await TopicRevision.exists({
-            $or: [{ userId }, { userId: "000000000000000000000000" }],
-            topic: { $regex: new RegExp(`^${safeCat}$`, "i") },
-          });
-          if (isTopic) {
-            toDeleteIds.push(item._id.toString());
-          }
+        if (!isKnown && topicSet.has(catLower)) {
+          toDeleteIds.push(item._id.toString());
         }
       }
     }
@@ -81,14 +69,16 @@ export async function GET() {
 
     await connectToDatabase();
 
-    await cleanupCorruptedSyllabusItems(userId);
-
     const todayStr = new Date().toISOString().split("T")[0];
     const userFilter = { $or: [{ userId }, { userId: "000000000000000000000000" }] };
-    const syllabus = await SyllabusItem.find(userFilter).lean();
-    const testLogs = await TestLog.find(userFilter).sort({ createdAt: -1 }).lean();
-    const topicRevisions = await TopicRevision.find(userFilter).lean();
-    const dbRuleSets = await SyllabusRuleSet.find(userFilter).lean();
+
+    // Parallelize all DB fetches using Promise.all for maximum speed!
+    const [syllabus, testLogs, topicRevisions, dbRuleSets] = await Promise.all([
+      SyllabusItem.find(userFilter).lean(),
+      TestLog.find(userFilter).sort({ createdAt: -1 }).lean(),
+      TopicRevision.find(userFilter).lean(),
+      SyllabusRuleSet.find(userFilter).lean(),
+    ]);
 
     // Format for frontend cleanly with dynamic rules array
     const formattedSyllabus = sortSyllabusItems(
@@ -146,6 +136,9 @@ export async function GET() {
         revisions: t.revisions || [],
       };
     });
+
+    // Run cleanup asynchronously without blocking client HTTP response
+    cleanupCorruptedSyllabusItems(userId).catch(() => {});
 
     return NextResponse.json({
       syllabusList: formattedSyllabus,

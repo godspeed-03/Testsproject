@@ -196,29 +196,29 @@ export default function AgendaShowcase() {
   );
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white via-slate-50/60 to-white border-t border-slate-100">
+    <section className="py-20 bg-gradient-to-b from-white via-slate-50/60 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border-t border-slate-100 dark:border-slate-800 transition-colors">
       <div className="max-w-6xl mx-auto px-6">
         {/* Section Title */}
         <div className="text-center space-y-3 mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 text-amber-700 text-xs font-black uppercase tracking-wider border border-amber-500/20">
-            <CalendarIcon size={14} className="text-amber-600" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-xs font-black uppercase tracking-wider border border-amber-500/20">
+            <CalendarIcon size={14} className="text-amber-600 dark:text-amber-400" />
             Feature 01 — Today's Daily Agenda
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="font-display text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Habit & Task Module
           </h2>
-          <p className="text-sm sm:text-base text-slate-500 max-w-2xl mx-auto font-medium">
+          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium">
             Track events, to-dos, recurring habits, streaks, and focus timers seamlessly in one place.
           </p>
         </div>
 
         {/* Outer Application Mock Container */}
-        <div className="bg-slate-50/50 border border-slate-200/90 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/50 space-y-4">
+        <div className="bg-slate-50/50 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-4">
           {/* Top Bar with New Habit Button */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 pb-2">
             <div>
-              <h3 className="font-black text-lg sm:text-xl text-slate-900">Habit & Task Module</h3>
-              <p className="text-xs text-slate-500 font-medium">
+              <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white">Habit & Task Module</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Track events, to-dos, recurring habits, streaks, and focus timers seamlessly in one place.
               </p>
             </div>
@@ -235,7 +235,7 @@ export default function AgendaShowcase() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Left Sidebar Navigation */}
             <div className="space-y-4">
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-3 space-y-1.5 shadow-2xs">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3 space-y-1.5 shadow-2xs">
                 {/* 1. Today Agenda */}
                 <button
                   type="button"
@@ -337,17 +337,17 @@ export default function AgendaShowcase() {
               </div>
 
               {/* Daily Target Widget */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-2.5 shadow-2xs">
-                <div className="flex items-center gap-1.5 text-amber-600 text-xs font-black uppercase">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 space-y-2.5 shadow-2xs">
+                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 text-xs font-black uppercase">
                   <span>📈 DAILY TARGET</span>
                 </div>
-                <div className="flex justify-between text-xs font-bold text-slate-700">
+                <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200">
                   <span>Today's Completion</span>
-                  <span className="font-black text-emerald-600">
+                  <span className="font-black text-emerald-600 dark:text-emerald-400">
                     {agendaItems.filter((i) => i.done).length} / {agendaItems.length} Done
                   </span>
                 </div>
-                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-900 overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 rounded-full transition-all duration-300"
                     style={{
@@ -355,9 +355,9 @@ export default function AgendaShowcase() {
                     }}
                   />
                 </div>
-                <div className="flex justify-between text-xs font-bold text-slate-500 pt-1">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 pt-1">
                   <span>Hours Read Today</span>
-                  <span className="font-black text-slate-900">1 hr</span>
+                  <span className="font-black text-slate-900 dark:text-white">1 hr</span>
                 </div>
               </div>
             </div>
@@ -367,10 +367,10 @@ export default function AgendaShowcase() {
               {activeTab === 'agenda' && (
                 <>
                   {/* Filter Strip */}
-                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-3 shadow-2xs">
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 space-y-3 shadow-2xs">
                     <div className="flex flex-wrap justify-between items-center gap-3">
-                      <div className="px-3.5 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-black text-slate-800 flex items-center gap-2">
-                        <CalendarIcon size={14} className="text-indigo-600" />
+                      <div className="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                        <CalendarIcon size={14} className="text-indigo-600 dark:text-indigo-400" />
                         <span>Aug 1, 2026</span>
                       </div>
 
@@ -382,19 +382,19 @@ export default function AgendaShowcase() {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Search tasks..."
-                            className="pl-8 pr-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 border border-slate-200 text-slate-900 w-44 outline-none focus:border-indigo-500 transition-all"
+                            className="pl-8 pr-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 w-44 outline-none focus:border-indigo-500 transition-all"
                           />
                         </div>
 
-                        <div className="px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-extrabold text-slate-700">
+                        <div className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-extrabold text-slate-700 dark:text-slate-300">
                           All Items ∨
                         </div>
                       </div>
                     </div>
 
                     {/* 7-Day Calendar Strip */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
-                      <button type="button" className="p-2 rounded-xl bg-slate-100 text-slate-400 hover:text-slate-700">
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center gap-2">
+                      <button type="button" className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                         <ChevronLeft size={16} />
                       </button>
 
@@ -403,7 +403,7 @@ export default function AgendaShowcase() {
                           type="button"
                           onClick={() => setSelectedDay(26)}
                           className={`p-2 rounded-xl text-xs font-bold transition-all ${
-                            selectedDay === 26 ? 'bg-rose-50 border border-rose-200 text-rose-600 ring-2 ring-rose-400' : 'bg-slate-100 text-slate-600'
+                            selectedDay === 26 ? 'bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400 ring-2 ring-rose-400' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'
                           }`}
                         >
                           <span className="text-[9px] font-black uppercase block">SUN</span>
@@ -413,7 +413,7 @@ export default function AgendaShowcase() {
                           type="button"
                           onClick={() => setSelectedDay(27)}
                           className={`p-2 rounded-xl text-xs font-bold transition-all ${
-                            selectedDay === 27 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30' : 'bg-slate-100 text-slate-600'
+                            selectedDay === 27 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'
                           }`}
                         >
                           <span className="text-[9px] font-black uppercase block">MON</span>
@@ -423,7 +423,7 @@ export default function AgendaShowcase() {
                           type="button"
                           onClick={() => setSelectedDay(28)}
                           className={`p-2 rounded-xl text-xs font-bold transition-all ${
-                            selectedDay === 28 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30' : 'bg-slate-100 text-slate-600'
+                            selectedDay === 28 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'
                           }`}
                         >
                           <span className="text-[9px] font-black uppercase block">TUE</span>
@@ -433,7 +433,7 @@ export default function AgendaShowcase() {
                           type="button"
                           onClick={() => setSelectedDay(29)}
                           className={`p-2 rounded-xl text-xs font-bold transition-all ${
-                            selectedDay === 29 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30' : 'bg-slate-100 text-slate-600'
+                            selectedDay === 29 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'
                           }`}
                         >
                           <span className="text-[9px] font-black uppercase block">WED</span>
@@ -443,7 +443,7 @@ export default function AgendaShowcase() {
                           type="button"
                           onClick={() => setSelectedDay(30)}
                           className={`p-2 rounded-xl text-xs font-bold transition-all ${
-                            selectedDay === 30 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30' : 'bg-slate-100 text-slate-600'
+                            selectedDay === 30 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'
                           }`}
                         >
                           <span className="text-[9px] font-black uppercase block">THU</span>
@@ -453,7 +453,7 @@ export default function AgendaShowcase() {
                           type="button"
                           onClick={() => setSelectedDay(31)}
                           className={`p-2 rounded-xl text-xs font-bold transition-all ${
-                            selectedDay === 31 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30' : 'bg-slate-100 text-slate-600'
+                            selectedDay === 31 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'
                           }`}
                         >
                           <span className="text-[9px] font-black uppercase block">FRI</span>
@@ -463,7 +463,7 @@ export default function AgendaShowcase() {
                           type="button"
                           onClick={() => setSelectedDay(1)}
                           className={`p-2 rounded-xl text-xs font-bold transition-all ${
-                            selectedDay === 1 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30 ring-2 ring-amber-400' : 'bg-slate-100 text-slate-600'
+                            selectedDay === 1 ? 'bg-indigo-600 text-white font-black shadow-md shadow-indigo-600/30 ring-2 ring-amber-400' : 'bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300'
                           }`}
                         >
                           <span className="text-[9px] font-black uppercase block">SAT</span>
@@ -471,7 +471,7 @@ export default function AgendaShowcase() {
                         </button>
                       </div>
 
-                      <button type="button" className="p-2 rounded-xl bg-slate-100 text-slate-400 hover:text-slate-700">
+                      <button type="button" className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                         <ChevronRight size={16} />
                       </button>
                     </div>
@@ -482,8 +482,8 @@ export default function AgendaShowcase() {
                     {filteredItems.map((item) => (
                       <div
                         key={item.id}
-                        className={`p-4 rounded-2xl bg-white border flex items-center justify-between gap-4 shadow-2xs transition-all ${
-                          item.done ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200/80'
+                        className={`p-4 rounded-2xl bg-white dark:bg-slate-800 border flex items-center justify-between gap-4 shadow-2xs transition-all ${
+                          item.done ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50/20 dark:bg-emerald-950/20' : 'border-slate-200/80 dark:border-slate-700/80'
                         }`}
                       >
                         <div className="flex items-center gap-3.5">
@@ -492,36 +492,36 @@ export default function AgendaShowcase() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
+                              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                                 {item.type}
                               </span>
                               {item.tag && (
-                                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-700 border border-indigo-500/20">
+                                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-md bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
                                   {item.tag}
                                 </span>
                               )}
-                              <h4 className={`font-black text-sm text-slate-900 ${item.done ? 'line-through text-slate-400' : ''}`}>
+                              <h4 className={`font-black text-sm text-slate-900 dark:text-white ${item.done ? 'line-through text-slate-400 dark:text-slate-500' : ''}`}>
                                 {item.title}
                               </h4>
                             </div>
-                            <div className="flex items-center gap-2 mt-1 text-[11px] font-bold text-slate-500">
+                            <div className="flex items-center gap-2 mt-1 text-[11px] font-bold text-slate-500 dark:text-slate-400">
                               {item.logged && (
-                                <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 font-black">
+                                <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 font-black">
                                   {item.logged}
                                 </span>
                               )}
                               {item.goal && (
-                                <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 font-black">
+                                <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 font-black">
                                   {item.goal}
                                 </span>
                               )}
                               {item.time && (
-                                <span className="flex items-center gap-1 text-indigo-600">
+                                <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400">
                                   <Clock size={12} /> {item.time}
                                 </span>
                               )}
                               {item.streak && (
-                                <span className="flex items-center gap-1 text-amber-600 font-black">
+                                <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-black">
                                   <Flame size={12} /> {item.streak}
                                 </span>
                               )}
@@ -533,7 +533,7 @@ export default function AgendaShowcase() {
                           <button
                             type="button"
                             onClick={() => deleteAgendaItem(item.id)}
-                            className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors"
+                            className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors"
                           >
                             <Trash2 size={16} />
                           </button>
@@ -544,7 +544,7 @@ export default function AgendaShowcase() {
                             className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
                               item.done
                                 ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
-                                : 'border-2 border-slate-300 hover:border-emerald-500'
+                                : 'border-2 border-slate-300 dark:border-slate-600 hover:border-emerald-500'
                             }`}
                           >
                             {item.done ? <Check size={20} className="stroke-[3]" /> : null}
@@ -554,7 +554,7 @@ export default function AgendaShowcase() {
                     ))}
 
                     {filteredItems.length === 0 && (
-                      <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-slate-400 font-medium text-xs">
+                      <div className="p-8 text-center bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 font-medium text-xs">
                         No tasks found matching query. Click "+ New Habit or Task" above to add one!
                       </div>
                     )}
@@ -565,17 +565,17 @@ export default function AgendaShowcase() {
               {/* Checklists tab view */}
               {activeTab === 'checklists' && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+                  <div className="flex items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
                     <div>
-                      <h4 className="font-black text-lg text-slate-900">Checklists & Task Notebooks</h4>
-                      <p className="text-xs text-slate-500 font-medium">Create customizable lists and packing checklists.</p>
+                      <h4 className="font-black text-lg text-slate-900 dark:text-white">Checklists & Task Notebooks</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Create customizable lists and packing checklists.</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4">
                     {checklists.map((list) => (
-                      <div key={list.id} className="p-5 rounded-2xl border border-slate-200/80 bg-white space-y-3 shadow-2xs">
-                        <h5 className="font-black text-base text-slate-900">{list.title}</h5>
+                      <div key={list.id} className="p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 space-y-3 shadow-2xs">
+                        <h5 className="font-black text-base text-slate-900 dark:text-white">{list.title}</h5>
                         <div className="space-y-2">
                           {list.items.map((it) => (
                             <button
@@ -583,15 +583,15 @@ export default function AgendaShowcase() {
                               type="button"
                               onClick={() => toggleChecklistItem(list.id, it.id)}
                               className={`w-full p-2.5 rounded-xl border flex items-center gap-3 text-left transition-all ${
-                                it.checked ? 'bg-emerald-50/60 border-emerald-300' : 'bg-slate-50 border-slate-200/80'
+                                it.checked ? 'bg-emerald-50/60 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800' : 'bg-slate-50 dark:bg-slate-900 border-slate-200/80 dark:border-slate-700/80'
                               }`}
                             >
                               <div className={`w-5 h-5 rounded-md border flex items-center justify-center shrink-0 ${
-                                it.checked ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300'
+                                it.checked ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 dark:border-slate-600'
                               }`}>
                                 {it.checked && <Check size={12} strokeWidth={3} />}
                               </div>
-                              <span className={`text-xs font-bold ${it.checked ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                              <span className={`text-xs font-bold ${it.checked ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-800 dark:text-slate-200'}`}>
                                 {it.text}
                               </span>
                             </button>

@@ -57,6 +57,8 @@ const TestLogSchema = new Schema<ITestLog>(
   { timestamps: true, strict: false }
 );
 
+TestLogSchema.index({ userId: 1, createdAt: -1 });
+
 const TestLog: Model<ITestLog> =
   mongoose.models.TestLog || mongoose.model<ITestLog>('TestLog', TestLogSchema);
 

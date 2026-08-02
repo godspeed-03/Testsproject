@@ -150,23 +150,18 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
   const startDate = dayKeys[0];
   const endDate = dayKeys[dayKeys.length - 1];
 
-  // Fetch daily snapshots for these 7 days
-  const dailyDocs = await DailySnapshot.find({
-    userId: effectiveUserId,
-    studyDayKey: { $in: dayKeys }
-  });
+  // Fetch daily snapshots, habits, syllabus items & revisions concurrently
+  const [dailyDocs, habits, syllabusItems, topicRevisions] = await Promise.all([
+    DailySnapshot.find({ userId: effectiveUserId, studyDayKey: { $in: dayKeys } }).lean(),
+    HabitItem.find({ userId: effectiveUserId }).lean(),
+    SyllabusItem.find({ userId: effectiveUserId }).lean(),
+    TopicRevision.find({ userId: effectiveUserId }).lean()
+  ]);
 
   const dailyDocMap: Record<string, any> = {};
-  dailyDocs.forEach((doc) => {
+  dailyDocs.forEach((doc: any) => {
     dailyDocMap[doc.studyDayKey] = doc;
   });
-
-  // Fetch habits & tasks
-  const habits = await HabitItem.find({ userId: effectiveUserId });
-
-  // Fetch syllabus items & revisions for subject distribution
-  const syllabusItems = await SyllabusItem.find({ userId: effectiveUserId });
-  const topicRevisions = await TopicRevision.find({ userId: effectiveUserId });
 
   let totalTasksDone = 0;
   const habitStatsMap: Record<

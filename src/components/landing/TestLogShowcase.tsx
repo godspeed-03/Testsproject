@@ -50,18 +50,18 @@ const DEMO_TESTS = [
 
 export default function TestLogShowcase() {
   return (
-    <section className="py-20 bg-gradient-to-b from-slate-50/50 via-white to-slate-50/50 border-t border-slate-100">
+    <section className="py-20 bg-gradient-to-b from-slate-50/50 via-white to-slate-50/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border-t border-slate-100 dark:border-slate-800 transition-colors">
       <div className="max-w-6xl mx-auto px-6">
         {/* Section Header */}
         <div className="text-center space-y-3 mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 text-purple-700 text-xs font-black uppercase tracking-wider border border-purple-500/20">
-            <Trophy size={14} className="text-purple-600" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-black uppercase tracking-wider border border-purple-500/20">
+            <Trophy size={14} className="text-purple-600 dark:text-purple-400" />
             Feature 08 — Mock Test Performance Analytics
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="font-display text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Granular Test Analytics & Error Audit
           </h2>
-          <p className="text-sm sm:text-base text-slate-500 max-w-2xl mx-auto font-medium">
+          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium">
             Log prelims and mains mocks with automatic accuracy circular gauges, correct/wrong/skipped breakdowns, net score calculation, and negative marking penalty badges.
           </p>
         </div>
@@ -74,21 +74,21 @@ export default function TestLogShowcase() {
             return (
               <div
                 key={test.id}
-                className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/40 space-y-5 flex flex-col justify-between hover:border-indigo-300 transition-all"
+                className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl shadow-slate-200/40 dark:shadow-none space-y-5 flex flex-col justify-between hover:border-indigo-300 dark:hover:border-indigo-600 transition-all"
               >
                 {/* Header */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className={`px-3 py-1 rounded-lg text-xs font-black border ${
-                      test.category === 'GS1' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                      test.category === 'GS2' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                      'bg-cyan-50 text-cyan-700 border-cyan-200'
+                      test.category === 'GS1' ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800' :
+                      test.category === 'GS2' ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800' :
+                      'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800'
                     }`}>
                       {test.category}
                     </span>
                     <span className="text-xs text-slate-400 font-bold">{test.date}</span>
                   </div>
-                  <h3 className="font-black text-base text-slate-900 leading-snug">{test.testName}</h3>
+                  <h3 className="font-display font-black text-base text-slate-900 dark:text-white leading-snug">{test.testName}</h3>
                 </div>
 
                 {/* Main Gauge & Score Block (Theme Adaptive) */}
@@ -130,43 +130,43 @@ export default function TestLogShowcase() {
 
                 {/* Score Progress Bar */}
                 <div className="space-y-1">
-                  <div className="flex justify-between text-xs font-bold text-slate-500">
+                  <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
                     <span>Performance Target</span>
-                    <span className="font-black text-slate-900">{scorePct}%</span>
+                    <span className="font-black text-slate-900 dark:text-slate-100">{scorePct}%</span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                     <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-500" style={{ width: `${scorePct}%` }} />
                   </div>
                 </div>
 
                 {/* Granular Breakdown Badges */}
-                <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
-                  <div className="p-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-100 text-center space-y-0.5">
+                <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-200 border border-emerald-100 dark:border-emerald-900 text-center space-y-0.5">
                     <div className="flex items-center justify-center gap-1 text-[10px] font-bold">
-                      <CheckCircle2 size={11} className="text-emerald-600" /> Correct
+                      <CheckCircle2 size={11} className="text-emerald-600 dark:text-emerald-400" /> Correct
                     </div>
                     <span className="font-black text-sm block">{test.correct}</span>
                   </div>
 
-                  <div className="p-2 rounded-xl bg-rose-50 text-rose-800 border border-rose-100 text-center space-y-0.5">
+                  <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-200 border border-rose-100 dark:border-rose-900 text-center space-y-0.5">
                     <div className="flex items-center justify-center gap-1 text-[10px] font-bold">
-                      <XCircle size={11} className="text-rose-600" /> Wrong
+                      <XCircle size={11} className="text-rose-600 dark:text-rose-400" /> Wrong
                     </div>
                     <span className="font-black text-sm block">{test.wrong}</span>
                   </div>
 
-                  <div className="p-2 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 text-center space-y-0.5">
+                  <div className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-center space-y-0.5">
                     <div className="flex items-center justify-center gap-1 text-[10px] font-bold">
-                      <MinusCircle size={11} className="text-slate-500" /> Skipped
+                      <MinusCircle size={11} className="text-slate-500 dark:text-slate-400" /> Skipped
                     </div>
                     <span className="font-black text-sm block">{test.skip}</span>
                   </div>
                 </div>
 
                 {/* Negative Penalty Badge */}
-                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between text-xs font-bold text-rose-800">
+                <div className="p-2.5 rounded-xl bg-rose-500/10 dark:bg-rose-950/60 border border-rose-500/20 text-xs font-bold text-rose-800 dark:text-rose-300 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
-                    <AlertTriangle size={13} className="text-rose-600" /> Penalty Deducted
+                    <AlertTriangle size={13} className="text-rose-600 dark:text-rose-400" /> Penalty Deducted
                   </span>
                   <span className="font-black">-{test.negMarks} marks</span>
                 </div>
@@ -176,8 +176,8 @@ export default function TestLogShowcase() {
         </div>
 
         {/* Info Callout */}
-        <div className="mt-8 p-4 rounded-2xl bg-purple-50 border border-purple-100 flex items-center gap-3 text-xs sm:text-sm font-bold text-purple-950">
-          <Sparkles size={16} className="text-purple-600 shrink-0" />
+        <div className="mt-8 p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/60 border border-purple-100 dark:border-purple-900 flex items-center gap-3 text-xs sm:text-sm font-bold text-purple-950 dark:text-purple-200">
+          <Sparkles size={16} className="text-purple-600 dark:text-purple-400 shrink-0" />
           <span>Automatic NaN protection & math fallbacks ensure your accuracy % and penalty statistics calculate reliably across every logged mock!</span>
         </div>
       </div>

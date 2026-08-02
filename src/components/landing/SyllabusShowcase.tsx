@@ -19,12 +19,12 @@ import {
 } from 'lucide-react';
 
 const CATEGORY_COLORS: Record<string, string> = {
-  GS1: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-  GS2: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  GS3: 'bg-amber-50 text-amber-700 border-amber-200',
-  GS4: 'bg-purple-50 text-purple-700 border-purple-200',
-  Maths: 'bg-rose-50 text-rose-700 border-rose-200',
-  CSAT: 'bg-cyan-50 text-cyan-700 border-cyan-200'
+  GS1: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
+  GS2: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+  GS3: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+  GS4: 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+  Maths: 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+  CSAT: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800'
 };
 
 const CATEGORIES = [
@@ -38,10 +38,10 @@ const CATEGORIES = [
 ];
 
 const STATUS_STAGES = [
-  { value: 'Not Started', label: 'Not Started', color: 'bg-slate-100 text-slate-600 border-slate-200', dotColor: 'bg-slate-400' },
-  { value: 'In Progress', label: 'In Progress', color: 'bg-amber-50 text-amber-700 border-amber-200', dotColor: 'bg-amber-500' },
-  { value: 'Revision Phase', label: 'Revision Phase', color: 'bg-indigo-50 text-indigo-700 border-indigo-200', dotColor: 'bg-indigo-500' },
-  { value: 'Completed', label: 'Completed', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', dotColor: 'bg-emerald-500' }
+  { value: 'Not Started', label: 'Not Started', color: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700', dotColor: 'bg-slate-400' },
+  { value: 'In Progress', label: 'In Progress', color: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800', dotColor: 'bg-amber-500' },
+  { value: 'Revision Phase', label: 'Revision Phase', color: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800', dotColor: 'bg-indigo-500' },
+  { value: 'Completed', label: 'Completed', color: 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800', dotColor: 'bg-emerald-500' }
 ];
 
 const DEFAULT_GS_RULES = [
@@ -312,29 +312,29 @@ export default function SyllabusShowcase() {
   };
 
   return (
-    <section className="py-20 bg-gradient-to-b from-white via-slate-50/60 to-white border-t border-slate-100">
+    <section className="py-20 bg-gradient-to-b from-white via-slate-50/60 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border-t border-slate-100 dark:border-slate-800 transition-colors">
       <div className="max-w-6xl mx-auto px-6">
         {/* Section Header */}
         <div className="text-center space-y-3 mb-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-black uppercase tracking-wider border border-emerald-500/20">
-            <BookOpen size={14} className="text-emerald-600" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-black uppercase tracking-wider border border-emerald-500/20">
+            <BookOpen size={14} className="text-emerald-600 dark:text-emerald-400" />
             Feature 07 — Syllabus Progress Matrix
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="font-display text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Database-Driven Syllabus Matrix
           </h2>
-          <p className="text-sm sm:text-base text-slate-500 max-w-2xl mx-auto font-medium">
+          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium">
             Interactive syllabus pipeline with dynamic milestone rules per subject category. Try clicking rules, changing stage statuses, or adding subjects below!
           </p>
         </div>
 
         {/* Main Matrix Card Container */}
-        <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xl shadow-slate-200/50 space-y-6">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-6">
           {/* Header Row: Title & Top Action Buttons */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h3 className="font-black text-2xl text-slate-900">Syllabus Matrix</h3>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">
+              <h3 className="font-display font-black text-2xl text-slate-900 dark:text-white">Syllabus Matrix</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                 Track subject-wise coverage across dynamic milestone rules stored in Database.
               </p>
             </div>
@@ -343,7 +343,7 @@ export default function SyllabusShowcase() {
               <button
                 type="button"
                 onClick={() => setActiveModal('rulesets')}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-2xl flex items-center gap-1.5 border border-slate-200/80 transition-all active:scale-95 cursor-pointer"
+                className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs px-4 py-2.5 rounded-2xl flex items-center gap-1.5 border border-slate-200/80 dark:border-slate-700 transition-all active:scale-95 cursor-pointer"
               >
                 <Settings size={15} className="text-amber-500" /> Ruleset Templates
               </button>
@@ -367,7 +367,7 @@ export default function SyllabusShowcase() {
           </div>
 
           {/* Filter Bar & Search Input Container */}
-          <div className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 space-y-3">
+          <div className="bg-slate-50/70 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 space-y-3">
             {/* Category Filter Pills */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
               <Filter size={14} className="text-slate-400 shrink-0 ml-1" />
@@ -381,7 +381,7 @@ export default function SyllabusShowcase() {
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                       isActive
                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                        : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-100'
+                        : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                     }`}
                   >
                     {cat}
@@ -398,7 +398,7 @@ export default function SyllabusShowcase() {
                 placeholder="Search subject by title or source..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500 transition-all"
+                className="w-full pl-10 pr-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500 transition-all"
               />
             </div>
           </div>
@@ -407,7 +407,7 @@ export default function SyllabusShowcase() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                <tr className="border-b border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 text-[11px] font-black text-slate-400 uppercase tracking-wider">
                   <th className="py-3.5 px-4 min-w-[170px]">SUBJECT</th>
                   <th className="py-3.5 px-3 min-w-[90px]">CATEGORY</th>
                   <th className="py-3.5 px-3 min-w-[150px]">STATUS STAGE</th>
@@ -416,16 +416,16 @@ export default function SyllabusShowcase() {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-slate-100 text-xs font-medium">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs font-medium">
                 {filteredSyllabus.map((item) => {
                   const completedCount = item.rules.filter((r) => r.completed).length;
                   const activeStageObj =
                     STATUS_STAGES.find((st) => st.value === item.status) || STATUS_STAGES[0];
 
                   return (
-                    <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
+                    <tr key={item.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors">
                       {/* Subject Name */}
-                      <td className="py-4 px-4 font-black text-slate-900 text-sm whitespace-nowrap">
+                      <td className="py-4 px-4 font-black text-slate-900 dark:text-white text-sm whitespace-nowrap">
                         {item.subject}
                       </td>
 
@@ -452,13 +452,13 @@ export default function SyllabusShowcase() {
                           </button>
 
                           {openStatusDropdown === item.id && (
-                            <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-xl p-1 min-w-[140px] space-y-1">
+                            <div className="absolute left-0 top-full mt-1 z-30 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-1 min-w-[140px] space-y-1">
                               {STATUS_STAGES.map((st) => (
                                 <button
                                   key={st.value}
                                   type="button"
                                   onClick={() => changeStatus(item.id, st.value)}
-                                  className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-50 flex items-center gap-2 text-slate-700 cursor-pointer"
+                                  className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 text-slate-700 dark:text-slate-200 cursor-pointer"
                                 >
                                   <span className={`w-2 h-2 rounded-full ${st.dotColor}`} />
                                   {st.label}
@@ -482,14 +482,14 @@ export default function SyllabusShowcase() {
                                 title={rule.label}
                                 className={`px-2.5 py-1 rounded-full text-xs font-bold border transition-all flex items-center gap-1 cursor-pointer ${
                                   isDone
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300 shadow-2xs'
-                                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-400'
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 shadow-2xs'
+                                    : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-400'
                                 }`}
                               >
                                 {isDone ? (
                                   <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
                                 ) : (
-                                  <Circle size={12} className="text-slate-300 shrink-0" />
+                                  <Circle size={12} className="text-slate-300 dark:text-slate-600 shrink-0" />
                                 )}
                                 <span>{rule.short}</span>
                               </button>
@@ -511,7 +511,7 @@ export default function SyllabusShowcase() {
                               setActiveSubjectId(item.id);
                               setActiveModal('topics');
                             }}
-                            className="px-2.5 py-1 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                            className="px-2.5 py-1 rounded-xl bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-bold text-xs flex items-center gap-1 cursor-pointer"
                           >
                             <Table size={13} /> ({item.topicCount})
                           </button>
@@ -522,7 +522,7 @@ export default function SyllabusShowcase() {
                               setActiveSubjectId(item.id);
                               setActiveModal('editRules');
                             }}
-                            className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-bold text-xs cursor-pointer"
+                            className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold text-xs cursor-pointer"
                           >
                             + Rules
                           </button>
@@ -530,7 +530,7 @@ export default function SyllabusShowcase() {
                           <button
                             type="button"
                             onClick={() => deleteSubject(item.id)}
-                            className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            className="p-1.5 text-slate-300 dark:text-slate-600 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
                           >
                             <Trash2 size={15} />
                           </button>
@@ -547,15 +547,15 @@ export default function SyllabusShowcase() {
         {/* MODAL 1: + Add Subject */}
         {activeModal === 'addSubject' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <form onSubmit={handleAddSubject} className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 className="font-black text-base text-slate-900 flex items-center gap-2">
-                  <PlusCircle size={16} className="text-indigo-600" /> Add New Subject
+            <form onSubmit={handleAddSubject} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
+                  <PlusCircle size={16} className="text-indigo-600 dark:text-indigo-400" /> Add New Subject
                 </h4>
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                   <X size={18} />
                 </button>
@@ -563,24 +563,24 @@ export default function SyllabusShowcase() {
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Subject Title</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">Subject Title</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Modern Indian History"
                     value={newSubName}
                     onChange={(e) => setNewSubName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 outline-none focus:border-indigo-500 mt-1"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-indigo-500 mt-1"
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Subject Category</label>
+                  <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">Subject Category</label>
                   <div className="relative mt-1">
                     <select
                       value={newSubCategory}
                       onChange={(e) => setNewSubCategory(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800 outline-none appearance-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none appearance-none"
                     >
                       <option value="GS1">GS1</option>
                       <option value="GS2">GS2</option>
@@ -598,7 +598,7 @@ export default function SyllabusShowcase() {
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-600"
                 >
                   Cancel
                 </button>
@@ -616,22 +616,22 @@ export default function SyllabusShowcase() {
         {/* MODAL 2: ✨ Bulk Add */}
         {activeModal === 'bulk' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <form onSubmit={handleBulkAdd} className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 className="font-black text-base text-slate-900 flex items-center gap-2">
-                  <Sparkles size={16} className="text-cyan-600" /> Bulk Add Subjects
+            <form onSubmit={handleBulkAdd} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
+                  <Sparkles size={16} className="text-cyan-600 dark:text-cyan-400" /> Bulk Add Subjects
                 </h4>
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                   <X size={18} />
                 </button>
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Select Subjects to Import</label>
+                <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-wider">Select Subjects to Import</label>
                 <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                   {BULK_PRESETS.map((preset) => {
                     const isSelected = selectedBulkItems.includes(preset.subject);
@@ -647,11 +647,11 @@ export default function SyllabusShowcase() {
                           }
                         }}
                         className={`w-full p-2.5 rounded-xl border flex items-center justify-between text-xs font-bold transition-all cursor-pointer ${
-                          isSelected ? 'bg-cyan-50 border-cyan-300 text-cyan-900' : 'bg-slate-50 border-slate-200 text-slate-600'
+                          isSelected ? 'bg-cyan-50 dark:bg-cyan-950/60 border-cyan-300 dark:border-cyan-800 text-cyan-900 dark:text-cyan-200' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'
                         }`}
                       >
                         <span>{preset.subject} ({preset.category})</span>
-                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center ${isSelected ? 'bg-cyan-600 border-cyan-600 text-white' : 'border-slate-300'}`}>
+                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center ${isSelected ? 'bg-cyan-600 border-cyan-600 text-white' : 'border-slate-300 dark:border-slate-600'}`}>
                           {isSelected && <Check size={12} strokeWidth={3} />}
                         </div>
                       </button>
@@ -664,7 +664,7 @@ export default function SyllabusShowcase() {
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold text-xs hover:bg-slate-200"
+                  className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-slate-600"
                 >
                   Cancel
                 </button>
@@ -682,32 +682,32 @@ export default function SyllabusShowcase() {
         {/* MODAL 3: ⚙️ Ruleset Templates */}
         {activeModal === 'rulesets' && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 className="font-black text-base text-slate-900 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
                   <Settings size={16} className="text-amber-500" /> Ruleset Templates
                 </h4>
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs font-medium text-slate-700">
-                <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl space-y-1">
-                  <span className="font-black text-indigo-900">UPSC GS Standard Template (12 Rules)</span>
-                  <p className="text-[11px] text-indigo-700">In Progress, R1, Rev1, Rev2, Pre Notes, Mains Notes, Q-Bank, Pre PYQ, Mains PYQ, Ans Writing, Pre Final Rev, Mains Final Rev.</p>
+              <div className="space-y-3 text-xs font-medium text-slate-700 dark:text-slate-300">
+                <div className="p-3 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-xl space-y-1">
+                  <span className="font-black text-indigo-900 dark:text-indigo-200">UPSC GS Standard Template (12 Rules)</span>
+                  <p className="text-[11px] text-indigo-700 dark:text-indigo-300">In Progress, R1, Rev1, Rev2, Pre Notes, Mains Notes, Q-Bank, Pre PYQ, Mains PYQ, Ans Writing, Pre Final Rev, Mains Final Rev.</p>
                 </div>
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl space-y-1">
-                  <span className="font-black text-rose-900">Maths Optional Template (8 Rules)</span>
-                  <p className="text-[11px] text-rose-700">Lectures, Examples PYQ, PYQ Sheet, Notes Mains, Rev 1, Rev 2, Practice 1, Practice 2.</p>
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 rounded-xl space-y-1">
+                  <span className="font-black text-rose-900 dark:text-rose-200">Maths Optional Template (8 Rules)</span>
+                  <p className="text-[11px] text-rose-700 dark:text-rose-300">Lectures, Examples PYQ, PYQ Sheet, Notes Mains, Rev 1, Rev 2, Practice 1, Practice 2.</p>
                 </div>
-                <div className="p-3 bg-cyan-50 border border-cyan-200 rounded-xl space-y-1">
-                  <span className="font-black text-cyan-900">CSAT Quick Template (5 Rules)</span>
-                  <p className="text-[11px] text-cyan-700">Reading, Short Notes, DPP, BOOK, PYQ.</p>
+                <div className="p-3 bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800 rounded-xl space-y-1">
+                  <span className="font-black text-cyan-900 dark:text-cyan-200">CSAT Quick Template (5 Rules)</span>
+                  <p className="text-[11px] text-cyan-700 dark:text-cyan-300">Reading, Short Notes, DPP, BOOK, PYQ.</p>
                 </div>
               </div>
 
@@ -715,7 +715,7 @@ export default function SyllabusShowcase() {
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs"
+                  className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-700 text-white font-bold text-xs"
                 >
                   Close
                 </button>
@@ -727,15 +727,15 @@ export default function SyllabusShowcase() {
         {/* MODAL 4: ⊞ Topic Revisions */}
         {activeModal === 'topics' && activeSubjectObj && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 className="font-black text-base text-slate-900 flex items-center gap-2">
-                  <Table size={16} className="text-purple-600" /> Topics — {activeSubjectObj.subject}
+            <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
+                  <Table size={16} className="text-purple-600 dark:text-purple-400" /> Topics — {activeSubjectObj.subject}
                 </h4>
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                   <X size={18} />
                 </button>
@@ -747,11 +747,11 @@ export default function SyllabusShowcase() {
                   placeholder="New Topic Name (e.g. Climatology)"
                   value={newTopicTitle}
                   onChange={(e) => setNewTopicTitle(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 outline-none"
+                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-purple-600 text-white font-black text-xs rounded-xl shadow-xs"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-black text-xs rounded-xl shadow-xs"
                 >
                   + Add
                 </button>
@@ -762,9 +762,9 @@ export default function SyllabusShowcase() {
                   <p className="text-xs text-slate-400 font-medium italic text-center py-4">No topics added yet.</p>
                 ) : (
                   activeSubjectObj.topics.map((top, idx) => (
-                    <div key={idx} className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 flex items-center justify-between">
+                    <div key={idx} className="p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
                       <span>{top}</span>
-                      <span className="text-[10px] text-purple-600 font-black">Topic #{idx + 1}</span>
+                      <span className="text-[10px] text-purple-600 dark:text-purple-400 font-black">Topic #{idx + 1}</span>
                     </div>
                   ))
                 )}
@@ -774,7 +774,7 @@ export default function SyllabusShowcase() {
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs"
+                  className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-700 text-white font-bold text-xs"
                 >
                   Done
                 </button>
@@ -786,15 +786,15 @@ export default function SyllabusShowcase() {
         {/* MODAL 5: + Edit Rules */}
         {activeModal === 'editRules' && activeSubjectObj && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h4 className="font-black text-base text-slate-900 flex items-center gap-2">
-                  <Settings size={16} className="text-indigo-600" /> Edit Rules — {activeSubjectObj.subject}
+            <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
+                  <Settings size={16} className="text-indigo-600 dark:text-indigo-400" /> Edit Rules — {activeSubjectObj.subject}
                 </h4>
                 <button
                   type="button"
                   onClick={() => setActiveModal(null)}
-                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100"
+                  className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
                 >
                   <X size={18} />
                 </button>
@@ -806,14 +806,14 @@ export default function SyllabusShowcase() {
                   placeholder="Short (e.g. Read)"
                   value={newRuleShort}
                   onChange={(e) => setNewRuleShort(e.target.value)}
-                  className="col-span-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 outline-none"
+                  className="col-span-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none"
                 />
                 <input
                   type="text"
                   placeholder="Full Label"
                   value={newRuleLabel}
                   onChange={(e) => setNewRuleLabel(e.target.value)}
-                  className="col-span-1 px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 outline-none"
+                  className="col-span-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none"
                 />
                 <button
                   type="submit"
@@ -825,7 +825,7 @@ export default function SyllabusShowcase() {
 
               <div className="space-y-1.5 max-h-52 overflow-y-auto">
                 {activeSubjectObj.rules.map((rule, idx) => (
-                  <div key={idx} className="p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 flex items-center justify-between">
+                  <div key={idx} className="p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
                     <span>{rule.short} ({rule.label})</span>
                     <button
                       type="button"

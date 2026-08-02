@@ -19,35 +19,35 @@ import {
 
 export default function FocusTimerShowcase() {
   return (
-    <section className="py-20 bg-white border-t border-slate-100">
+    <section className="py-20 bg-white dark:bg-slate-950 border-t border-slate-100 dark:border-slate-800 transition-colors">
       <div className="max-w-6xl mx-auto px-6">
         {/* Section Header */}
         <div className="text-center space-y-3 mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 text-purple-700 text-xs font-black uppercase tracking-wider border border-purple-500/20">
-            <Clock size={14} className="text-purple-600" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 text-xs font-black uppercase tracking-wider border border-purple-500/20">
+            <Clock size={14} className="text-purple-600 dark:text-purple-400" />
             Feature 06 — Persistent Study Focus Timer
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="font-display text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Study Focus Timer & Session Tracker
           </h2>
-          <p className="text-sm sm:text-base text-slate-500 max-w-2xl mx-auto font-medium">
+          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto font-medium">
             Persistent stopwatch that continues tracking your study session across page navigations. Auto-sync focus time to your daily target goals.
           </p>
         </div>
 
         {/* Outer Application Mock Container */}
-        <div className="bg-slate-50/50 border border-slate-200/90 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/50 space-y-4">
+        <div className="bg-slate-50/50 dark:bg-slate-900/60 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-4 sm:p-6 shadow-xl shadow-slate-200/50 dark:shadow-none space-y-4">
           {/* Top Bar */}
           <div className="flex items-center justify-between gap-4 pb-2">
             <div>
-              <h3 className="font-black text-xl text-slate-900">Habit & Task Module</h3>
-              <p className="text-xs text-slate-500 font-medium">
+              <h3 className="font-display font-black text-xl text-slate-900 dark:text-white">Habit & Task Module</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                 Track events, to-dos, recurring habits, streaks, and focus timers seamlessly in one place.
               </p>
             </div>
             <button
               type="button"
-              className="bg-indigo-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
+              className="bg-indigo-600 text-white font-extrabold text-xs px-4 py-2.5 rounded-2xl flex items-center gap-1.5 shadow-md shadow-indigo-600/20 cursor-pointer"
             >
               + New Habit or Task
             </button>
@@ -57,34 +57,34 @@ export default function FocusTimerShowcase() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Left Sidebar Navigation */}
             <div className="space-y-4">
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-3 space-y-1.5 shadow-2xs">
-                <div className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-3 space-y-1.5 shadow-2xs">
+                <div className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                   <span className="flex items-center gap-2">
                     <CheckSquare size={14} /> Today Agenda
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-500">3</span>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-300">3</span>
                 </div>
 
-                <div className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50">
+                <div className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                   <span className="flex items-center gap-2">
                     <Flame size={14} className="text-amber-500" /> Habits & Streaks
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-500">11</span>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-300">11</span>
                 </div>
 
-                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50">
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                   <Calendar size={14} /> Month Calendar
                 </div>
 
-                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50">
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                   <BarChart2 size={14} /> Analytics & Scores
                 </div>
 
-                <div className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50">
+                <div className="flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                   <span className="flex items-center gap-2">
                     <Layers size={14} /> Checklists
                   </span>
-                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-500">4</span>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-bold text-slate-500 dark:text-slate-300">4</span>
                 </div>
 
                 <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-indigo-600 text-white font-black text-xs shadow-md shadow-indigo-600/20">
@@ -93,20 +93,20 @@ export default function FocusTimerShowcase() {
               </div>
 
               {/* Daily Target Widget */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-4 space-y-2.5 shadow-2xs">
-                <div className="flex items-center gap-1.5 text-amber-600 text-xs font-black uppercase">
+              <div className="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 space-y-2.5 shadow-2xs">
+                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 text-xs font-black uppercase">
                   <span>📈 DAILY TARGET</span>
                 </div>
-                <div className="flex justify-between text-xs font-bold text-slate-700">
+                <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                   <span>Today's Completion</span>
-                  <span className="font-black text-emerald-600">2 / 3 Done</span>
+                  <span className="font-black text-emerald-600 dark:text-emerald-400">2 / 3 Done</span>
                 </div>
-                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-700 overflow-hidden">
                   <div className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 w-2/3 rounded-full" />
                 </div>
-                <div className="flex justify-between text-xs font-bold text-slate-500 pt-1">
+                <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 pt-1">
                   <span>Hours Read Today</span>
-                  <span className="font-black text-slate-900">1 hr</span>
+                  <span className="font-black text-slate-900 dark:text-white">1 hr</span>
                 </div>
               </div>
             </div>
@@ -114,27 +114,27 @@ export default function FocusTimerShowcase() {
             {/* Right Main Focus Timer Workspace */}
             <div className="md:col-span-3 space-y-4">
               {/* Workspace Header */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-                <h3 className="font-black text-lg text-slate-900 flex items-center gap-2">
+              <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+                <h3 className="font-black text-lg text-slate-900 dark:text-white flex items-center gap-2">
                   <span className="p-1.5 rounded-xl bg-purple-500 text-white">
                     <Clock size={16} />
                   </span>
                   Study Focus Timer
                 </h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
                   Persistent stopwatch — tracks focus time for today's agenda tasks.
                 </p>
               </div>
 
               {/* Main Timer Display Card */}
-              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 space-y-6 shadow-2xs">
+              <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/80 dark:border-slate-700/80 p-6 sm:p-8 space-y-6 shadow-2xs">
                 {/* Active Study Task Dropdown Selector */}
-                <div className="bg-indigo-50/40 rounded-2xl border border-indigo-100 p-4 space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
-                    <BookOpen size={12} className="text-indigo-600" /> ACTIVE STUDY TASK
+                <div className="bg-indigo-50/40 dark:bg-indigo-950/40 rounded-2xl border border-indigo-100 dark:border-indigo-900/60 p-4 space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                    <BookOpen size={12} className="text-indigo-600 dark:text-indigo-400" /> ACTIVE STUDY TASK
                   </label>
 
-                  <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-800 shadow-2xs cursor-pointer">
+                  <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-3 flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-100 shadow-2xs cursor-pointer">
                     <span className="flex items-center gap-2 truncate">
                       <span>🏃</span> Differential Calculas: ghsghdgsd [1 hr / 3 hrs]
                     </span>
@@ -148,7 +148,7 @@ export default function FocusTimerShowcase() {
                     {/* SVG Gauge */}
                     <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                       {/* Outer track */}
-                      <circle cx="50" cy="50" r="42" strokeWidth="3" className="stroke-slate-100" fill="transparent" />
+                      <circle cx="50" cy="50" r="42" strokeWidth="3" className="stroke-slate-100 dark:stroke-slate-700" fill="transparent" />
                       {/* Ticks */}
                       {Array.from({ length: 60 }).map((_, i) => {
                         const angle = (i / 60) * 360 - 90;
@@ -163,7 +163,7 @@ export default function FocusTimerShowcase() {
                             y1={50 + r1 * Math.sin(rad)}
                             x2={50 + r2 * Math.cos(rad)}
                             y2={50 + r2 * Math.sin(rad)}
-                            className={isMajor ? 'stroke-slate-300' : 'stroke-slate-200'}
+                            className={isMajor ? 'stroke-slate-300 dark:stroke-slate-600' : 'stroke-slate-200 dark:stroke-slate-700'}
                             strokeWidth={isMajor ? 1 : 0.5}
                           />
                         );
@@ -191,14 +191,14 @@ export default function FocusTimerShowcase() {
 
                     {/* Timer Digital Display Center */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-                      <span className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight font-sans tabular-nums">
+                      <span className="text-4xl sm:text-5xl font-black text-slate-900 dark:text-white tracking-tight font-sans tabular-nums">
                         00:00:00
                       </span>
                       <div className="mt-2.5 flex flex-col items-center gap-1">
-                        <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider px-3 py-0.5 rounded-full bg-indigo-100/70 border border-indigo-200">
+                        <span className="text-[10px] font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-wider px-3 py-0.5 rounded-full bg-indigo-100/70 dark:bg-indigo-950/80 border border-indigo-200 dark:border-indigo-800">
                           DIFFERENTIAL CALCULAS: ...
                         </span>
-                        <span className="text-[10px] font-extrabold text-slate-400 flex items-center gap-1">
+                        <span className="text-[10px] font-extrabold text-slate-400 dark:text-slate-400 flex items-center gap-1">
                           <span>⏸</span> Paused
                         </span>
                       </div>
@@ -208,17 +208,17 @@ export default function FocusTimerShowcase() {
 
                 {/* 3 Metric Cards */}
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-3.5 text-center space-y-1">
+                  <div className="bg-slate-50/80 dark:bg-slate-900/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-3.5 text-center space-y-1">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">LOGGED TODAY</p>
-                    <p className="text-base font-black text-slate-900">1 hr</p>
+                    <p className="text-base font-black text-slate-900 dark:text-white">1 hr</p>
                   </div>
-                  <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-3.5 text-center space-y-1">
+                  <div className="bg-slate-50/80 dark:bg-slate-900/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-3.5 text-center space-y-1">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">THIS SESSION</p>
-                    <p className="text-base font-black text-purple-600">0 mins</p>
+                    <p className="text-base font-black text-purple-600 dark:text-purple-400">0 mins</p>
                   </div>
-                  <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-3.5 text-center space-y-1">
+                  <div className="bg-slate-50/80 dark:bg-slate-900/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 p-3.5 text-center space-y-1">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">DAILY GOAL</p>
-                    <p className="text-base font-black text-amber-500">3 hrs</p>
+                    <p className="text-base font-black text-amber-500 dark:text-amber-400">3 hrs</p>
                   </div>
                 </div>
 

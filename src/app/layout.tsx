@@ -8,21 +8,27 @@ import { cn } from "@/lib/utils";
 const inter = Inter({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-inter"
+  variable: "--font-inter",
+  display: "swap"
 });
 
 const orbitron = Orbitron({
   subsets: ["latin"],
   weight: ["600", "700", "800", "900"],
-  variable: "--font-orbitron"
+  variable: "--font-orbitron",
+  display: "swap"
 });
 
 export const viewport: Viewport = {
-  themeColor: "#7C3AED",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#020617" },
+  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {

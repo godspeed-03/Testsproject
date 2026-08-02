@@ -47,13 +47,16 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
   const monthKey = dayKey.substring(0, 7);
   const monthName = getMonthName(monthKey);
 
-  // Fetch all habits & topic revisions dynamically from DB using effective user ID
-  const habits = await HabitItem.find({ userId: effectiveUserId });
-  const topicRevisions = await TopicRevision.find({ userId: effectiveUserId });
+  // Fetch all habits, topic revisions & syllabus items concurrently from DB using effective user ID
+  const [habits, topicRevisions, syllabusItems] = await Promise.all([
+    HabitItem.find({ userId: effectiveUserId }).lean(),
+    TopicRevision.find({ userId: effectiveUserId }).lean(),
+    SyllabusItem.find({ userId: effectiveUserId }).lean()
+  ]);
 
   // Separate Habits & Tasks: Include all routines/habits in habitItems unless marked as one-time
-  const habitItems = habits.filter((h) => h.frequency?.mode !== 'once');
-  const taskItems = habits.filter((h) => h.type === 'task' && h.frequency?.mode !== 'once');
+  const habitItems = habits.filter((h: any) => h.frequency?.mode !== 'once');
+  const taskItems = habits.filter((h: any) => h.type === 'task' && h.frequency?.mode !== 'once');
 
   // A. Daily Habit Score
   let habitSchedCount = 0;
@@ -118,8 +121,6 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
   // C. Daily Revision Score (SRS Model with Asymmetric Weighting)
   const categoryMap: Record<string, { due: number; done: number; missed: number; topicsRead: number }> = {};
   const subjectMap: Record<string, { due: number; done: number; missed: number; topicsRead: number; category: string }> = {};
-
-  const syllabusItems = await SyllabusItem.find({ userId: effectiveUserId });
 
   // Initialize Categories from live DB records (SyllabusItems + TopicRevisions only)
   const dynamicCategories = Array.from(
@@ -315,9 +316,7 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
   if (existingDailyDocs.length === 0) {
     await recalculateDailySnapshot(effectiveUserId);
   } else {
-    for (const d of existingDailyDocs) {
-      await recalculateDailySnapshot(effectiveUserId, d.studyDayKey);
-    }
+    await Promise.all(existingDailyDocs.map((d) => recalculateDailySnapshot(effectiveUserId, d.studyDayKey)));
   }
 
   const dailyDocs = await DailySnapshot.find({ userId: effectiveUserId, monthKey: mKey }).sort({ studyDayKey: 1 });

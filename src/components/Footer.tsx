@@ -35,7 +35,7 @@ export default function Footer() {
         <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
           <div className="flex items-center gap-2 font-bold text-slate-900 dark:text-slate-200">
             <BrandLogoIcon size="sm" />
-            <span>UPSC tracker</span>
+            <span className="font-display">UPSC Tracker</span>
           </div>
           <span className="hidden sm:inline text-slate-300 dark:text-slate-700">|</span>
           <p className="text-slate-500 dark:text-slate-400 text-xs">

@@ -56,6 +56,9 @@ const TopicRevisionSchema = new Schema<ITopicRevision>(
   { timestamps: true }
 );
 
+TopicRevisionSchema.index({ userId: 1, subject: 1, topic: 1 });
+TopicRevisionSchema.index({ userId: 1, nextScheduledDate: 1 });
+
 if (mongoose.models && (mongoose.models as any).TopicRevision) {
   delete (mongoose.models as any).TopicRevision;
 }

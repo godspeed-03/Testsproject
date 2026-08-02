@@ -147,29 +147,29 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
           <div>
-            <h1 className={`text-2xl sm:text-3xl font-black font-display tracking-tight ${textTitle}`}>
+            <h1 className={`text-xl sm:text-3xl font-black font-display tracking-tight ${textTitle}`}>
               Habit & Task Module
             </h1>
-            <p className={`text-xs sm:text-sm ${textMuted} mt-1`}>
+            <p className={`text-xs sm:text-sm ${textMuted} mt-0.5`}>
               Track events, to-dos, recurring habits, streaks, and focus timers seamlessly in one place.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={() => handleOpenCreateModal('task')}
-              className="bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs sm:text-sm px-5 py-3 rounded-xl flex items-center gap-2 shadow-lg transition-all shrink-0 active:scale-95 cursor-pointer"
+              className="w-full sm:w-auto bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs sm:text-sm px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all shrink-0 active:scale-95 cursor-pointer"
             >
-              <Plus size={18} /> New Habit or Task
+              <Plus size={16} /> New Habit or Task
             </button>
           </div>
         </div>
 
-        {/* Mobile Horizontal Pill Navigation Bar (<768px) */}
-        <div className="md:hidden overflow-x-auto flex items-center gap-2 pb-1 scrollbar-none -mx-1 px-1">
+        {/* Mobile Horizontal Pill Navigation Bar (<768px) with Touch Snap & Smooth Scroll */}
+        <div className="md:hidden overflow-x-auto flex items-center gap-2 pb-1 pt-0.5 scrollbar-none -mx-4 px-4 snap-x snap-mandatory">
           {navTabs.map((tab) => {
             const Icon = tab.icon;
             const active = pathname === tab.href || (pathname === '/tracker' && tab.href === '/tracker/agenda');
@@ -177,13 +177,13 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`shrink-0 flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-black transition-all ${
+                className={`shrink-0 snap-start flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition-all ${
                   active
                     ? 'bg-accent-gradient text-white shadow-neon-glow'
                     : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800'
                 }`}
               >
-                <Icon size={15} />
+                <Icon size={14} />
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && (
                   <span

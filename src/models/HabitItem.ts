@@ -97,6 +97,9 @@ const HabitItemSchema = new Schema<IHabitItem>(
   { timestamps: true }
 );
 
+HabitItemSchema.index({ userId: 1, type: 1 });
+HabitItemSchema.index({ userId: 1, startDate: 1 });
+
 const HabitItem: Model<IHabitItem> =
   mongoose.models.HabitItem || mongoose.model<IHabitItem>('HabitItem', HabitItemSchema);
 

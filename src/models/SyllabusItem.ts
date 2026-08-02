@@ -45,6 +45,9 @@ const SyllabusItemSchema = new Schema<ISyllabusItem>(
   { timestamps: true }
 );
 
+SyllabusItemSchema.index({ userId: 1, subject: 1 });
+SyllabusItemSchema.index({ userId: 1, category: 1 });
+
 const SyllabusItem: Model<ISyllabusItem> =
   mongoose.models.SyllabusItem || mongoose.model<ISyllabusItem>('SyllabusItem', SyllabusItemSchema);
 

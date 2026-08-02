@@ -111,10 +111,10 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-colors ${
+                  className={`px-3.5 py-2.5 rounded-xl text-xs font-black flex items-center gap-2.5 transition-all ${
                     isActive
-                      ? 'bg-violet-50 text-[#7C3AED] dark:bg-violet-950/80 dark:text-violet-300 border border-violet-200 dark:border-violet-800/80'
-                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      ? 'bg-accent-gradient text-white shadow-md'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80'
                   }`}
                 >
                   <Icon size={15} />

@@ -57,7 +57,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white text-slate-900 transition-colors">
+    <div className="flex-1 flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <HeroSection />
 
       {/* 1. Today Agenda Screen Showcase */}
@@ -91,16 +91,16 @@ export default async function Home() {
       <TransparencySection />
 
       {/* Final CTA */}
-      <section className="py-20 bg-gradient-to-b from-white via-violet-50/20 to-white border-t border-slate-100">
+      <section className="py-20 bg-gradient-to-b from-white via-violet-50/20 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 border-t border-slate-100 dark:border-slate-800 transition-colors">
         <div className="max-w-3xl mx-auto px-6 text-center space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/25 text-xs text-[#7C3AED] font-bold">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/25 text-xs text-[#7C3AED] dark:text-violet-400 font-bold">
             <Target size={14} />
             Ready to start?
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             Start Tracking Your UPSC Journey
           </h2>
-          <p className="text-sm sm:text-base text-slate-500 max-w-xl mx-auto font-medium">
+          <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-xl mx-auto font-medium">
             Sign in with Google and structure your study data in seconds. Free to use for all UPSC CSE aspirants.
           </p>
           <Link

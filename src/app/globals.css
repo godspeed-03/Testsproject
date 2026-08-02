@@ -593,3 +593,14 @@
 .text-accent-quinary {
   color: var(--accent-quinary) !important;
 }
+
+/* PWA Safe Area Insets for Mobile Notch & Status Bars */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  nav {
+    padding-top: env(safe-area-inset-top);
+  }
+}

@@ -30,6 +30,11 @@ import ShadcnDatePicker from '@/components/ui/ShadcnDatePicker';
 import ShadcnSelect from '@/components/ui/ShadcnSelect';
 import ShadcnTimePicker from '@/components/ui/ShadcnTimePicker';
 import TimetableCodeEditorModal from '@/components/TimetableCodeEditorModal';
+import {
+  SUBJECT_COLOR_OPTIONS,
+  NON_SUBJECT_COLOR_OPTIONS,
+  getSubjectTheme
+} from '@/lib/subjectThemeMap';
 
 export default function TrackerLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -129,6 +134,12 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
     return () => window.removeEventListener('open-create-modal', handleOpen);
   }, [handleOpenCreateModal]);
+
+  useEffect(() => {
+    if (formIsStudyTask) {
+      setShowEmojiPicker(false);
+    }
+  }, [formIsStudyTask]);
 
   const cardBg = 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80';
   const textTitle = 'text-slate-900 dark:text-slate-100';
@@ -243,28 +254,25 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
             {/* Quick Mini Stats Card */}
             {(() => {
-              // Calculate ONLY Study & Time-based task logged hours for todayItems on selectedDate
-              const totalTodayLoggedHours = todayItems.reduce((acc: number, h: any) => {
-                const isTimeOrStudy =
-                  h.isStudyTask ||
-                  h.subject ||
-                  ['hours', 'hrs', 'hour', 'mins', 'minutes', 'min'].includes((h.target?.unit || '').toLowerCase());
+              const isTimeBasedUnit = (h: any) => {
+                const unit = (h.target?.unit || '').toLowerCase().trim();
+                return ['hours', 'hrs', 'hour', 'mins', 'minutes', 'min', 'minute'].includes(unit);
+              };
 
-                if (!isTimeOrStudy) return acc;
+              // Calculate ONLY time-based task logged hours for todayItems on selectedDate
+              const totalTodayLoggedHours = todayItems.reduce((acc: number, h: any) => {
+                if (!isTimeBasedUnit(h)) return acc;
 
                 const entry = (h.history || []).find((e: any) => e.date === selectedDate);
                 if (!entry) return acc;
 
                 const val = Number(entry.value || 0);
-
-                // If status is not done and value is 0, do not count
                 if (val <= 0 && entry.status !== 'done') return acc;
 
-                const unit = (h.target?.unit || '').toLowerCase();
+                const unit = (h.target?.unit || '').toLowerCase().trim();
                 const effectiveVal = val > 0 ? val : (entry.status === 'done' ? Number(h.target?.value || 0) : 0);
 
-                // Convert mins to hours if unit is minutes
-                if (unit === 'mins' || unit === 'minutes' || unit === 'min') {
+                if (['mins', 'minutes', 'min', 'minute'].includes(unit)) {
                   return acc + effectiveVal / 60;
                 }
                 return acc + effectiveVal;
@@ -279,6 +287,19 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 if (h > 0) return `${h} hr${h > 1 ? 's' : ''}`;
                 return `${m} mins`;
               };
+
+              // Calculate total target hours for todayItems on selectedDate
+              const totalTodayTargetHours = todayItems.reduce((acc: number, h: any) => {
+                if (!isTimeBasedUnit(h)) return acc;
+
+                const unit = (h.target?.unit || '').toLowerCase().trim();
+                const tgt = Number(h.target?.value || 0);
+
+                if (['mins', 'minutes', 'min', 'minute'].includes(unit)) {
+                  return acc + tgt / 60;
+                }
+                return acc + tgt;
+              }, 0);
 
               const doneCount = todayItems.filter((h: any) =>
                 (h.history || []).some((hist: any) => hist.date === selectedDate && hist.status === 'done')
@@ -307,7 +328,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     <div className="flex justify-between text-xs font-bold pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
                       <span className={textMuted}>Hours Read Today</span>
                       <span className="text-accent-quaternary font-black">
-                        {formatHoursAndMins(totalTodayLoggedHours)}
+                        {formatHoursAndMins(totalTodayLoggedHours)} {totalTodayTargetHours > 0 ? `/ ${formatHoursAndMins(totalTodayTargetHours)}` : ''}
                       </span>
                     </div>
                   </div>
@@ -369,6 +390,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     } else if (t.id === 'habit') {
                       setFormFrequencyMode('daily');
                       setFormIsStudyTask(false);
+                      if (formTitle === formSubject || (formSubject && formTitle.startsWith(formSubject))) {
+                        setFormTitle('');
+                      }
+                    } else if (t.id === 'list') {
+                      setFormIsStudyTask(false);
+                      if (formTitle === formSubject || (formSubject && formTitle.startsWith(formSubject))) {
+                        setFormTitle('');
+                      }
                     }
                   }}
                   className={`py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
@@ -418,6 +447,10 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                               setFormIsStudyTask(checked);
                               if (checked) {
                                 setFormFrequencyMode('once');
+                              } else {
+                                if (formTitle === formSubject || (formSubject && formTitle.startsWith(formSubject))) {
+                                  setFormTitle('');
+                                }
                               }
                             }}
                             className="sr-only peer"
@@ -462,6 +495,11 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                   setFormSubject(val);
                                   const autoTitle = val && formTopic ? `${val}: ${formTopic}` : (val || formTopic);
                                   if (autoTitle) setFormTitle(autoTitle);
+                                  const theme = getSubjectTheme(val);
+                                  if (theme) {
+                                    setFormColor(theme.color);
+                                    setFormIcon(theme.icon);
+                                  }
                                   const matchedItem = (syllabusItems || []).find((item: any) => item.subject?.toLowerCase() === val.toLowerCase());
                                   if (matchedItem?.category) {
                                     setFormCategory({ id: matchedItem.category.toLowerCase(), label: matchedItem.category, icon: '📚', color: '#6366F1' });
@@ -515,40 +553,55 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   )}
 
                   {/* Title & Icon Input */}
-                  <div className={createType === 'habit' || !formIsStudyTask ? 'grid grid-cols-1 sm:grid-cols-2 gap-3' : 'grid grid-cols-1 gap-3'}>
-                    <div>
+                  <div className={createType === 'habit' || !formIsStudyTask ? 'grid grid-cols-1 sm:grid-cols-2 gap-4 items-start' : 'grid grid-cols-1 gap-3'}>
+                    <div className="min-w-0">
                       <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Title</label>
 
-                      <div className="relative">
-                        <div className="flex items-center gap-1.5">
-                          {/* Default Icon button on left of title */}
-                          <button
-                            type="button"
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            title="Click to select icon & color"
-                            className="h-10 px-3 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-lg flex items-center justify-center gap-1 hover:border-indigo-500 transition-all shrink-0 active:scale-95 shadow-2xs"
-                            style={{ borderColor: formColor || undefined }}
-                          >
-                            <span>{formIcon || '🏃'}</span>
-                            <span className="text-[9px] text-slate-400">▾</span>
-                          </button>
+                      <div className="relative min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          {/* Icon button on left of title */}
+                          {!formIsStudyTask ? (
+                            <button
+                              type="button"
+                              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                              title="Click to select icon & color"
+                              className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 hover:border-indigo-500 transition-all shrink-0 active:scale-95 shadow-2xs cursor-pointer"
+                              style={{ borderColor: formColor || undefined }}
+                            >
+                              <span>{formIcon || '🏃'}</span>
+                              <span className="text-[9px] text-slate-400">▾</span>
+                            </button>
+                          ) : (
+                            <div
+                              title="Fixed Icon & Theme Color from Syllabus Matrix"
+                              className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 shrink-0 cursor-not-allowed opacity-90 shadow-2xs"
+                              style={{ borderColor: formColor || '#6366F1', backgroundColor: formColor ? `${formColor}15` : undefined }}
+                            >
+                              <span>{formIcon || '📚'}</span>
+                            </div>
+                          )}
 
                           {/* Title Input */}
                           <input
                             type="text"
-                            placeholder={createType === 'habit' ? 'e.g., Daily Answer Writing / Running' : 'Task Title'}
+                            placeholder={createType === 'habit' ? 'e.g., Daily Answer Writing' : 'Task Title'}
                             value={formTitle}
                             onChange={(e) => setFormTitle(e.target.value)}
-                            className="flex-1 h-10 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500"
+                            className="flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all"
                           />
                         </div>
 
                         {/* Floating Popover: Icon & Theme Color Selector */}
-                        {showEmojiPicker && (
-                          <div className="absolute top-full left-0 mt-1.5 w-80 sm:w-[420px] max-w-[calc(100vw-2.5rem)] p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-indigo-500/30 shadow-2xl space-y-3 animate-fade-in z-50">
+                        {showEmojiPicker && !formIsStudyTask && (
+                          <div className="absolute top-full left-0 mt-1.5 w-80 sm:w-[420px] max-w-[calc(100vw-2.5rem)] p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-indigo-500/30 shadow-2xl space-y-3 animate-fade-in z-[99999]">
                             {/* Popover Header */}
                             <div className="flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2">
-                              <span>Customize Icon & Theme Color</span>
+                              <div className="flex items-center gap-1.5">
+                                <span>Customize Icon & Color</span>
+                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                                  {formIsStudyTask ? 'Subject Palette (35)' : 'Custom Palette (10)'}
+                                </span>
+                              </div>
                               <button
                                 type="button"
                                 onClick={() => setShowEmojiPicker(false)}
@@ -559,24 +612,50 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             </div>
 
                             {/* Theme Color Picker Section */}
-                            <div className="space-y-1.5">
-                              <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Theme Color Palette</div>
-                              <div className="flex items-center justify-between gap-1.5 bg-slate-50 dark:bg-slate-950 p-2 rounded-xl border border-slate-100 dark:border-slate-800 flex-wrap">
-                                {['#6366F1', '#10B981', '#F59E0B', '#F43F5E', '#8B5CF6', '#06B6D4', '#EC4899', '#3B82F6', '#14B8A6', '#F97316'].map((c) => (
-                                  <button
-                                    key={c}
-                                    type="button"
-                                    onClick={() => setFormColor(c)}
-                                    className={`w-6 h-6 rounded-full transition-all ${
-                                      formColor === c
-                                        ? 'scale-125 ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-md'
-                                        : 'hover:scale-110 opacity-70 hover:opacity-100'
-                                    }`}
-                                    style={{ backgroundColor: c }}
-                                  />
-                                ))}
-                              </div>
-                            </div>
+                            {(() => {
+                              const takenColors = (habits || [])
+                                .filter((h: any) => (editingHabitId ? (h._id || h.id) !== editingHabitId : true) && h.color)
+                                .map((h: any) => String(h.color).toLowerCase().trim());
+
+                              const colorsToDisplay = formIsStudyTask ? SUBJECT_COLOR_OPTIONS : NON_SUBJECT_COLOR_OPTIONS;
+
+                              return (
+                                <div className="space-y-1.5">
+                                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                    <span>Theme Color Palette</span>
+                                    <span>{formIsStudyTask ? 'UPSC Colors' : 'Non-UPSC Colors'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 flex-wrap max-h-32 overflow-y-auto custom-scrollbar">
+                                    {colorsToDisplay.map((c) => {
+                                      const isTaken = takenColors.includes(c.toLowerCase().trim()) && formColor?.toLowerCase().trim() !== c.toLowerCase().trim();
+                                      const isSelected = formColor?.toLowerCase().trim() === c.toLowerCase().trim();
+
+                                      return (
+                                        <button
+                                          key={c}
+                                          type="button"
+                                          disabled={isTaken}
+                                          onClick={() => {
+                                            if (!isTaken) setFormColor(c);
+                                          }}
+                                          title={isTaken ? 'Color assigned to another subject/item (Taken)' : c}
+                                          className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center ${
+                                            isTaken
+                                              ? 'opacity-30 cursor-not-allowed border border-rose-500/50'
+                                              : isSelected
+                                              ? 'scale-125 ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-md cursor-pointer'
+                                              : 'hover:scale-110 opacity-75 hover:opacity-100 cursor-pointer'
+                                          }`}
+                                          style={{ backgroundColor: c }}
+                                        >
+                                          {isTaken && <span className="text-[8px] leading-none text-white font-black">🚫</span>}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
 
                             {/* Category Filter Tabs */}
                             <div className="space-y-2">
@@ -607,9 +686,13 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                 </div>
                               </div>
 
-                              {/* Categorized Emoji Grid */}
+                              {/* Categorized Emoji Grid with Taken Masks */}
                               <div className="grid grid-cols-10 sm:grid-cols-12 gap-1.5 max-h-44 overflow-y-auto p-2 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 scrollbar-thin">
                                 {(() => {
+                                  const takenIcons = (habits || [])
+                                    .filter((h: any) => (editingHabitId ? (h._id || h.id) !== editingHabitId : true) && h.icon)
+                                    .map((h: any) => String(h.icon).trim());
+
                                   const sets: Record<string, string[]> = {
                                     study: [
                                       '📚', '✍️', '📖', '📝', '💡', '🎓', '🧠', '🔬', '🧪', '📐', '💻', '📊',
@@ -633,23 +716,37 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                     ? Object.values(sets).flat()
                                     : (sets[activeEmojiTab] || []);
 
-                                  return iconsToDisplay.map((emoji, i) => (
-                                    <button
-                                      key={i}
-                                      type="button"
-                                      onClick={() => {
-                                        setFormIcon(emoji);
-                                        setShowEmojiPicker(false);
-                                      }}
-                                      className={`w-7 h-7 rounded-lg text-base flex items-center justify-center transition-all ${
-                                        formIcon === emoji
-                                          ? 'bg-accent-gradient text-white font-black scale-110 shadow-md'
-                                          : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'
-                                      }`}
-                                    >
-                                      {emoji}
-                                    </button>
-                                  ));
+                                  return iconsToDisplay.map((emoji, i) => {
+                                    const isTaken = takenIcons.includes(emoji.trim()) && formIcon?.trim() !== emoji.trim();
+                                    const isSelected = formIcon?.trim() === emoji.trim();
+
+                                    return (
+                                      <button
+                                        key={i}
+                                        type="button"
+                                        disabled={isTaken}
+                                        onClick={() => {
+                                          if (!isTaken) {
+                                            setFormIcon(emoji);
+                                            setShowEmojiPicker(false);
+                                          }
+                                        }}
+                                        title={isTaken ? 'Icon assigned to another subject/item (Taken)' : emoji}
+                                        className={`relative w-7 h-7 rounded-lg text-base flex items-center justify-center transition-all ${
+                                          isTaken
+                                            ? 'opacity-30 cursor-not-allowed bg-rose-500/10 border border-rose-500/30'
+                                            : isSelected
+                                            ? 'bg-accent-gradient text-white font-black scale-110 shadow-md cursor-pointer'
+                                            : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
+                                        }`}
+                                      >
+                                        <span>{emoji}</span>
+                                        {isTaken && (
+                                          <span className="absolute inset-0 flex items-center justify-center text-[8px] bg-slate-950/70 rounded-lg">🚫</span>
+                                        )}
+                                      </button>
+                                    );
+                                  });
                                 })()}
                               </div>
                             </div>
@@ -753,25 +850,19 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   </div>
 
                   {/* Target Goal & Unit */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Target Quantity</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={formTargetVal}
-                        onChange={(e) => setFormTargetVal(Number(e.target.value))}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-accent-primary"
-                      />
-                    </div>
-
+                  {formTargetUnit === 'yes_no' || formTargetUnit === 'boolean' ? (
                     <div>
                       <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Unit Selector</label>
                       <ShadcnSelect
                         value={formTargetUnit}
-                        onChange={(val: string) => setFormTargetUnit(val)}
+                        onChange={(val: string) => {
+                          setFormTargetUnit(val);
+                          if (val === 'yes_no' || val === 'boolean') {
+                            setFormTargetVal(1);
+                          }
+                        }}
                         options={[
-                          { value: 'yes_no', label: 'Mark Done (Yes / No)' },
+                          { value: 'yes_no', label: 'Mark Done' },
                           { value: 'hours', label: 'Hours' },
                           { value: 'minutes', label: 'Minutes' },
                           { value: 'times', label: 'Times' },
@@ -780,17 +871,52 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                           { value: 'custom', label: 'Custom Unit...' }
                         ]}
                       />
-                      {formTargetUnit === 'custom' && (
-                        <input
-                          type="text"
-                          placeholder="e.g. Quizzes, MCQs"
-                          value={formCustomUnit}
-                          onChange={(e) => setFormCustomUnit(e.target.value)}
-                          className="w-full mt-2 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold outline-none"
-                        />
-                      )}
                     </div>
-                  </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Target Quantity</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={formTargetVal}
+                          onChange={(e) => setFormTargetVal(Number(e.target.value))}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-accent-primary"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Unit Selector</label>
+                        <ShadcnSelect
+                          value={formTargetUnit}
+                          onChange={(val: string) => {
+                            setFormTargetUnit(val);
+                            if (val === 'yes_no' || val === 'boolean') {
+                              setFormTargetVal(1);
+                            }
+                          }}
+                          options={[
+                            { value: 'yes_no', label: 'Mark Done' },
+                            { value: 'hours', label: 'Hours' },
+                            { value: 'minutes', label: 'Minutes' },
+                            { value: 'times', label: 'Times' },
+                            { value: 'pages', label: 'Pages' },
+                            { value: 'answers', label: 'Answers' },
+                            { value: 'custom', label: 'Custom Unit...' }
+                          ]}
+                        />
+                        {formTargetUnit === 'custom' && (
+                          <input
+                            type="text"
+                            placeholder="e.g. Quizzes, MCQs"
+                            value={formCustomUnit}
+                            onChange={(e) => setFormCustomUnit(e.target.value)}
+                            className="w-full mt-2 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold outline-none"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Start Date & Reminders */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -813,7 +939,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             onChange={(e) => setFormEnableReminder(e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-accent-primary"></div>
+                          <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent-primary"></div>
                         </label>
                         <div className="flex-1">
                           <ShadcnTimePicker
@@ -923,91 +1049,237 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               </div>
             )}
 
-            {/* Hero Stepper & Preset Controls */}
-            <div className="space-y-5 text-center">
-              {/* Main Stepper Control */}
-              <div className="flex items-center justify-center gap-5 py-2">
-                <button
-                  type="button"
-                  onClick={() => setProgressModalValue(Math.max(0, Number((progressModalValue - 0.5).toFixed(2))))}
-                  className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-black text-2xl hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all active:scale-90 shadow-sm flex items-center justify-center shrink-0"
-                >
-                  -
-                </button>
+            {/* Hero Stepper / Hours & Minutes Slider Controls */}
+            {(() => {
+              const unitStr = (progressModalHabit.target?.unit || '').toLowerCase();
+              const isTimeBased =
+                ['hours', 'hrs', 'hour', 'mins', 'minutes', 'min'].includes(unitStr) ||
+                progressModalHabit.isStudyTask ||
+                progressModalHabit.subject;
 
-                <div className="flex flex-col items-center">
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={progressModalValue}
-                    onChange={(e) => setProgressModalValue(Math.max(0, Number(e.target.value)))}
-                    className="w-32 text-center text-4xl font-black bg-transparent text-slate-900 dark:text-slate-100 outline-none focus:scale-105 transition-transform"
-                  />
-                  <span className="text-2xs font-black text-accent-primary uppercase tracking-widest mt-0.5">
-                    {progressModalHabit.target?.unit || 'hours'}
-                  </span>
-                </div>
+              const formatDuration = (hrsDecimal: number) => {
+                const totalMins = Math.round(hrsDecimal * 60);
+                const h = Math.floor(totalMins / 60);
+                const m = totalMins % 60;
+                if (h > 0 && m > 0) return `${h} hr ${m} mins`;
+                if (h > 0) return `${h} hr${h > 1 ? 's' : ''}`;
+                return `${m} mins`;
+              };
 
-                <button
-                  type="button"
-                  onClick={() => setProgressModalValue(Number((progressModalValue + 0.5).toFixed(2)))}
-                  className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-black text-2xl hover:bg-emerald-500 hover:text-white hover:border-emerald-500 transition-all active:scale-90 shadow-sm flex items-center justify-center shrink-0"
-                >
-                  +
-                </button>
-              </div>
+              const hoursVal = Math.floor(progressModalValue || 0);
+              const minsVal = Math.round(((progressModalValue || 0) % 1) * 60);
 
-              {/* Quick Add Presets */}
-              <div className="flex items-center justify-center gap-2">
-                {[0.5, 1.0, 1.5, 2.0, 3.0].map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => setProgressModalValue(preset)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black border transition-all ${
-                      progressModalValue === preset
-                        ? 'bg-accent-gradient text-white border-accent-primary shadow-md shadow-accent/30 scale-105'
-                        : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    +{preset}
-                  </button>
-                ))}
-              </div>
+              const setHours = (h: number) => {
+                const newTotal = h + minsVal / 60;
+                setProgressModalValue(Number(newTotal.toFixed(2)));
+              };
 
-              {/* Projected Progress & Total Bar */}
-              {(() => {
-                const projectedTotal = progressModalMode === 'add' && existingModalVal > 0 
+              const setMinutes = (m: number) => {
+                const newTotal = hoursVal + m / 60;
+                setProgressModalValue(Number(newTotal.toFixed(2)));
+              };
+
+              const projectedTotal =
+                progressModalMode === 'add' && existingModalVal > 0
                   ? Number((existingModalVal + progressModalValue).toFixed(2))
                   : progressModalValue;
-                const targetVal = progressModalHabit.target?.value || 1;
-                const pct = Math.round((projectedTotal / targetVal) * 100);
-                const isComplete = pct >= 100;
+              const targetVal = progressModalHabit.target?.value || 1;
+              const pct = Math.round((projectedTotal / targetVal) * 100);
+              const isComplete = pct >= 100;
 
+              if (isTimeBased) {
                 return (
+                  <div className="space-y-5 text-center">
+                    {/* Time Display Badge */}
+                    <div className="py-3 px-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 inline-block shadow-inner">
+                      <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
+                        {formatDuration(progressModalValue)}
+                      </div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-amber-600/70 dark:text-amber-400/70 mt-0.5">
+                        Selected Duration
+                      </div>
+                    </div>
+
+                    {/* Dual Sliders: Hours & Minutes */}
+                    <div className="space-y-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 text-left">
+                      {/* Hours Slider */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-xs font-black">
+                          <span className="text-slate-600 dark:text-slate-300">Hours</span>
+                          <span className="text-amber-600 dark:text-amber-400 font-extrabold">{hoursVal} hr{hoursVal !== 1 ? 's' : ''}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="12"
+                          step="1"
+                          value={hoursVal}
+                          onChange={(e) => setHours(Number(e.target.value))}
+                          className="w-full accent-amber-500 cursor-pointer h-2 bg-slate-200 dark:bg-slate-800 rounded-lg outline-none"
+                        />
+                      </div>
+
+                      {/* Minutes Slider */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-xs font-black">
+                          <span className="text-slate-600 dark:text-slate-300">Minutes</span>
+                          <span className="text-amber-600 dark:text-amber-400 font-extrabold">{minsVal} mins</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="55"
+                          step="5"
+                          value={minsVal}
+                          onChange={(e) => setMinutes(Number(e.target.value))}
+                          className="w-full accent-amber-500 cursor-pointer h-2 bg-slate-200 dark:bg-slate-800 rounded-lg outline-none"
+                        />
+                      </div>
+
+                      {/* Quick Minute Step Pills */}
+                      <div className="flex items-center justify-between gap-1.5 pt-1">
+                        {[0, 15, 30, 45].map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setMinutes(m)}
+                            className={`flex-1 py-1 rounded-xl text-xs font-black border transition-all ${
+                              minsVal === m
+                                ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
+                                : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            :{m === 0 ? '00' : m}m
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Quick Add Presets */}
+                    <div className="flex items-center justify-center gap-2">
+                      {[
+                        { label: '+15m', val: 0.25 },
+                        { label: '+30m', val: 0.5 },
+                        { label: '+45m', val: 0.75 },
+                        { label: '+1h', val: 1.0 },
+                        { label: '+2h', val: 2.0 },
+                      ].map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => setProgressModalValue(preset.val)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-black border transition-all ${
+                            progressModalValue === preset.val
+                              ? 'bg-amber-500 text-white border-amber-500 shadow-sm scale-105'
+                              : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Projected Progress & Total Bar */}
+                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 space-y-2.5">
+                      <div className="flex items-center justify-between text-xs font-black">
+                        <span className="text-slate-500 dark:text-slate-400">Projected Total</span>
+                        <span className={`font-black ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                          {formatDuration(projectedTotal)} / {formatDuration(targetVal)} ({pct}%)
+                        </span>
+                      </div>
+
+                      <div className="w-full bg-slate-200 dark:bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 shadow-inner">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isComplete
+                              ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/50'
+                              : 'bg-gradient-to-r from-amber-500 to-orange-500'
+                          }`}
+                          style={{ width: `${Math.min(100, pct)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              // Non-time habit stepper
+              return (
+                <div className="space-y-5 text-center">
+                  {/* Main Stepper Control */}
+                  <div className="flex items-center justify-center gap-5 py-2">
+                    <button
+                      type="button"
+                      onClick={() => setProgressModalValue(Math.max(0, Number((progressModalValue - 0.5).toFixed(2))))}
+                      className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-black text-2xl hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all active:scale-90 shadow-sm flex items-center justify-center shrink-0"
+                    >
+                      -
+                    </button>
+
+                    <div className="flex flex-col items-center">
+                      <input
+                        type="number"
+                        step="0.5"
+                        min="0"
+                        value={progressModalValue}
+                        onChange={(e) => setProgressModalValue(Math.max(0, Number(e.target.value)))}
+                        className="w-32 text-center text-4xl font-black bg-transparent text-slate-900 dark:text-slate-100 outline-none focus:scale-105 transition-transform"
+                      />
+                      <span className="text-2xs font-black text-accent-primary uppercase tracking-widest mt-0.5">
+                        {progressModalHabit.target?.unit || 'times'}
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setProgressModalValue(Number((progressModalValue + 0.5).toFixed(2)))}
+                      className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-black text-2xl hover:bg-emerald-500 hover:text-white hover:border-emerald-500 transition-all active:scale-90 shadow-sm flex items-center justify-center shrink-0"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {/* Quick Add Presets */}
+                  <div className="flex items-center justify-center gap-2">
+                    {[1, 2, 3, 5].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setProgressModalValue(preset)}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black border transition-all ${
+                          progressModalValue === preset
+                            ? 'bg-accent-gradient text-white border-accent-primary shadow-md shadow-accent/30 scale-105'
+                            : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        +{preset}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Projected Progress & Total Bar */}
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 space-y-2.5">
                     <div className="flex items-center justify-between text-xs font-black">
                       <span className="text-slate-500 dark:text-slate-400">Projected Total</span>
                       <span className={`font-black ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
-                        {projectedTotal} / {targetVal} {progressModalHabit.target?.unit || 'h'} ({pct}%)
+                        {projectedTotal} / {targetVal} {progressModalHabit.target?.unit || 'times'} ({pct}%)
                       </span>
                     </div>
 
                     <div className="w-full bg-slate-200 dark:bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 shadow-inner">
-                      <div 
+                      <div
                         className={`h-full rounded-full transition-all duration-500 ${
-                          isComplete 
-                            ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/50' 
+                          isComplete
+                            ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/50'
                             : 'bg-gradient-to-r from-indigo-500 to-purple-500'
                         }`}
                         style={{ width: `${Math.min(100, pct)}%` }}
                       />
                     </div>
                   </div>
-                );
-              })()}
-            </div>
+                </div>
+              );
+            })()}
 
             {/* Footer CTAs */}
             <div className="flex items-center justify-end gap-3 pt-2">

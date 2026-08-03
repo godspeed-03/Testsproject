@@ -262,10 +262,15 @@ export default function AnalyticsPage() {
   const textTitle = "text-slate-900 dark:text-slate-100";
   const textMuted = "text-slate-500 dark:text-slate-400";
 
-  // Pure DB Values (No Hardcoded Fallbacks)
-  const weeklyData = weeklyDoc?.weeklyData || [];
-  const subjectDistribution = weeklyDoc?.subjectDistribution || [];
-  const habitDistribution = weeklyDoc?.habitDistribution || [];
+  // DB Values & Breakdown Extraction
+  const bd = (weeklyDoc?.breakdown as any) || weeklyDoc || {};
+  const weeklyData = bd.weeklyData || weeklyDoc?.weeklyData || [];
+  const subjectDistribution = bd.subjectDistribution || weeklyDoc?.subjectDistribution || [];
+  const habitDistribution = bd.habitDistribution || weeklyDoc?.habitDistribution || [];
+  const displayWeeklyTotalHours = bd.weeklyTotalHours ?? weeklyDoc?.weeklyTotalHours ?? weeklyDoc?.totalHours ?? 0;
+  const displayDailyAverageHours = bd.dailyAverageHours ?? weeklyDoc?.dailyAverageHours ?? (displayWeeklyTotalHours > 0 ? Number((displayWeeklyTotalHours / 7).toFixed(1)) : 0);
+  const displayConsistencyPct = bd.consistencyPct ?? weeklyDoc?.consistencyPct ?? weeklyDoc?.weeklyScore ?? 0;
+  const displayTotalTasksDone = bd.totalTasksDone ?? weeklyDoc?.totalTasksDone ?? weeklyDoc?.completedTopicsCount ?? 0;
 
   // Fetch Weekly Analytics Data (Separate API)
   const fetchWeeklyData = async () => {
@@ -556,7 +561,7 @@ export default function AnalyticsPage() {
                 </div>
               </div>
               <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>
-                {weeklyDoc?.weeklyTotalHours ?? 0} <span className="text-xs font-bold text-slate-500 font-sans">hrs</span>
+                {displayWeeklyTotalHours} <span className="text-xs font-bold text-slate-500 font-sans">hrs</span>
               </p>
               <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                 <TrendingUp size={12} /> Live DB Logged
@@ -571,7 +576,7 @@ export default function AnalyticsPage() {
                 </div>
               </div>
               <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>
-                {weeklyDoc?.dailyAverageHours ?? 0} <span className="text-xs font-bold text-slate-500 font-sans">hrs/day</span>
+                {displayDailyAverageHours} <span className="text-xs font-bold text-slate-500 font-sans">hrs/day</span>
               </p>
               <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Target: 8.0 hrs/day</p>
             </div>
@@ -583,7 +588,7 @@ export default function AnalyticsPage() {
                   <Award size={15} />
                 </div>
               </div>
-              <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>{weeklyDoc?.consistencyPct ?? 0}%</p>
+              <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>{displayConsistencyPct}%</p>
               <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">2+ Day Habit Velocity 🔥</p>
             </div>
 
@@ -595,7 +600,7 @@ export default function AnalyticsPage() {
                 </div>
               </div>
               <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>
-                {weeklyDoc?.totalTasksDone ?? 0} <span className="text-xs font-bold text-slate-500 font-sans">completed</span>
+                {displayTotalTasksDone} <span className="text-xs font-bold text-slate-500 font-sans">completed</span>
               </p>
               <p className="text-[11px] font-bold text-accent-secondary">7-Day Completion Logs</p>
             </div>

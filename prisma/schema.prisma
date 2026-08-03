@@ -72,6 +72,8 @@ model SyllabusItem {
   source           String?  @default("")
   date             String?  @default("")
   nextRev          String?  @default("")
+  color            String?  @default("")
+  icon             String?  @default("")
   rules            Json     @default("[]")
   topicRevisionIds Json     @default("[]")
   createdAt        DateTime @default(now())

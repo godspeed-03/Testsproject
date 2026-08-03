@@ -27,20 +27,13 @@ export function getWeekKey(d: Date = new Date()): string {
 }
 
 export async function getEffectiveUserId(userId?: string): Promise<string> {
-  if (userId && userId !== '000000000000000000000000') return userId;
-  return userId || '000000000000000000000000';
+  return userId || '';
 }
 
 function isTimeBasedActivity(h: any): boolean {
-  if (h.isStudyTask) return true;
-
   const targetObj = typeof h.target === 'object' && h.target !== null ? (h.target as any) : {};
   const unit = (targetObj.unit || '').toLowerCase().trim();
-  const nonStudyUnits = ['yes_no', 'boolean', 'times', 'time', 'count', 'liters', 'liter', 'glass', 'glasses', 'ml', 'l', 'steps', 'kg', 'reps'];
-
-  if (nonStudyUnits.includes(unit)) return false;
-  if (['hrs', 'hr', 'hours', 'hour', 'mins', 'min', 'minutes', 'minute'].includes(unit)) return true;
-  return false;
+  return ['hrs', 'hr', 'hours', 'hour', 'mins', 'min', 'minutes', 'minute'].includes(unit);
 }
 
 function getHabitItemHours(h: any, entry: any): number {
@@ -48,17 +41,16 @@ function getHabitItemHours(h: any, entry: any): number {
 
   const targetObj = typeof h.target === 'object' && h.target !== null ? (h.target as any) : {};
   const unit = (targetObj.unit || '').toLowerCase().trim();
-  let val = entry?.value;
+  const val = Number(entry?.value || 0);
 
-  if (val === undefined || val === null || val === 0) {
-    val = entry?.status === 'done' ? targetObj.value || 1 : 0;
-  }
+  if (val <= 0 && entry?.status !== 'done') return 0;
 
-  if (['hrs', 'hr', 'hours', 'hour'].includes(unit)) return val;
-  if (['mins', 'min', 'minutes', 'minute'].includes(unit)) return val / 60;
+  const effectiveVal = val > 0 ? val : (entry?.status === 'done' ? Number(targetObj.value || 0) : 0);
 
-  const itemMin = h.durationMinutes || h.timeNeededMinutes || 60;
-  return val > 0 ? val * (itemMin / 60) : entry?.status === 'done' ? itemMin / 60 : 0;
+  if (['hrs', 'hr', 'hours', 'hour'].includes(unit)) return effectiveVal;
+  if (['mins', 'min', 'minutes', 'minute'].includes(unit)) return effectiveVal / 60;
+
+  return 0;
 }
 
 const INVALID_SUBJECT_NAMES = new Set(['study', 'general', 'gs1', 'gs2', 'gs3', 'gs4', 'csat', 'reading', 'revision', 'task', 'habit', 'uncategorized']);
@@ -73,8 +65,13 @@ function resolveValidSubject(rawSubj: string | undefined, title: string | undefi
   }
 
   if (title) {
-    const matched = validSyllabusSubjects.find((s) => title.toLowerCase().includes(s.toLowerCase()));
+    const cleanTitle = title.replace(/^\[R[123]\s+Revision\]\s*/i, '').trim();
+    const matched = validSyllabusSubjects.find((s) => cleanTitle.toLowerCase().includes(s.toLowerCase()));
     if (matched) return matched;
+
+    if (cleanTitle && !INVALID_SUBJECT_NAMES.has(cleanTitle.toLowerCase())) {
+      return cleanTitle;
+    }
   }
 
   return null;
@@ -85,18 +82,26 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
   const now = new Date();
   const weekKey = getWeekKey(now);
 
+  // Find Monday of current calendar week
+  const dayOfWeek = now.getDay();
+  const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diffToMon);
+
   const dayKeys: string[] = [];
-  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const weeklyData: Array<{ day: string; dateKey: string; hours: number; tasksCount: number; target: number }> = [];
 
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const dayKey = getStudyDayKey(d);
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dayKey = `${y}-${m}-${day}`;
     dayKeys.push(dayKey);
-    const dayName = daysOfWeek[d.getDay()];
     weeklyData.push({
-      day: dayName,
+      day: daysOfWeek[i],
       dateKey: dayKey,
       hours: 0,
       tasksCount: 0,
@@ -190,24 +195,7 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
       }
     });
 
-    topicRevisions.forEach((tr: any) => {
-      const subj = resolveValidSubject(tr.subject, tr.topic, validSyllabusSubjects);
-      const stages = Array.isArray(tr.revisions) ? tr.revisions : [];
-      stages.forEach((st: any) => {
-        if (st.completedDate === dKey || (st.status === 'done' && st.scheduledDate === dKey)) {
-          totalTasksDone++;
-          dayTasksCount++;
-          const revHours = 1.5;
-          dayEstimatedHours += revHours;
-          if (subj) {
-            if (!subjectHoursMap[subj]) {
-              subjectHoursMap[subj] = { subject: subj, hours: 0, color: colors[Object.keys(subjectHoursMap).length % colors.length] };
-            }
-            subjectHoursMap[subj].hours += revHours;
-          }
-        }
-      });
-    });
+    // dayTasksCount and totalTasksDone are accurately counted from habits collection above
 
     dayObj.hours = Number(dayEstimatedHours.toFixed(1));
     dayObj.tasksCount = dayTasksCount;

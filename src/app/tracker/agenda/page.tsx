@@ -9,6 +9,7 @@ import {
   Clock,
   Flame,
   Trash2,
+  Edit2,
   Loader2,
   Check,
   Circle,
@@ -34,6 +35,7 @@ export default function AgendaPage() {
     handleNextWeek,
     handleGoToToday,
     handleDeleteHabit,
+    handleOpenEditModal,
     handleItemClick,
   } = useTracker();
 
@@ -259,19 +261,37 @@ export default function AgendaPage() {
                   </div>
                 </div>
 
-                {/* Toggle Checkbox & Delete Buttons */}
+                {/* Toggle Checkbox, Edit & Delete Buttons */}
                 <div className="flex items-center gap-1 sm:gap-2">
+                  <button
+                    type="button"
+                    disabled={saving || selectedDate < new Date().toISOString().split("T")[0]}
+                    onClick={() => handleOpenEditModal(h)}
+                    className={`p-2 rounded-lg transition-colors ${
+                      selectedDate < new Date().toISOString().split("T")[0]
+                        ? "text-slate-300 dark:text-slate-700 cursor-not-allowed opacity-40"
+                        : "text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                    }`}
+                    title={
+                      selectedDate < new Date().toISOString().split("T")[0]
+                        ? "Backdate editing is disabled"
+                        : "Edit Task"
+                    }
+                  >
+                    <Edit2 size={16} />
+                  </button>
+
                   {h.type !== "habit" && (
                     <button
                       type="button"
-                      disabled={saving || deletingId === h._id}
+                      disabled={saving || deletingId === (h.id || h._id)}
                       onClick={() => {
-                        handleDeleteHabit(h._id);
+                        handleDeleteHabit(h.id || h._id);
                       }}
                       className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                       title="Delete Task & Topic Data"
                     >
-                      {deletingId === h._id ? (
+                      {deletingId === (h.id || h._id) ? (
                         <Loader2 size={16} className="animate-spin text-rose-500" />
                       ) : (
                         <Trash2 size={16} />

@@ -29,8 +29,7 @@ export function getMonthName(monthKey: string): string {
 }
 
 export async function getEffectiveUserId(userId?: string): Promise<string> {
-  if (userId && userId !== '000000000000000000000000') return userId;
-  return userId || '000000000000000000000000';
+  return userId || '';
 }
 
 // 1. Recalculate Atomic DailySnapshot

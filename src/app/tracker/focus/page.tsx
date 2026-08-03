@@ -70,32 +70,38 @@ export default function FocusPage() {
     return true;
   };
 
-  // Filter ONLY items on Today's Agenda that have time/hour goals or are study tasks
-  const todayAgendaHabits = habits.filter((h: any) => {
-    const scheduled = isScheduledForToday(h);
-    const hasTimeGoal =
-      h.isStudyTask ||
-      h.type === "task" ||
-      h.target?.unit === "hours" ||
-      h.target?.unit === "mins" ||
-      h.target?.unit === "minutes" ||
-      h.subject;
-    return scheduled && hasTimeGoal;
-  });
+  // Filter ONLY items on TODAY's Agenda that have time goals (hours or minutes ONLY)
+  const finalHabitList = habits.filter((h: any) => {
+    // 1. Must be scheduled on Today's Agenda
+    if (!isScheduledForToday(h)) return false;
 
-  const availableHabits = todayAgendaHabits.length > 0 ? todayAgendaHabits : habits.filter(isScheduledForToday);
-  const finalHabitList = availableHabits.length > 0 ? availableHabits : habits;
+    // 2. Unit MUST be time-based (hours or minutes)
+    const unit = (h.target?.unit || "").toLowerCase().trim();
+    const isTimeGoal =
+      unit === "hours" ||
+      unit === "hrs" ||
+      unit === "hour" ||
+      unit === "hr" ||
+      unit === "mins" ||
+      unit === "minutes" ||
+      unit === "min" ||
+      unit === "minute";
+
+    return isTimeGoal;
+  });
 
   useEffect(() => {
     if (finalHabitList.length > 0) {
-      const exists = finalHabitList.some((h: any) => h._id === timerHabitId);
+      const exists = finalHabitList.some((h: any) => (h.id || h._id) === timerHabitId);
       if (!exists) {
-        setTimerHabitId(finalHabitList[0]._id);
+        setTimerHabitId(finalHabitList[0].id || finalHabitList[0]._id);
       }
+    } else {
+      setTimerHabitId("");
     }
-  }, [finalHabitList.length]);
+  }, [finalHabitList, timerHabitId]);
 
-  const activeHabit = habits.find((h: any) => h._id === timerHabitId) || finalHabitList[0];
+  const activeHabit = habits.find((h: any) => (h.id || h._id) === timerHabitId) || finalHabitList[0];
 
   // Current session duration metrics
   const sessionHoursNum = Number((timerElapsed / 3600).toFixed(2));
@@ -168,7 +174,7 @@ export default function FocusPage() {
     const isGoalMet = isYesNoUnit || targetVal === 0 || newTotalVal >= targetVal;
     const targetStatus = isGoalMet ? "done" : "pending";
 
-    await handleToggleLog(activeHabit._id, todayStr, targetStatus, focusHours, true);
+    await handleToggleLog(activeHabit.id || activeHabit._id, todayStr, targetStatus, focusHours, true);
 
     if (isGoalMet) {
       setLogSuccessMessage(
@@ -232,20 +238,29 @@ export default function FocusPage() {
             </label>
             <ShadcnSelect
               value={timerHabitId}
-              onChange={(val: string) => setTimerHabitId(val)}
-              options={finalHabitList.map((h: any) => {
-                const hist = (h.history || []).find((e: any) => e.date === todayStr);
-                const valNum = hist ? hist.value || 0 : 0;
-                const tgtNum = h.target?.value || 0;
-                const progressStr =
-                  valNum > 0
-                    ? ` [${formatHoursAndMins(valNum)} / ${formatHoursAndMins(tgtNum)}]`
-                    : ` [Goal: ${formatHoursAndMins(tgtNum)}]`;
-                return {
-                  value: h._id,
-                  label: `${h.icon || "📚"} ${h.title}${progressStr}`,
-                };
-              })}
+              onChange={(val: string) => {
+                setTimerHabitId(val);
+                if (typeof syncTimerToStorage === "function") {
+                  syncTimerToStorage(timerRunning, null, timerElapsed, val, laps);
+                }
+              }}
+              options={
+                finalHabitList.length > 0
+                  ? finalHabitList.map((h: any) => {
+                      const hist = (h.history || []).find((e: any) => e.date === todayStr);
+                      const valNum = hist ? hist.value || 0 : 0;
+                      const tgtNum = h.target?.value || 0;
+                      const progressStr =
+                        valNum > 0
+                          ? ` [${formatHoursAndMins(valNum)} / ${formatHoursAndMins(tgtNum)}]`
+                          : ` [Goal: ${formatHoursAndMins(tgtNum)}]`;
+                      return {
+                        value: h.id || h._id,
+                        label: `${h.icon || "📚"} ${h.title}${progressStr}`,
+                      };
+                    })
+                  : [{ value: "", label: "No time-based tasks scheduled for today" }]
+              }
             />
           </div>
 

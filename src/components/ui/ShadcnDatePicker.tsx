@@ -101,7 +101,7 @@ export default function ShadcnDatePicker({
     : 'left-0';
 
   return (
-    <div className="relative inline-block w-full z-30" ref={popoverRef}>
+    <div className={`relative inline-block w-full ${isOpen ? 'z-[99999]' : 'z-30'}`} ref={popoverRef}>
       <div className="flex items-center gap-1.5 w-full">
         <button
           type="button"

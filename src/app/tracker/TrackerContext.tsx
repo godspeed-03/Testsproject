@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getSubjectTheme } from '@/lib/subjectThemeMap';
 
 export const calculateHabitStreak = (h: any) => {
   if (!h || !h.history) return { current: 0, best: 0 };
@@ -178,7 +179,7 @@ export const isHabitScheduledForDate = (h: any, dateIso: string): boolean => {
 export const getTargetGoalLabel = (h: any) => {
   const val = h.target?.value || 1;
   const unit = h.target?.unit || 'times';
-  if (unit === 'yes_no' || unit === 'boolean') return 'Mark Done (Yes/No)';
+  if (unit === 'yes_no' || unit === 'boolean') return 'Mark Done';
   if (unit !== 'times' && unit !== 'yes_no' && unit !== 'boolean') {
     return `${val} ${unit}`;
   }
@@ -240,6 +241,25 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       setFormIsAugmentedRevision(!isNonAug);
     }
   }, [formSubject, formCategory, formIsStudyTask]);
+
+  // Auto-fill Icon & Theme Color from selected Syllabus subject when formIsStudyTask is true
+  useEffect(() => {
+    if (formIsStudyTask && formSubject) {
+      const matchedItem = (syllabusItems || []).find(
+        (item: any) => item.subject?.toLowerCase() === formSubject.toLowerCase()
+      );
+      if (matchedItem) {
+        if (matchedItem.color) setFormColor(matchedItem.color);
+        if (matchedItem.icon) setFormIcon(matchedItem.icon);
+      } else {
+        const theme = getSubjectTheme(formSubject);
+        if (theme) {
+          if (theme.color) setFormColor(theme.color);
+          if (theme.icon) setFormIcon(theme.icon);
+        }
+      }
+    }
+  }, [formSubject, syllabusItems, formIsStudyTask]);
 
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [progressModalHabit, setProgressModalHabit] = useState<any | null>(null);
@@ -382,7 +402,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           }
         }
         if (data.habits && data.habits.length > 0 && !timerHabitId) {
-          setTimerHabitId(data.habits[0]._id);
+          setTimerHabitId(data.habits[0].id || data.habits[0]._id);
         }
       }
     } catch (e) {
@@ -417,6 +437,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormStartDate(item.startDate || new Date().toISOString().split('T')[0]);
     setFormEndDate(item.endDate || '');
     setFormIsStudyTask(!!item.isStudyTask);
+    setFormIsAugmentedRevision(item.isAugmentedRevision !== undefined ? !!item.isAugmentedRevision : true);
     setFormSubject(item.subject || '');
     setFormTopic(item.topic || '');
     setFormColor(item.color || '#6366F1');
@@ -517,7 +538,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     const isYesNoUnit = h.target?.unit === 'yes_no' || h.target?.unit === 'boolean';
     
     if (isRevision || isYesNoUnit || h.type === 'event') {
-      handleToggleLog(h._id, date, 'toggle');
+      handleToggleLog(h.id || h._id, date, 'toggle');
     } else {
       const existing = (h.history || []).find((hist: any) => hist.date === date);
       const existingVal = existing ? (existing.value || 0) : 0;
@@ -546,7 +567,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
 
     const targetVal = progressModalHabit.target?.value || 1;
     const finalStatus = finalVal >= targetVal ? 'done' : (finalVal > 0 ? 'pending' : 'pending');
-    await handleToggleLog(progressModalHabit._id, progressModalDate, finalStatus, finalVal);
+    await handleToggleLog(progressModalHabit.id || progressModalHabit._id, progressModalDate, finalStatus, finalVal);
     setShowProgressModal(false);
   };
 
@@ -617,7 +638,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
             monthlyDay: formFrequencyMode === 'monthly' ? formMonthlyDay : 1
           },
           target: {
-            value: Number(formTargetVal) || 1,
+            value: (finalTargetUnit === 'yes_no' || finalTargetUnit === 'boolean') ? null : (Number(formTargetVal) || 1),
             unit: finalTargetUnit
           },
           reminders: [

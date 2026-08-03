@@ -1,9 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X, Plus, Trash2, Check, Loader2, ListChecks, Zap, GripVertical } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { X, Plus, Trash2, Check, Loader2, ListChecks, Zap, GripVertical, Palette } from "lucide-react";
 import ShadcnSelect from "@/components/ui/ShadcnSelect";
 import { ISyllabusRuleState } from "@/types";
+import {
+  SUBJECT_COLOR_OPTIONS,
+  NON_SUBJECT_COLOR_OPTIONS,
+  ALL_UPSC_ICONS,
+  getSubjectTheme,
+} from "@/lib/subjectThemeMap";
 import {
   DndContext,
   closestCenter,
@@ -26,12 +32,13 @@ interface EditSubjectRulesModalProps {
   isOpen: boolean;
   onClose: () => void;
   subjectItem: any;
-  onSaveRules: (subjectId: string, updatedRules: ISyllabusRuleState[]) => Promise<void>;
+  onSaveRules: (subjectId: string, updatedRules: ISyllabusRuleState[], color?: string, icon?: string) => Promise<void>;
   isLight?: boolean;
   cardBg?: string;
   inputBg?: string;
   textTitle?: string;
   textMuted?: string;
+  existingSubjects?: any[];
 }
 
 export default function EditSubjectRulesModal({
@@ -44,12 +51,37 @@ export default function EditSubjectRulesModal({
   inputBg = "bg-slate-50 dark:bg-slate-950",
   textTitle = "text-slate-900 dark:text-slate-100",
   textMuted = "text-slate-500 dark:text-slate-400",
+  existingSubjects = [],
 }: EditSubjectRulesModalProps) {
   const [rules, setRules] = useState<ISyllabusRuleState[]>([]);
+  const [color, setColor] = useState<string>("#6366F1");
+  const [icon, setIcon] = useState<string>("📚");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [activeEmojiTab, setActiveEmojiTab] = useState<string>("all");
   const [newRuleName, setNewRuleName] = useState("");
   const [ruleTemplates, setRuleTemplates] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const usedColors = useMemo(() => {
+    const set = new Set<string>();
+    (existingSubjects || []).forEach((s) => {
+      if (s.id === subjectItem?.id) return;
+      const c = s.color || getSubjectTheme(s.subject)?.color;
+      if (c) set.add(c.toLowerCase());
+    });
+    return set;
+  }, [existingSubjects, subjectItem]);
+
+  const usedIcons = useMemo(() => {
+    const set = new Set<string>();
+    (existingSubjects || []).forEach((s) => {
+      if (s.id === subjectItem?.id) return;
+      const ic = s.icon || getSubjectTheme(s.subject)?.icon;
+      if (ic) set.add(ic);
+    });
+    return set;
+  }, [existingSubjects, subjectItem]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -65,6 +97,9 @@ export default function EditSubjectRulesModal({
   useEffect(() => {
     if (isOpen && subjectItem) {
       setRules(subjectItem.rules || []);
+      const matchedTheme = getSubjectTheme(subjectItem.subject);
+      setColor(subjectItem.color || matchedTheme?.color || "#6366F1");
+      setIcon(subjectItem.icon || matchedTheme?.icon || "📚");
       fetchTemplates();
     }
   }, [isOpen, subjectItem]);
@@ -137,7 +172,7 @@ export default function EditSubjectRulesModal({
   const handleSave = async () => {
     setLoading(true);
     try {
-      await onSaveRules(subjectItem.id, rules);
+      await onSaveRules(subjectItem.id, rules, color, icon);
       onClose();
     } catch (e) {
       console.error(e);
@@ -152,14 +187,115 @@ export default function EditSubjectRulesModal({
         
         <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center justify-center shrink-0">
-              <ListChecks size={22} />
+            {/* Subject Icon + Color Badge */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 border shadow-inner transition-all hover:scale-105 cursor-pointer active:scale-95"
+                style={{ backgroundColor: `${color}20`, color, borderColor: `${color}40` }}
+                title="Click to customize Subject Icon & Color"
+              >
+                {icon}
+              </button>
+
+              {/* Floating Popover: Icon & Theme Color Selector */}
+              {showEmojiPicker && (
+                <div className="absolute top-full left-0 mt-2 w-80 sm:w-[400px] p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-amber-500/30 shadow-2xl space-y-3 animate-fade-in z-[999999]">
+                  <div className="flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <div className="flex items-center gap-1.5">
+                      <Palette size={15} className="text-amber-500" />
+                      <span>Customize Subject Icon & Color</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowEmojiPicker(false)}
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  {/* Theme Color Picker Section */}
+                  <div className="space-y-1.5">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Theme Color Palette (35 Colors)</div>
+                    <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-100 dark:border-slate-800 flex-wrap max-h-32 overflow-y-auto custom-scrollbar">
+                      {SUBJECT_COLOR_OPTIONS.map((c) => {
+                        const isTaken = usedColors.has(c.toLowerCase()) && color?.toLowerCase() !== c.toLowerCase();
+                        return (
+                          <button
+                            key={c}
+                            type="button"
+                            disabled={isTaken}
+                            onClick={() => {
+                              if (isTaken) return;
+                              setColor(c);
+                            }}
+                            title={isTaken ? "Color already assigned to another subject" : c}
+                            className={`w-6 h-6 rounded-full transition-all flex items-center justify-center relative ${
+                              isTaken
+                                ? 'opacity-25 cursor-not-allowed filter grayscale scale-90'
+                                : color?.toLowerCase() === c.toLowerCase()
+                                ? 'scale-125 ring-2 ring-amber-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-md cursor-pointer'
+                                : 'hover:scale-110 opacity-75 hover:opacity-100 cursor-pointer'
+                            }`}
+                            style={{ backgroundColor: c }}
+                          >
+                            {isTaken && (
+                              <span className="text-[9px] text-white font-black drop-shadow-xs select-none">✕</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 150+ UPSC Subject & Syllabus Icons */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">UPSC Subject Icons (150+ Options)</span>
+                    </div>
+
+                    <div className="grid grid-cols-8 sm:grid-cols-10 gap-1.5 max-h-44 overflow-y-auto p-2 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 scrollbar-thin">
+                      {ALL_UPSC_ICONS.map((emoji, idx) => {
+                        const isTaken = usedIcons.has(emoji) && icon !== emoji;
+                        return (
+                          <button
+                            key={emoji + idx}
+                            type="button"
+                            disabled={isTaken}
+                            onClick={() => {
+                              if (isTaken) return;
+                              setIcon(emoji);
+                              setShowEmojiPicker(false);
+                            }}
+                            title={isTaken ? "Icon already assigned to another subject" : emoji}
+                            className={`w-7 h-7 rounded-lg text-base flex items-center justify-center transition-all relative ${
+                              isTaken
+                                ? 'opacity-25 cursor-not-allowed bg-slate-200/60 dark:bg-slate-800/60 grayscale scale-90'
+                                : icon === emoji
+                                ? 'bg-amber-500 text-white font-black scale-110 shadow-md cursor-pointer'
+                                : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
+                            }`}
+                          >
+                            {emoji}
+                            {isTaken && (
+                              <span className="absolute inset-0 flex items-center justify-center text-[10px] text-rose-500 font-black select-none">🚫</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
+
             <div>
               <h3 className="font-black font-display text-base sm:text-xl text-slate-900 dark:text-slate-100">
-                Edit Rules for <span className="text-amber-500">{subjectItem.subject}</span>
+                Edit Rules for <span style={{ color }}>{subjectItem.subject}</span>
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">Customize milestone sequence steps</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">Customize milestone sequence steps & theme</p>
             </div>
           </div>
           
@@ -169,6 +305,31 @@ export default function EditSubjectRulesModal({
             className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-rose-500/10 hover:text-rose-500 text-slate-400 flex items-center justify-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700/60 active:scale-95"
           >
             <X size={18} />
+          </button>
+        </div>
+
+        {/* Dedicated Subject Icon & Color Customization Trigger Bar */}
+        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2.5">
+            <span
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-lg shrink-0 shadow-xs"
+              style={{ backgroundColor: `${color}30`, color }}
+            >
+              {icon}
+            </span>
+            <div>
+              <span className="block text-xs font-black text-slate-800 dark:text-slate-200">Subject Theme Color & Icon</span>
+              <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold">Click button to change icon and color</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-black transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+          >
+            <Palette size={14} />
+            <span>Edit Icon & Theme Color</span>
           </button>
         </div>
 

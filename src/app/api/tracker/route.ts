@@ -4,6 +4,7 @@ import { getUserFromCookies } from "@/lib/auth";
 import { calcOverdueStatus } from "@/lib/topicRevisionEngine";
 import { buildDynamicRulesFromLegacy } from "@/lib/syllabusRules";
 import { sortSyllabusItems } from "@/lib/utils";
+import { ensureUniqueColorsAndIcons } from "@/lib/subjectThemeMap";
 
 async function cleanupCorruptedSyllabusItems(userId: string) {
   try {
@@ -60,7 +61,10 @@ async function cleanupCorruptedSyllabusItems(userId: string) {
 export async function GET() {
   try {
     const user = await getUserFromCookies();
-    const userId = user?.userId || "000000000000000000000000";
+    if (!user?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = user.userId;
 
     const todayStr = new Date().toISOString().split("T")[0];
 
@@ -71,18 +75,33 @@ export async function GET() {
       prisma.syllabusRuleSet.findMany({ where: { userId } }),
     ]);
 
-    const formattedSyllabus = sortSyllabusItems(
-      syllabus.map((item) => ({
-        id: item.customId || item.id,
-        subject: item.subject,
-        category: item.category || "GS1",
-        status: item.status || "Not Started",
-        source: item.source || "",
-        date: item.date || "",
-        nextRev: item.nextRev || "",
-        rules: buildDynamicRulesFromLegacy(item, dbRuleSets),
-      }))
-    );
+    const rawSyllabus = syllabus.map((item) => ({
+      id: item.customId || item.id,
+      dbId: item.id,
+      subject: item.subject,
+      category: item.category || "GS1",
+      status: item.status || "Not Started",
+      source: item.source || "",
+      date: item.date || "",
+      nextRev: item.nextRev || "",
+      color: (item as any).color || "",
+      icon: (item as any).icon || "",
+      rules: buildDynamicRulesFromLegacy(item, dbRuleSets),
+    }));
+
+    const uniqueSyllabus = ensureUniqueColorsAndIcons(rawSyllabus);
+
+    for (const item of uniqueSyllabus) {
+      const orig = syllabus.find((s) => s.id === item.dbId);
+      if (orig && (!(orig as any).color || !(orig as any).icon)) {
+        await prisma.syllabusItem.update({
+          where: { id: item.dbId },
+          data: { color: item.color, icon: item.icon },
+        }).catch(() => {});
+      }
+    }
+
+    const formattedSyllabus = sortSyllabusItems(uniqueSyllabus);
 
     const formattedTestLogs = testLogs.map((item) => ({
       id: item.customId || item.id,

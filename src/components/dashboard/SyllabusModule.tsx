@@ -127,7 +127,18 @@ export default function SyllabusModule({
               >
                 <div className="flex justify-between items-start flex-wrap gap-2">
                   <div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                      {(s.icon || s.color) ? (
+                        <div
+                          className="w-7.5 h-7.5 rounded-lg flex items-center justify-center text-sm shrink-0 shadow-xs border border-black/10 dark:border-white/10"
+                          style={{
+                            backgroundColor: s.color ? `${s.color}22` : 'transparent',
+                            borderColor: s.color ? `${s.color}44` : undefined,
+                          }}
+                        >
+                          {s.icon ? <span>{s.icon}</span> : null}
+                        </div>
+                      ) : null}
                       <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-lg border ${getCategoryBadge(s.category)}`}>
                         {s.category}
                       </span>

@@ -1,10 +1,27 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Plus, X, Loader2, ListChecks, BookOpen } from "lucide-react";
+import { Plus, X, Loader2, ListChecks, BookOpen, Palette, Smile, ChevronDown } from "lucide-react";
 import ShadcnSelect from "@/components/ui/ShadcnSelect";
 import { ISyllabusRuleState } from "@/types";
+import {
+  SUBJECT_COLOR_OPTIONS,
+  NON_SUBJECT_COLOR_OPTIONS,
+  ALL_UPSC_ICONS,
+  getSubjectTheme,
+} from "@/lib/subjectThemeMap";
+
+const DEFAULT_UPSC_CATEGORIES = [
+  "GS1",
+  "GS2",
+  "GS3",
+  "GS4",
+  "MATHS",
+  "CSAT",
+  "ESSAY",
+  "OPTIONAL",
+];
 
 interface AddSubjectModalProps {
   isOpen: boolean;
@@ -16,6 +33,7 @@ interface AddSubjectModalProps {
   textTitle?: string;
   textMuted?: string;
   categories?: string[];
+  existingSubjects?: any[];
 }
 
 export default function AddSubjectModal({
@@ -28,10 +46,37 @@ export default function AddSubjectModal({
   textTitle = "text-slate-900 dark:text-slate-100",
   textMuted = "text-slate-700 dark:text-slate-300",
   categories = [],
+  existingSubjects = [],
 }: AddSubjectModalProps) {
   const [mounted, setMounted] = useState(false);
+  const effectiveCategories = categories && categories.length > 0 ? categories : DEFAULT_UPSC_CATEGORIES;
+  
   const [subject, setSubject] = useState("");
-  const [category, setCategory] = useState(categories[0] || "");
+  const [category, setCategory] = useState(effectiveCategories[0] || "GS1");
+  const [color, setColor] = useState("#6366F1");
+  const [icon, setIcon] = useState("📚");
+  const [isUserCustomizedColor, setIsUserCustomizedColor] = useState(false);
+  const [isUserCustomizedIcon, setIsUserCustomizedIcon] = useState(false);
+
+  // Compute colors and icons already assigned to existing subjects
+  const usedColors = useMemo(() => {
+    const set = new Set<string>();
+    (existingSubjects || []).forEach((s) => {
+      const c = s.color || getSubjectTheme(s.subject)?.color;
+      if (c) set.add(c.toLowerCase());
+    });
+    return set;
+  }, [existingSubjects]);
+
+  const usedIcons = useMemo(() => {
+    const set = new Set<string>();
+    (existingSubjects || []).forEach((s) => {
+      const ic = s.icon || getSubjectTheme(s.subject)?.icon;
+      if (ic) set.add(ic);
+    });
+    return set;
+  }, [existingSubjects]);
+  const [showPicker, setShowPicker] = useState(false);
   const [ruleTemplates, setRuleTemplates] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [customRules, setCustomRules] = useState<ISyllabusRuleState[]>([]);
@@ -43,10 +88,29 @@ export default function AddSubjectModal({
   }, []);
 
   useEffect(() => {
-    if (categories.length > 0 && !category) {
-      setCategory(categories[0]);
+    if (isOpen) {
+      const firstUnusedColor = SUBJECT_COLOR_OPTIONS.find((c) => !usedColors.has(c.toLowerCase())) || SUBJECT_COLOR_OPTIONS[0];
+      const firstUnusedIcon = ALL_UPSC_ICONS.find((ic) => !usedIcons.has(ic)) || ALL_UPSC_ICONS[0];
+      if (!isUserCustomizedColor) setColor(firstUnusedColor);
+      if (!isUserCustomizedIcon) setIcon(firstUnusedIcon);
     }
-  }, [categories, category]);
+  }, [isOpen, usedColors, usedIcons, isUserCustomizedColor, isUserCustomizedIcon]);
+
+  useEffect(() => {
+    if (effectiveCategories.length > 0 && !category) {
+      setCategory(effectiveCategories[0]);
+    }
+  }, [effectiveCategories, category]);
+
+  // Auto set theme when subject name matches a UPSC subject ONLY if user hasn't manually customized
+  const handleSubjectNameChange = (val: string) => {
+    setSubject(val);
+    const matched = getSubjectTheme(val);
+    if (matched) {
+      if (!isUserCustomizedColor) setColor(matched.color);
+      if (!isUserCustomizedIcon) setIcon(matched.icon);
+    }
+  };
 
   useEffect(() => {
     if (isOpen && mounted) {
@@ -145,9 +209,13 @@ export default function AddSubjectModal({
       await onAddSubject({
         subject: subject.trim(),
         category,
+        color,
+        icon,
         rules: customRules,
       });
       setSubject("");
+      setIsUserCustomizedColor(false);
+      setIsUserCustomizedIcon(false);
       onClose();
     } catch (err) {
       console.error(err);
@@ -156,7 +224,7 @@ export default function AddSubjectModal({
     }
   };
 
-  const catOptions = categories.map((c) => ({
+  const catOptions = effectiveCategories.map((c) => ({
     value: c,
     label: c,
   }));
@@ -194,14 +262,118 @@ export default function AddSubjectModal({
           <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm">
             <div>
               <label className="block mb-1.5 font-black text-slate-700 dark:text-slate-300">Subject Name *</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. Modern History, Ethics, Geography"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-4 py-3 outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all shadow-inner"
-              />
+              <div className="flex gap-2 items-center">
+                {/* Integrated Icon & Theme Picker Trigger */}
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowPicker(!showPicker)}
+                    className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 border shadow-inner transition-all hover:scale-105 cursor-pointer active:scale-95"
+                    style={{ backgroundColor: `${color}25`, color, borderColor: `${color}45` }}
+                    title="Click to choose subject icon & theme color"
+                  >
+                    {icon}
+                  </button>
+
+                  {/* Floating Popover: Icon & Theme Color Selector */}
+                  {showPicker && (
+                    <div className="absolute top-full left-0 mt-2 w-80 sm:w-[380px] p-4 bg-white dark:bg-slate-900 rounded-3xl border border-indigo-500/30 shadow-2xl space-y-3 z-[9999999] animate-fade-in glass-panel">
+                      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                        <span className="text-xs font-black text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                          <Palette size={15} className="text-indigo-500" /> Subject Theme Color & Icon
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowPicker(false)}
+                          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-bold p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      {/* 35 Color Palette */}
+                      <div className="space-y-1.5">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Theme Colors (35 Options)</span>
+                        <div className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 flex-wrap max-h-32 overflow-y-auto scrollbar-thin">
+                          {SUBJECT_COLOR_OPTIONS.map((c) => {
+                            const isTaken = usedColors.has(c.toLowerCase()) && color.toLowerCase() !== c.toLowerCase();
+                            return (
+                              <button
+                                key={c}
+                                type="button"
+                                disabled={isTaken}
+                                onClick={() => {
+                                  if (isTaken) return;
+                                  setColor(c);
+                                  setIsUserCustomizedColor(true);
+                                }}
+                                title={isTaken ? "Color already assigned to another subject" : c}
+                                className={`w-6 h-6 rounded-full transition-all flex items-center justify-center relative ${
+                                  isTaken
+                                    ? 'opacity-25 cursor-not-allowed filter grayscale scale-90'
+                                    : color?.toLowerCase() === c.toLowerCase()
+                                    ? 'scale-125 ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-md cursor-pointer'
+                                    : 'hover:scale-110 opacity-75 hover:opacity-100 cursor-pointer'
+                                }`}
+                                style={{ backgroundColor: c }}
+                              >
+                                {isTaken && (
+                                  <span className="text-[9px] text-white font-black drop-shadow-xs select-none">✕</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 150+ UPSC Subject & Syllabus Icons */}
+                      <div className="space-y-1.5 pt-1">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">UPSC Subject & Syllabus Icons (150+ Options)</span>
+                        <div className="grid grid-cols-8 sm:grid-cols-10 gap-1.5 p-2 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 max-h-44 overflow-y-auto scrollbar-thin">
+                          {ALL_UPSC_ICONS.map((emoji, idx) => {
+                            const isTaken = usedIcons.has(emoji) && icon !== emoji;
+                            return (
+                              <button
+                                key={emoji + idx}
+                                type="button"
+                                disabled={isTaken}
+                                onClick={() => {
+                                  if (isTaken) return;
+                                  setIcon(emoji);
+                                  setIsUserCustomizedIcon(true);
+                                  setShowPicker(false);
+                                }}
+                                title={isTaken ? "Icon already assigned to another subject" : emoji}
+                                className={`w-7 h-7 rounded-xl text-base flex items-center justify-center transition-all relative ${
+                                  isTaken
+                                    ? 'opacity-25 cursor-not-allowed bg-slate-200/60 dark:bg-slate-800/60 grayscale scale-90'
+                                    : icon === emoji
+                                    ? 'bg-indigo-600 text-white font-black scale-110 shadow-md ring-2 ring-indigo-400 cursor-pointer'
+                                    : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
+                                }`}
+                              >
+                                {emoji}
+                                {isTaken && (
+                                  <span className="absolute inset-0 flex items-center justify-center text-[10px] text-rose-500 font-black select-none">🚫</span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Modern History, Ethics, Geography"
+                  value={subject}
+                  onChange={(e) => handleSubjectNameChange(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-4 py-3 outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/20 transition-all shadow-inner"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

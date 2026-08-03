@@ -19,7 +19,10 @@ function deepClean(obj: any): any {
 export async function GET() {
   try {
     const user = await getUserFromCookies();
-    const userId = user?.userId || '000000000000000000000000';
+    if (!user?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = user.userId;
     const todayStr = new Date().toISOString().split('T')[0];
 
     const [

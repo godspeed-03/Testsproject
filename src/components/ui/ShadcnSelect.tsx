@@ -51,7 +51,7 @@ export default function ShadcnSelect({
   const dropdownStyle = "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-2xl backdrop-blur-md";
 
   return (
-    <div className={`relative inline-block w-full z-30 ${className}`} ref={containerRef}>
+    <div className={`relative inline-block w-full ${isOpen ? 'z-[99999]' : 'z-30'} ${className}`} ref={containerRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}

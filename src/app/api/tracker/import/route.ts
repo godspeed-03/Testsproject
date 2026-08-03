@@ -20,7 +20,10 @@ function sanitizeBson(obj: any): any {
 export async function POST(req: Request) {
   try {
     const user = await getUserFromCookies();
-    const userId = user?.userId || '000000000000000000000000';
+    if (!user?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = user.userId;
 
     const rawData = await req.json();
     const data = sanitizeBson(rawData);

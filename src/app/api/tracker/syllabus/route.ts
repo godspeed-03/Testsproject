@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { getUserFromCookies } from "@/lib/auth";
 import { buildDynamicRulesFromLegacy, getDefaultRulesForCategory } from "@/lib/syllabusRules";
 import { sortSyllabusItems } from "@/lib/utils";
+import { ensureUniqueColorsAndIcons } from "@/lib/subjectThemeMap";
 
 function addDaysStr(dateStr: string, days: number) {
   if (!dateStr) return "";
@@ -14,10 +15,13 @@ function addDaysStr(dateStr: string, days: number) {
 export async function POST(req: Request) {
   try {
     const user = await getUserFromCookies();
-    const userId = user?.userId || "000000000000000000000000";
+    if (!user?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = user.userId;
 
     const body = await req.json();
-    const { action, id, subject, category, status, source, date, nextRev, rules, ruleKey, completed } = body;
+    const { action, id, subject, category, status, source, date, nextRev, color, icon, rules, ruleKey, completed } = body;
 
     const dbRuleSets = await prisma.syllabusRuleSet.findMany({ where: { userId } });
 
@@ -85,6 +89,8 @@ export async function POST(req: Request) {
             source: source ?? item.source,
             date: date ?? (item.date || todayStr),
             nextRev: nextRev ?? (item.nextRev || addDaysStr(item.date || todayStr, 7)),
+            color: color ?? (item as any).color,
+            icon: icon ?? (item as any).icon,
             rules: newRules as any,
           },
         });
@@ -115,6 +121,8 @@ export async function POST(req: Request) {
           source: source || "",
           date: initialDate,
           nextRev: initialNextRev,
+          color: color || "",
+          icon: icon || "",
           rules: initialRules as any,
         },
       });
@@ -122,18 +130,33 @@ export async function POST(req: Request) {
 
     const syllabus = await prisma.syllabusItem.findMany({ where: { userId } });
 
-    const formattedSyllabus = sortSyllabusItems(
-      syllabus.map((item) => ({
-        id: item.customId || item.id,
-        subject: item.subject,
-        category: item.category || "GS1",
-        status: item.status || "Not Started",
-        source: item.source || "",
-        date: item.date || "",
-        nextRev: item.nextRev || "",
-        rules: buildDynamicRulesFromLegacy(item, dbRuleSets),
-      })),
-    );
+    const rawSyllabus = syllabus.map((item) => ({
+      id: item.customId || item.id,
+      dbId: item.id,
+      subject: item.subject,
+      category: item.category || "GS1",
+      status: item.status || "Not Started",
+      source: item.source || "",
+      date: item.date || "",
+      nextRev: item.nextRev || "",
+      color: (item as any).color || "",
+      icon: (item as any).icon || "",
+      rules: buildDynamicRulesFromLegacy(item, dbRuleSets),
+    }));
+
+    const uniqueSyllabus = ensureUniqueColorsAndIcons(rawSyllabus);
+
+    for (const item of uniqueSyllabus) {
+      const orig = syllabus.find((s) => s.id === item.dbId);
+      if (orig && (!(orig as any).color || !(orig as any).icon)) {
+        await prisma.syllabusItem.update({
+          where: { id: item.dbId },
+          data: { color: item.color, icon: item.icon },
+        }).catch(() => {});
+      }
+    }
+
+    const formattedSyllabus = sortSyllabusItems(uniqueSyllabus);
 
     return NextResponse.json({ syllabusList: formattedSyllabus });
   } catch (error: any) {

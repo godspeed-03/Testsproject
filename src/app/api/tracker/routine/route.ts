@@ -36,7 +36,10 @@ function cleanRoutinePayload(obj: any): any {
 export async function GET() {
   try {
     const user = await getUserFromCookies();
-    const userId = user?.userId || '000000000000000000000000';
+    if (!user?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = user.userId;
 
     const config = await prisma.routineConfig.findUnique({
       where: { userId },
@@ -66,7 +69,10 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const user = await getUserFromCookies();
-    const userId = user?.userId || '000000000000000000000000';
+    if (!user?.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = user.userId;
 
     const body = await req.json();
     let rawRoutineData = body.routineConfig || body;

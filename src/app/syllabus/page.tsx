@@ -210,7 +210,12 @@ export default function SyllabusPage() {
     }
   };
 
-  const handleSaveSubjectRules = async (subjectId: string, updatedRules: ISyllabusRuleState[]) => {
+  const handleSaveSubjectRules = async (
+    subjectId: string,
+    updatedRules: ISyllabusRuleState[],
+    color?: string,
+    icon?: string
+  ) => {
     try {
       const res = await fetch("/api/tracker/syllabus", {
         method: "POST",
@@ -219,6 +224,8 @@ export default function SyllabusPage() {
           action: "update_rules",
           id: subjectId,
           rules: updatedRules,
+          color,
+          icon,
         }),
       });
       if (res.ok) {
@@ -619,16 +626,30 @@ export default function SyllabusPage() {
 
                         {/* Subject */}
                         <td className="py-4.5 px-5 font-bold text-slate-900 dark:text-slate-100">
-                          <div className="flex flex-col">
-                            <span
-                              onClick={() => setSelectedSubjectModal(s)}
-                              className="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-black text-sm sm:text-base whitespace-nowrap"
-                            >
-                              {s.subject}
-                            </span>
-                            {s.source && (
-                              <span className="text-xs text-slate-400 font-medium mt-0.5">Source: {s.source}</span>
-                            )}
+                          <div className="flex items-center gap-2.5">
+                            {/* Render icon & color preview ONLY if icon or color exists */}
+                            {(s.icon || s.color) ? (
+                              <div
+                                className="w-8 h-8 rounded-xl flex items-center justify-center text-base shrink-0 shadow-xs border border-black/10 dark:border-white/10"
+                                style={{
+                                  backgroundColor: s.color ? `${s.color}22` : 'transparent',
+                                  borderColor: s.color ? `${s.color}44` : undefined,
+                                }}
+                              >
+                                {s.icon ? <span>{s.icon}</span> : null}
+                              </div>
+                            ) : null}
+                            <div className="flex flex-col">
+                              <span
+                                onClick={() => setSelectedSubjectModal(s)}
+                                className="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-black text-sm sm:text-base whitespace-nowrap"
+                              >
+                                {s.subject}
+                              </span>
+                              {s.source && (
+                                <span className="text-xs text-slate-400 font-medium mt-0.5">Source: {s.source}</span>
+                              )}
+                            </div>
                           </div>
                         </td>
 
@@ -750,6 +771,8 @@ export default function SyllabusPage() {
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           onAddSubject={handleAddSubjectSubmit}
+          categories={["GS1", "GS2", "GS3", "GS4", "MATHS", "CSAT", "ESSAY", "OPTIONAL"]}
+          existingSubjects={syllabusList}
           isLight={false}
           cardBg="bg-white dark:bg-slate-900"
           inputBg="bg-slate-100 dark:bg-slate-950"
@@ -767,6 +790,7 @@ export default function SyllabusPage() {
           isOpen={!!editingSubjectRules}
           onClose={() => setEditingSubjectRules(null)}
           subjectItem={editingSubjectRules}
+          existingSubjects={syllabusList}
           onSaveRules={handleSaveSubjectRules}
           isLight={true}
         />

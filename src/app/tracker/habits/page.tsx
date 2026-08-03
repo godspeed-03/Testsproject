@@ -185,10 +185,11 @@ export default function HabitsPage() {
       ) : (
         <div className="space-y-5">
           {habitList.map((h: any) => {
+            const habitId = h.id || h._id;
             const streak = calculateHabitStreak(h);
-            const offset = habitWeekOffsets[h._id] || 0;
+            const offset = habitWeekOffsets[habitId] || 0;
             const weekDays = getWeekDaysForOffset(offset);
-            const mOffset = habitMonthOffsets[h._id] || 0;
+            const mOffset = habitMonthOffsets[habitId] || 0;
             const { year: mYear, monthName: mName, monthDays } = getMonthDaysForOffset(mOffset);
 
             const todayHist = (h.history || []).find((entry: any) => entry.date === todayIso);
@@ -196,7 +197,7 @@ export default function HabitsPage() {
             const isNumeric = h.target?.unit !== 'yes_no' && h.target?.unit !== 'boolean';
 
             return (
-              <div key={h._id} className={`p-5 rounded-2xl border ${cardBg} space-y-4 shadow-xs`}>
+              <div key={habitId} className={`p-5 rounded-2xl border ${cardBg} space-y-4 shadow-xs`}>
                 {/* Habit Card Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                   <div className="flex items-center gap-3.5">
@@ -257,16 +258,16 @@ export default function HabitsPage() {
 
                     <button
                       type="button"
-                      disabled={saving || deletingId === h._id}
+                      disabled={saving || deletingId === habitId}
                       onClick={() => {
                         if (confirm(`Delete habit "${h.title}"?`)) {
-                          handleDeleteHabit(h._id);
+                          handleDeleteHabit(habitId);
                         }
                       }}
                       className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                       title="Delete Habit"
                     >
-                      {deletingId === h._id ? <Loader2 size={16} className="animate-spin text-rose-500" /> : <Trash2 size={16} />}
+                      {deletingId === habitId ? <Loader2 size={16} className="animate-spin text-rose-500" /> : <Trash2 size={16} />}
                     </button>
                   </div>
                 </div>
@@ -279,7 +280,7 @@ export default function HabitsPage() {
                         <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
                           <button
                             type="button"
-                            onClick={() => setHabitMonthOffsets((prev) => ({ ...prev, [h._id]: (prev[h._id] || 0) - 1 }))}
+                            onClick={() => setHabitMonthOffsets((prev) => ({ ...prev, [habitId]: (prev[habitId] || 0) - 1 }))}
                             className="p-1 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
                             title="Previous Month"
                           >
@@ -290,7 +291,7 @@ export default function HabitsPage() {
                           </span>
                           <button
                             type="button"
-                            onClick={() => setHabitMonthOffsets((prev) => ({ ...prev, [h._id]: (prev[h._id] || 0) + 1 }))}
+                            onClick={() => setHabitMonthOffsets((prev) => ({ ...prev, [habitId]: (prev[habitId] || 0) + 1 }))}
                             className="p-1 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
                             title="Next Month"
                           >
@@ -301,7 +302,7 @@ export default function HabitsPage() {
                         {mOffset !== 0 && (
                           <button
                             type="button"
-                            onClick={() => setHabitMonthOffsets((prev) => ({ ...prev, [h._id]: 0 }))}
+                            onClick={() => setHabitMonthOffsets((prev) => ({ ...prev, [habitId]: 0 }))}
                             className="px-3.5 py-1.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-black hover:bg-purple-500/20 transition-all normal-case"
                           >
                             Reset Month
@@ -350,7 +351,7 @@ export default function HabitsPage() {
                             className={`py-1 px-1 rounded-lg text-center transition-all flex items-center justify-center min-h-[28px] ${cellStyle}`}
                             title={`${d.iso}: ${isDone ? 'Completed' : isPast ? 'Missed' : scheduled ? 'Scheduled' : 'Off'}`}
                           >
-                            {togglingId === `${h._id}_${d.iso}` ? (
+                            {togglingId === `${habitId}_${d.iso}` ? (
                               <Loader2 size={10} className="animate-spin text-white" />
                             ) : (
                               <span className="text-[11px] font-black font-display">{d.dayNum}</span>
@@ -367,7 +368,7 @@ export default function HabitsPage() {
                       <div className="flex justify-end text-2xs font-extrabold uppercase">
                         <button
                           type="button"
-                          onClick={() => setHabitWeekOffsets((prev: any) => ({ ...prev, [h._id]: 0 }))}
+                          onClick={() => setHabitWeekOffsets((prev: any) => ({ ...prev, [habitId]: 0 }))}
                           className="text-accent-primary hover:underline"
                         >
                           Reset Week
@@ -378,7 +379,7 @@ export default function HabitsPage() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => setHabitWeekOffsets((prev: any) => ({ ...prev, [h._id]: offset - 1 }))}
+                        onClick={() => setHabitWeekOffsets((prev: any) => ({ ...prev, [habitId]: offset - 1 }))}
                         className="p-2 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all shrink-0"
                         title="Previous Week"
                       >
@@ -418,7 +419,7 @@ export default function HabitsPage() {
                             >
                               <span className="text-[10px] font-black uppercase tracking-wider">{w.dayName}</span>
 
-                              {togglingId === `${h._id}_${w.iso}` ? (
+                              {togglingId === `${habitId}_${w.iso}` ? (
                                 <Loader2 size={14} className="animate-spin text-white" />
                               ) : !scheduled ? (
                                 <span className="text-[9px] font-bold uppercase opacity-60">Off</span>
@@ -436,7 +437,7 @@ export default function HabitsPage() {
 
                       <button
                         type="button"
-                        onClick={() => setHabitWeekOffsets((prev: any) => ({ ...prev, [h._id]: offset + 1 }))}
+                        onClick={() => setHabitWeekOffsets((prev: any) => ({ ...prev, [habitId]: offset + 1 }))}
                         className="p-2 rounded-xl bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all shrink-0"
                         title="Next Week"
                       >

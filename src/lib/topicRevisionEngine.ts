@@ -1,5 +1,4 @@
-import SyllabusItem from '@/models/SyllabusItem';
-import TopicRevision from '@/models/TopicRevision';
+import prisma from '@/lib/prisma';
 import { addDays, parseISO, format, differenceInCalendarDays, isValid } from 'date-fns';
 
 export function addDaysStr(dateStr: string, days: number): string {
@@ -27,7 +26,7 @@ export function calcOverdueStatus(scheduledDate: string, currentDate: string) {
 }
 
 export async function processTopicTag(
-  userId: any,
+  userId: string,
   tag: {
     subject: string;
     category?: string;
@@ -46,54 +45,83 @@ export async function processTopicTag(
   const topicName = tag.topic.trim();
   const catName = tag.category || 'GS1';
 
-  // Determine if this topic uses Augmented Revision (SRS) strictly based on frontend flag
   const isAugmentedRevision = !!tag.isAugmentedRevision;
 
-  const safeSubj = subjName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-  const safeTop = topicName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-
-  // Find existing TopicRevision document
-  let doc = await TopicRevision.findOne({
-    $or: [{ userId }, { userId: '000000000000000000000000' }],
-    subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') },
-    topic: { $regex: new RegExp(`^${safeTop}$`, 'i') }
+  // Find existing TopicRevision document using Prisma
+  let doc = await prisma.topicRevision.findFirst({
+    where: {
+      userId,
+      subject: { equals: subjName, mode: 'insensitive' },
+      topic: { equals: topicName, mode: 'insensitive' },
+    },
   });
 
   if (!doc) {
     const customId = 'tr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6);
     if (isAugmentedRevision) {
       if (!tag.isRevision) {
-        // First Read: set R1 (+7d), R2 (+21d), R3 (+45d) scheduled dates inside revisions array
         const r1Sched = addDaysStr(logDate, 7);
         const r2Sched = addDaysStr(logDate, 21);
         const r3Sched = addDaysStr(logDate, 45);
         const overdueInfo = calcOverdueStatus(r1Sched, logDate);
-        doc = await TopicRevision.create({
-          userId,
-          customId,
-          subject: subjName,
-          category: catName,
-          topic: topicName,
-          firstReadDate: logDate,
-          lastRevisedDate: '',
-          isAugmentedRevision: true,
-          status: 'Pending',
-          isOverdue: overdueInfo.isOverdue,
-          overdueDays: overdueInfo.overdueDays,
-          nextScheduledDate: r1Sched,
-          revisions: [
-            { stage: 'First Read', scheduledDate: logDate, completedDate: logDate, status: 'Completed', note: tag.note || 'Initial Study Read' },
-            { stage: 'R1', scheduledDate: r1Sched, completedDate: '', status: 'Pending', note: '' },
-            { stage: 'R2', scheduledDate: r2Sched, completedDate: '', status: 'Pending', note: '' },
-            { stage: 'R3', scheduledDate: r3Sched, completedDate: '', status: 'Pending', note: '' }
-          ]
+
+        const revisions = [
+          { stage: 'First Read', scheduledDate: logDate, completedDate: logDate, status: 'Completed', note: tag.note || 'Initial Study Read' },
+          { stage: 'R1', scheduledDate: r1Sched, completedDate: '', status: 'Pending', note: '' },
+          { stage: 'R2', scheduledDate: r2Sched, completedDate: '', status: 'Pending', note: '' },
+          { stage: 'R3', scheduledDate: r3Sched, completedDate: '', status: 'Pending', note: '' },
+        ];
+
+        doc = await prisma.topicRevision.create({
+          data: {
+            userId,
+            customId,
+            subject: subjName,
+            category: catName,
+            topic: topicName,
+            firstReadDate: logDate,
+            lastRevisedDate: '',
+            isAugmentedRevision: true,
+            status: 'Pending',
+            isOverdue: overdueInfo.isOverdue,
+            overdueDays: overdueInfo.overdueDays,
+            nextScheduledDate: r1Sched,
+            revisions,
+          },
         });
       } else {
-        // Direct Revision Tagged
         const r1Sched = addDaysStr(logDate, -7);
         const r2Sched = addDaysStr(logDate, 21);
         const r3Sched = addDaysStr(logDate, 45);
-        doc = await TopicRevision.create({
+
+        const revisions = [
+          { stage: 'First Read', scheduledDate: logDate, completedDate: logDate, status: 'Completed', note: 'Initial Read' },
+          { stage: 'R1', scheduledDate: r1Sched, completedDate: logDate, status: 'Completed', note: tag.note || 'Direct Revision Logged' },
+          { stage: 'R2', scheduledDate: r2Sched, completedDate: '', status: 'Pending', note: '' },
+          { stage: 'R3', scheduledDate: r3Sched, completedDate: '', status: 'Pending', note: '' },
+        ];
+
+        doc = await prisma.topicRevision.create({
+          data: {
+            userId,
+            customId,
+            subject: subjName,
+            category: catName,
+            topic: topicName,
+            firstReadDate: logDate,
+            lastRevisedDate: logDate,
+            isAugmentedRevision: true,
+            status: 'Completed',
+            isOverdue: false,
+            overdueDays: 0,
+            nextScheduledDate: r2Sched,
+            revisions,
+          },
+        });
+      }
+    } else {
+      doc = await prisma.topicRevision.create({
+        data: {
           userId,
           customId,
           subject: subjName,
@@ -101,52 +129,34 @@ export async function processTopicTag(
           topic: topicName,
           firstReadDate: logDate,
           lastRevisedDate: logDate,
-          isAugmentedRevision: true,
+          isAugmentedRevision: false,
           status: 'Completed',
           isOverdue: false,
           overdueDays: 0,
-          nextScheduledDate: r2Sched,
-          revisions: [
-            { stage: 'First Read', scheduledDate: logDate, completedDate: logDate, status: 'Completed', note: 'Initial Read' },
-            { stage: 'R1', scheduledDate: r1Sched, completedDate: logDate, status: 'Completed', note: tag.note || 'Direct Revision Logged' },
-            { stage: 'R2', scheduledDate: r2Sched, completedDate: '', status: 'Pending', note: '' },
-            { stage: 'R3', scheduledDate: r3Sched, completedDate: '', status: 'Pending', note: '' }
-          ]
-        });
-      }
-    } else {
-      // Non-Augmented Topic (CSAT / MATHS / Not subject to revision) -> revisions array is EMPTY []
-      doc = await TopicRevision.create({
-        userId,
-        customId,
-        subject: subjName,
-        category: catName,
-        topic: topicName,
-        firstReadDate: logDate,
-        lastRevisedDate: logDate,
-        isAugmentedRevision: false,
-        status: 'Completed',
-        isOverdue: false,
-        overdueDays: 0,
-        nextScheduledDate: '',
-        revisions: [] // Empty array for topics not subject to revision!
+          nextScheduledDate: '',
+          revisions: [],
+        },
       });
     }
   } else {
-    // Document exists - update based on action
-    if (!doc.revisions) doc.revisions = [];
+    // Existing record - update revisions
+    const revisions: any[] = Array.isArray(doc.revisions) ? [...(doc.revisions as any[])] : [];
+    let lastRevisedDate = doc.lastRevisedDate;
+    let nextScheduledDate = doc.nextScheduledDate;
+    let isOverdue = doc.isOverdue;
+    let overdueDays = doc.overdueDays;
 
     if (isAugmentedRevision && tag.isRevision) {
-      doc.lastRevisedDate = logDate;
+      lastRevisedDate = logDate;
       const baseDate = doc.firstReadDate || logDate;
 
-      let r1 = doc.revisions.find((r: any) => r.stage === 'R1');
-      let r2 = doc.revisions.find((r: any) => r.stage === 'R2');
-      let r3 = doc.revisions.find((r: any) => r.stage === 'R3');
+      let r1 = revisions.find((r: any) => r.stage === 'R1');
+      let r2 = revisions.find((r: any) => r.stage === 'R2');
+      let r3 = revisions.find((r: any) => r.stage === 'R3');
 
       if (!r1) {
         r1 = { stage: 'R1', scheduledDate: addDaysStr(baseDate, 7), completedDate: '', status: 'Pending', note: '' };
-        doc.revisions.push(r1);
+        revisions.push(r1);
       }
 
       if (!r1.completedDate || r1.status !== 'Completed') {
@@ -154,76 +164,85 @@ export async function processTopicTag(
         r1.status = 'Completed';
         if (!r2) {
           r2 = { stage: 'R2', scheduledDate: addDaysStr(baseDate, 21), completedDate: '', status: 'Pending', note: '' };
-          doc.revisions.push(r2);
+          revisions.push(r2);
         }
-        doc.nextScheduledDate = r2.scheduledDate;
+        nextScheduledDate = r2.scheduledDate;
       } else if (!r2 || !r2.completedDate || r2.status !== 'Completed') {
         if (!r2) {
           r2 = { stage: 'R2', scheduledDate: addDaysStr(baseDate, 21), completedDate: '', status: 'Pending', note: '' };
-          doc.revisions.push(r2);
+          revisions.push(r2);
         }
         r2.completedDate = logDate;
         r2.status = 'Completed';
         if (!r3) {
           r3 = { stage: 'R3', scheduledDate: addDaysStr(baseDate, 45), completedDate: '', status: 'Pending', note: '' };
-          doc.revisions.push(r3);
+          revisions.push(r3);
         }
-        doc.nextScheduledDate = r3.scheduledDate;
+        nextScheduledDate = r3.scheduledDate;
       } else if (!r3 || !r3.completedDate || r3.status !== 'Completed') {
         if (!r3) {
           r3 = { stage: 'R3', scheduledDate: addDaysStr(baseDate, 45), completedDate: '', status: 'Pending', note: '' };
-          doc.revisions.push(r3);
+          revisions.push(r3);
         }
         r3.completedDate = logDate;
         r3.status = 'Completed';
-        doc.isOverdue = false;
-        doc.overdueDays = 0;
-        doc.nextScheduledDate = '';
+        isOverdue = false;
+        overdueDays = 0;
+        nextScheduledDate = '';
       }
     } else {
-      if (!doc.firstReadDate) doc.firstReadDate = logDate;
       if (isAugmentedRevision) {
-        let r1 = doc.revisions.find((r: any) => r.stage === 'R1');
+        let r1 = revisions.find((r: any) => r.stage === 'R1');
         if (!r1) {
           const r1Sched = addDaysStr(logDate, 7);
           r1 = { stage: 'R1', scheduledDate: r1Sched, completedDate: '', status: 'Pending', note: '' };
-          doc.revisions.push(r1);
-          doc.nextScheduledDate = r1Sched;
+          revisions.push(r1);
+          nextScheduledDate = r1Sched;
         }
       }
     }
 
-    if (isAugmentedRevision && doc.nextScheduledDate) {
-      const overdueInfo = calcOverdueStatus(doc.nextScheduledDate, logDate);
-      doc.isOverdue = overdueInfo.isOverdue;
-      doc.overdueDays = overdueInfo.overdueDays;
+    if (isAugmentedRevision && nextScheduledDate) {
+      const overdueInfo = calcOverdueStatus(nextScheduledDate, logDate);
+      isOverdue = overdueInfo.isOverdue;
+      overdueDays = overdueInfo.overdueDays;
     } else {
-      doc.isOverdue = false;
-      doc.overdueDays = 0;
+      isOverdue = false;
+      overdueDays = 0;
     }
 
-    await doc.save();
+    doc = await prisma.topicRevision.update({
+      where: { id: doc.id },
+      data: {
+        lastRevisedDate,
+        nextScheduledDate,
+        isOverdue,
+        overdueDays,
+        revisions,
+      },
+    });
   }
 
-  // Update existing SyllabusItem only if it already exists as a master subject
-  let sysItem = await SyllabusItem.findOne({
-    $or: [{ userId }, { userId: '000000000000000000000000' }],
-    subject: { $regex: new RegExp(`^${safeSubj}$`, 'i') }
+  // Update master SyllabusItem if exists
+  const sysItem = await prisma.syllabusItem.findFirst({
+    where: {
+      userId,
+      subject: { equals: subjName, mode: 'insensitive' },
+    },
   });
 
   if (sysItem) {
-    sysItem.date = logDate;
-    if (isAugmentedRevision) {
-      sysItem.nextRev = doc.nextScheduledDate;
-    }
-    if (doc && doc._id) {
-      if (!sysItem.topicRevisionIds) sysItem.topicRevisionIds = [];
-      const idStr = doc._id.toString();
-      if (!sysItem.topicRevisionIds.some((id: any) => id.toString() === idStr)) {
-        sysItem.topicRevisionIds.push(doc._id.toString());
-      }
-    }
-    await sysItem.save();
+    const existingTopicRevIds: string[] = Array.isArray(sysItem.topicRevisionIds) ? (sysItem.topicRevisionIds as string[]) : [];
+    const updatedTopicRevIds = existingTopicRevIds.includes(doc.id) ? existingTopicRevIds : [...existingTopicRevIds, doc.id];
+
+    await prisma.syllabusItem.update({
+      where: { id: sysItem.id },
+      data: {
+        date: logDate,
+        nextRev: isAugmentedRevision ? doc.nextScheduledDate : sysItem.nextRev,
+        topicRevisionIds: updatedTopicRevIds,
+      },
+    });
   }
 
   return doc;

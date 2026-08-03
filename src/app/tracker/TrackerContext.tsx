@@ -210,7 +210,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [formTitle, setFormTitle] = useState('');
   const [formCategory, setFormCategory] = useState({ id: 'study', label: 'Study', icon: '📚', color: '#6366F1' });
   const [formDescription, setFormDescription] = useState('');
-  const [formPriority, setFormPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [formFrequencyMode, setFormFrequencyMode] = useState<'daily' | 'specific_days' | 'monthly' | 'once'>('daily');
   const [formFrequencyDays, setFormFrequencyDays] = useState<string[]>(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']);
   const [formMonthlyDay, setFormMonthlyDay] = useState<number>(1);
@@ -399,7 +398,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormTitle(item.title || '');
     setFormCategory(item.category || { id: 'general', label: 'General', icon: '📌', color: '#6366F1' });
     setFormDescription(item.description || '');
-    setFormPriority(item.priority || 'medium');
     setFormFrequencyMode(item.frequency?.mode || 'daily');
     setFormFrequencyDays(item.frequency?.days || []);
     setFormMonthlyDay(item.frequency?.monthlyDay || 1);
@@ -444,7 +442,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       : [];
     const initialSubject = matchedSubjects.length > 0 ? matchedSubjects[0] : '';
     setFormSubject(initialSubject);
-    setFormPriority('medium');
     setFormFrequencyMode(type === 'task' ? 'once' : 'daily');
     setFormFrequencyDays(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
     setFormMonthlyDay(1);
@@ -614,7 +611,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           title: computedTitle,
           description: formDescription,
           category: formCategory,
-          priority: formPriority,
           frequency: {
             mode: formFrequencyMode,
             days: formFrequencyMode === 'specific_days' ? formFrequencyDays : [],
@@ -842,8 +838,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormCategory,
     formDescription,
     setFormDescription,
-    formPriority,
-    setFormPriority,
     formFrequencyMode,
     setFormFrequencyMode,
     formFrequencyDays,

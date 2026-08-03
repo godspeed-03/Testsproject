@@ -1,24 +1,21 @@
 import { NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/mongodb';
+import prisma from '@/lib/prisma';
 import { getUserFromCookies } from '@/lib/auth';
-import SyllabusRuleSet from '@/models/SyllabusRuleSet';
 
 export async function GET() {
   try {
     const user = await getUserFromCookies();
     const userId = user?.userId || '000000000000000000000000';
 
-    await connectToDatabase();
+    const ruleSets = await prisma.syllabusRuleSet.findMany({
+      where: { userId },
+    });
 
-    const ruleSets = await SyllabusRuleSet.find({
-      $or: [{ userId }, { userId: '000000000000000000000000' }]
-    }).lean();
-
-    const formatted = ruleSets.map((rs: any) => ({
-      id: rs._id.toString(),
+    const formatted = ruleSets.map((rs) => ({
+      id: rs.id,
       name: rs.name,
       category: rs.category,
-      rules: rs.rules || []
+      rules: Array.isArray(rs.rules) ? rs.rules : [],
     }));
 
     return NextResponse.json({ ruleSets: formatted });
@@ -35,7 +32,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await connectToDatabase();
     const body = await req.json();
     const { action, id, name, category, rules } = body;
 
@@ -43,30 +39,43 @@ export async function POST(req: Request) {
       if (!name || !Array.isArray(rules)) {
         return NextResponse.json({ error: 'Name and rules array are required' }, { status: 400 });
       }
-      await SyllabusRuleSet.create({
-        userId: user.userId,
-        name,
-        category: category || 'General',
-        rules
+      await prisma.syllabusRuleSet.create({
+        data: {
+          userId: user.userId,
+          name,
+          category: category || 'General',
+          rules,
+        },
       });
     } else if (action === 'update' && id) {
-      const rs = await SyllabusRuleSet.findOne({ _id: id, userId: user.userId });
+      const rs = await prisma.syllabusRuleSet.findFirst({
+        where: { id, userId: user.userId },
+      });
       if (rs) {
-        if (name !== undefined) rs.name = name;
-        if (category !== undefined) rs.category = category;
-        if (rules !== undefined && Array.isArray(rules)) rs.rules = rules;
-        await rs.save();
+        await prisma.syllabusRuleSet.update({
+          where: { id: rs.id },
+          data: {
+            name: name !== undefined ? name : rs.name,
+            category: category !== undefined ? category : rs.category,
+            rules: (rules !== undefined && Array.isArray(rules)) ? rules : (rs.rules as any),
+          },
+        });
       }
     } else if (action === 'delete' && id) {
-      await SyllabusRuleSet.deleteOne({ _id: id, userId: user.userId });
+      await prisma.syllabusRuleSet.deleteMany({
+        where: { id, userId: user.userId },
+      });
     }
 
-    const ruleSets = await SyllabusRuleSet.find({ userId: user.userId }).lean();
-    const formatted = ruleSets.map((rs: any) => ({
-      id: rs._id.toString(),
+    const ruleSets = await prisma.syllabusRuleSet.findMany({
+      where: { userId: user.userId },
+    });
+
+    const formatted = ruleSets.map((rs) => ({
+      id: rs.id,
       name: rs.name,
       category: rs.category,
-      rules: rs.rules || []
+      rules: Array.isArray(rs.rules) ? rs.rules : [],
     }));
 
     return NextResponse.json({ ruleSets: formatted });

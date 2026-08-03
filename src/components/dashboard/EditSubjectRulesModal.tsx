@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Plus, Trash2, Check, Loader2, ListChecks, Zap, GripVertical } from "lucide-react";
 import ShadcnSelect from "@/components/ui/ShadcnSelect";
-import { ISyllabusRuleState } from "@/models/SyllabusItem";
+import { ISyllabusRuleState } from "@/types";
 import {
   DndContext,
   closestCenter,

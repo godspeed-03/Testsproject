@@ -1,23 +1,12 @@
 import { NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/mongodb';
+import prisma from '@/lib/prisma';
 import { getUserFromCookies } from '@/lib/auth';
-import SyllabusItem from '@/models/SyllabusItem';
-import SyllabusRuleSet from '@/models/SyllabusRuleSet';
-import TopicRevision from '@/models/TopicRevision';
-import TestLog from '@/models/TestLog';
-import HabitItem from '@/models/HabitItem';
-import CheckList from '@/models/CheckList';
-import DailySnapshot from '@/models/DailySnapshot';
-import MonthlySnapshot from '@/models/MonthlySnapshot';
-import ConsistencySnapshot from '@/models/ConsistencySnapshot';
-import AllTimeSnapshot from '@/models/AllTimeSnapshot';
-import RoutineConfig from '@/models/RoutineConfig';
 import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
 
 function sanitizeBson(obj: any): any {
   if (!obj || typeof obj !== 'object') return obj;
   if (Array.isArray(obj)) return obj.map(sanitizeBson);
-  
+
   if (obj.$oid) return obj.$oid;
   if (obj.$date) return new Date(obj.$date);
 
@@ -33,35 +22,26 @@ export async function POST(req: Request) {
     const user = await getUserFromCookies();
     const userId = user?.userId || '000000000000000000000000';
 
-    await connectToDatabase();
     const rawData = await req.json();
     const data = sanitizeBson(rawData);
 
-    // Flexible collection matching across all 11 MongoDB models
     const habitsInput = data.habits || data.habitItems || [];
     const listsInput = data.lists || data.checkLists || [];
     const topicRevisionsInput = data.topicrevisions || data.topicRevisions || [];
     const syllabusInput = data.syllabusitems || data.syllabusList || data.syllabus || [];
     const testLogsInput = data.testlogs || data.testLogs || [];
     const ruleSetsInput = data.rulesets || data.ruleSets || data.syllabusRuleSets || [];
-    const dailySnapshotsInput = data.dailysnapshots || data.dailySnapshots || [];
-    const monthlySnapshotsInput = data.monthlysnapshots || data.monthlySnapshots || [];
-    const consistencySnapshotsInput = data.consistencysnapshots || data.consistencySnapshots || [];
-    const allTimeSnapshotInput = data.alltimesnapshot || data.allTimeSnapshot || null;
     const routineConfigInput = data.routineconfig || data.routineConfig || data.tables || null;
 
-    const userFilter = { $or: [{ userId }, { userId: '000000000000000000000000' }] };
-
-    // 1. Process Habits & Agenda Items
+    // 1. Process Habits
     if (Array.isArray(habitsInput) && habitsInput.length > 0) {
-      await HabitItem.deleteMany(userFilter);
+      await prisma.habitItem.deleteMany({ where: { userId } });
       const docs = habitsInput.map((h: any) => ({
         userId,
         type: h.type || 'habit',
         title: h.title || 'Untitled',
         category: h.category || { id: 'general', label: 'General', icon: '📌', color: '#6366F1' },
         description: h.description || '',
-        priority: h.priority || 'medium',
         frequency: h.frequency || { mode: 'daily', days: [] },
         target: h.target || { value: 1, unit: 'times' },
         reminders: h.reminders || [{ time: '08:00', enabled: true }],
@@ -75,14 +55,14 @@ export async function POST(req: Request) {
         icon: h.icon || '🏃',
         streakCurrent: h.streakCurrent || 0,
         streakBest: h.streakBest || 0,
-        history: h.history || []
+        history: h.history || [],
       }));
-      await HabitItem.insertMany(docs);
+      await prisma.habitItem.createMany({ data: docs });
     }
 
     // 2. Process Checklists
     if (Array.isArray(listsInput) && listsInput.length > 0) {
-      await CheckList.deleteMany(userFilter);
+      await prisma.checkList.deleteMany({ where: { userId } });
       const docs = listsInput.map((l: any) => ({
         userId,
         title: l.title || 'Untitled List',
@@ -90,15 +70,15 @@ export async function POST(req: Request) {
         items: (l.items || []).map((item: any, idx: number) => ({
           id: String(item.id || item._id || `item_${idx}_${Date.now()}`),
           text: String(item.text || ''),
-          checked: item.checked !== undefined ? !!item.checked : !!item.completed
-        }))
+          checked: item.checked !== undefined ? !!item.checked : !!item.completed,
+        })),
       }));
-      await CheckList.insertMany(docs);
+      await prisma.checkList.createMany({ data: docs });
     }
 
     // 3. Process Topic Revisions
     if (Array.isArray(topicRevisionsInput) && topicRevisionsInput.length > 0) {
-      await TopicRevision.deleteMany(userFilter);
+      await prisma.topicRevision.deleteMany({ where: { userId } });
       const docs = topicRevisionsInput.map((t: any) => ({
         userId,
         customId: t.customId || t.id || 'tr_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -111,14 +91,14 @@ export async function POST(req: Request) {
         isOverdue: !!t.isOverdue,
         overdueDays: t.overdueDays || 0,
         nextScheduledDate: t.nextScheduledDate || '',
-        revisions: t.revisions || []
+        revisions: t.revisions || [],
       }));
-      await TopicRevision.insertMany(docs);
+      await prisma.topicRevision.createMany({ data: docs });
     }
 
     // 4. Process Syllabus Items
     if (Array.isArray(syllabusInput) && syllabusInput.length > 0) {
-      await SyllabusItem.deleteMany(userFilter);
+      await prisma.syllabusItem.deleteMany({ where: { userId } });
       const docs = syllabusInput.map((item: any) => ({
         userId,
         customId: item.customId || item.id || 'subj_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -129,14 +109,13 @@ export async function POST(req: Request) {
         date: item.date || '',
         nextRev: item.nextRev || '',
         rules: item.rules || buildDynamicRulesFromLegacy(item),
-        topicRevisionIds: item.topicRevisionIds || []
       }));
-      await SyllabusItem.insertMany(docs);
+      await prisma.syllabusItem.createMany({ data: docs });
     }
 
     // 5. Process Test Logs
     if (Array.isArray(testLogsInput) && testLogsInput.length > 0) {
-      await TestLog.deleteMany(userFilter);
+      await prisma.testLog.deleteMany({ where: { userId } });
       const docs = testLogsInput.map((t: any) => ({
         userId,
         customId: t.customId || t.id || 'test_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -159,104 +138,25 @@ export async function POST(req: Request) {
         silly: t.silly || 0,
         timeP: t.timeP || 0,
         weakAreas: Array.isArray(t.weakAreas) ? t.weakAreas : [],
-        takeaway: t.takeaway || ''
+        takeaway: t.takeaway || '',
       }));
-      await TestLog.insertMany(docs);
+      await prisma.testLog.createMany({ data: docs });
     }
 
     // 6. Process Syllabus Rule Sets
     if (Array.isArray(ruleSetsInput) && ruleSetsInput.length > 0) {
-      await SyllabusRuleSet.deleteMany(userFilter);
+      await prisma.syllabusRuleSet.deleteMany({ where: { userId } });
       const docs = ruleSetsInput.map((r: any) => ({
         userId,
         name: r.name || 'Custom Rule Set',
         category: r.category || 'General',
-        rules: r.rules || []
+        rules: r.rules || [],
       }));
-      await SyllabusRuleSet.insertMany(docs);
+      await prisma.syllabusRuleSet.createMany({ data: docs });
     }
 
-    // 7. Process Daily Snapshots
-    if (Array.isArray(dailySnapshotsInput) && dailySnapshotsInput.length > 0) {
-      await DailySnapshot.deleteMany(userFilter);
-      const docs = dailySnapshotsInput.map((d: any) => ({
-        userId,
-        studyDayKey: d.studyDayKey,
-        monthKey: d.monthKey,
-        monthName: d.monthName,
-        habitScore: d.habitScore || 0,
-        taskScore: d.taskScore || 0,
-        revisionScore: d.revisionScore || 0,
-        overallScore: d.overallScore || 0,
-        habitBreakdown: d.habitBreakdown || [],
-        categoryBreakdown: d.categoryBreakdown || [],
-        subjectBreakdown: d.subjectBreakdown || [],
-        calculatedAt: d.calculatedAt || new Date().toISOString()
-      }));
-      await DailySnapshot.insertMany(docs);
-    }
-
-    // 8. Process Monthly Snapshots
-    if (Array.isArray(monthlySnapshotsInput) && monthlySnapshotsInput.length > 0) {
-      await MonthlySnapshot.deleteMany(userFilter);
-      const docs = monthlySnapshotsInput.map((m: any) => ({
-        userId,
-        monthKey: m.monthKey,
-        monthName: m.monthName,
-        overallScore: m.overallScore || 0,
-        habitScore: m.habitScore || 0,
-        taskScore: m.taskScore || 0,
-        revisionScore: m.revisionScore || 0,
-        daysWithData: m.daysWithData || 0,
-        habitBreakdown: m.habitBreakdown || [],
-        categoryBreakdown: m.categoryBreakdown || [],
-        subjectBreakdown: m.subjectBreakdown || [],
-        calculatedAt: m.calculatedAt || new Date().toISOString()
-      }));
-      await MonthlySnapshot.insertMany(docs);
-    }
-
-    // 9. Process Consistency Snapshots
-    if (Array.isArray(consistencySnapshotsInput) && consistencySnapshotsInput.length > 0) {
-      await ConsistencySnapshot.deleteMany(userFilter);
-      const docs = consistencySnapshotsInput.map((c: any) => ({
-        userId,
-        studyDayKey: c.studyDayKey,
-        monthKey: c.monthKey,
-        monthName: c.monthName,
-        overallScore: c.overallScore || 0,
-        tillDateScore: c.tillDateScore || 100,
-        habitScore: c.habitScore || 0,
-        taskScore: c.taskScore || 0,
-        revisionScore: c.revisionScore || 0,
-        totalDone: c.totalDone || 0,
-        habitBreakdown: c.habitBreakdown || [],
-        categoryBreakdown: c.categoryBreakdown || [],
-        calculatedAt: c.calculatedAt || new Date().toISOString()
-      }));
-      await ConsistencySnapshot.insertMany(docs);
-    }
-
-    // 10. Process All-Time Snapshot
-    if (allTimeSnapshotInput) {
-      await AllTimeSnapshot.deleteMany(userFilter);
-      await AllTimeSnapshot.create({
-        userId,
-        overallScore: allTimeSnapshotInput.overallScore || 0,
-        habitScore: allTimeSnapshotInput.habitScore || 0,
-        taskScore: allTimeSnapshotInput.taskScore || 0,
-        revisionScore: allTimeSnapshotInput.revisionScore || 0,
-        totalDaysRecorded: allTimeSnapshotInput.totalDaysRecorded || 0,
-        habitBreakdown: allTimeSnapshotInput.habitBreakdown || [],
-        categoryBreakdown: allTimeSnapshotInput.categoryBreakdown || [],
-        subjectBreakdown: allTimeSnapshotInput.subjectBreakdown || [],
-        calculatedAt: allTimeSnapshotInput.calculatedAt || new Date().toISOString()
-      });
-    }
-
-    // 11. Process RoutineConfig (Master Routine & Schedule Multi-Table)
+    // 7. Process Routine Config
     if (routineConfigInput) {
-      await RoutineConfig.deleteMany(userFilter);
       let payload = routineConfigInput;
       while (payload && payload.configPayload && typeof payload.configPayload === 'object' && !payload.timeSlots && !payload.tables && !payload.satakGoals) {
         payload = payload.configPayload;
@@ -267,24 +167,16 @@ export async function POST(req: Request) {
       }
       const finalPayload = Array.isArray(payload) ? { tables: payload } : payload;
 
-      await RoutineConfig.create({
-        userId,
-        configPayload: finalPayload,
-        tables: finalPayload.tables,
-        title: finalPayload.title,
-        subtitle: finalPayload.subtitle,
-        timeSlots: finalPayload.timeSlots,
-        cells: finalPayload.cells,
-        metrics: finalPayload.metrics,
-        satakGoals: finalPayload.satakGoals,
-        weeklySummary: finalPayload.weeklySummary,
-        updatedAt: new Date()
+      await prisma.routineConfig.upsert({
+        where: { userId },
+        update: { configPayload: finalPayload },
+        create: { userId, configPayload: finalPayload },
       });
     }
 
     return NextResponse.json({
       success: true,
-      message: 'System data imported successfully across all collections',
+      message: 'System data imported successfully into PostgreSQL via Prisma',
       importedCount: {
         habits: habitsInput.length,
         lists: listsInput.length,
@@ -292,12 +184,8 @@ export async function POST(req: Request) {
         syllabus: syllabusInput.length,
         testLogs: testLogsInput.length,
         ruleSets: ruleSetsInput.length,
-        dailySnapshots: dailySnapshotsInput.length,
-        monthlySnapshots: monthlySnapshotsInput.length,
-        consistencySnapshots: consistencySnapshotsInput.length,
-        allTimeSnapshot: allTimeSnapshotInput ? 1 : 0,
-        routineConfig: routineConfigInput ? 1 : 0
-      }
+        routineConfig: routineConfigInput ? 1 : 0,
+      },
     });
   } catch (error: any) {
     console.error('Import tracker error:', error);

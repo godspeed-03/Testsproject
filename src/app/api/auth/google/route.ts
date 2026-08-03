@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/mongodb';
-import User from '@/models/User';
+import prisma from '@/lib/prisma';
 import { signToken } from '@/lib/auth';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID as string;
@@ -27,7 +26,6 @@ export async function POST(req: Request) {
     let picture = '';
 
     if (credential) {
-      // Verify that the token is valid via Google tokeninfo
       const googleRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
       if (!googleRes.ok) {
         const errorData = await googleRes.json();
@@ -35,21 +33,15 @@ export async function POST(req: Request) {
       }
 
       const tokenInfoPayload = await googleRes.json();
-
-      // Verify audience matches client id
       if (tokenInfoPayload.aud !== GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes(tokenInfoPayload.aud)) {
         console.warn('Google client ID mismatch warning:', tokenInfoPayload.aud);
       }
 
-      // tokeninfo doesn't return name/picture — decode from the JWT directly
       const jwtPayload = decodeJwtPayload(credential);
-
       email = tokenInfoPayload.email || jwtPayload?.email || '';
       name = jwtPayload?.name || jwtPayload?.given_name || tokenInfoPayload.name || '';
       picture = jwtPayload?.picture || '';
-
     } else if (code) {
-      // Exchange Authorization Code for Tokens
       const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -57,9 +49,9 @@ export async function POST(req: Request) {
           code,
           client_id: GOOGLE_CLIENT_ID,
           client_secret: GOOGLE_CLIENT_SECRET,
-          redirect_uri: redirectUri || `${process.env.NEXT_PUBLIC_APP_URL  as string}/tracker`,
-          grant_type: 'authorization_code'
-        })
+          redirect_uri: redirectUri || `${process.env.NEXT_PUBLIC_APP_URL as string}/tracker`,
+          grant_type: 'authorization_code',
+        }),
       });
 
       if (!tokenRes.ok) {
@@ -68,13 +60,10 @@ export async function POST(req: Request) {
       }
 
       const tokens = await tokenRes.json();
-
-      // Decode the id_token JWT directly to get name + picture
       const jwtPayload = decodeJwtPayload(tokens.id_token);
       email = jwtPayload?.email || '';
       name = jwtPayload?.name || jwtPayload?.given_name || '';
       picture = jwtPayload?.picture || '';
-
     } else {
       return NextResponse.json({ error: 'Missing credential or code' }, { status: 400 });
     }
@@ -83,43 +72,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to retrieve email from Google Account' }, { status: 400 });
     }
 
-    await connectToDatabase();
-    let user = await User.findOne({ email: email.toLowerCase() });
+    const cleanEmail = email.toLowerCase().trim();
+    let user = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
     if (!user) {
-      user = await User.create({
-        email: email.toLowerCase(),
-        name: name,
-        picture: picture,
-        passwordHash: '',
-        role: 'user'
+      user = await prisma.user.create({
+        data: {
+          email: cleanEmail,
+          name: name,
+          picture: picture,
+          passwordHash: '',
+          role: 'user',
+        },
       });
     } else {
-      let updated = false;
-      if (name && !user.name) {
-        user.name = name;
-        updated = true;
-      }
-      if (picture && user.picture !== picture) {
-        user.picture = picture;
-        updated = true;
-      }
-      if (updated) {
-        await user.save();
+      const needsNameUpdate = name && !user.name;
+      const needsPicUpdate = picture && user.picture !== picture;
+      if (needsNameUpdate || needsPicUpdate) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            name: needsNameUpdate ? name : user.name,
+            picture: needsPicUpdate ? picture : user.picture,
+          },
+        });
       }
     }
 
     const token = signToken({
-      userId: user._id.toString(),
+      userId: user.id,
       email: user.email,
-      name: user.name,
-      picture: user.picture,
-      role: user.role
+      name: user.name || undefined,
+      picture: user.picture || undefined,
+      role: user.role as 'admin' | 'user',
     });
 
     const response = NextResponse.json({
       message: 'Authenticated successfully via Google',
-      user: { id: user._id, email: user.email, name: user.name, picture: user.picture, role: user.role }
+      user: { id: user.id, email: user.email, name: user.name, picture: user.picture, role: user.role },
     });
 
     response.cookies.set({
@@ -128,7 +118,7 @@ export async function POST(req: Request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 // 1 day
+      maxAge: 60 * 60 * 24, // 1 day
     });
 
     return response;

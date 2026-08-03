@@ -1,28 +1,17 @@
 import { NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/mongodb';
+import prisma from '@/lib/prisma';
 import { getUserFromCookies } from '@/lib/auth';
-import SyllabusItem from '@/models/SyllabusItem';
-import SyllabusRuleSet from '@/models/SyllabusRuleSet';
-import TestLog from '@/models/TestLog';
-import TopicRevision from '@/models/TopicRevision';
-import HabitItem from '@/models/HabitItem';
-import CheckList from '@/models/CheckList';
-import DailySnapshot from '@/models/DailySnapshot';
-import MonthlySnapshot from '@/models/MonthlySnapshot';
-import ConsistencySnapshot from '@/models/ConsistencySnapshot';
-import AllTimeSnapshot from '@/models/AllTimeSnapshot';
-import RoutineConfig from '@/models/RoutineConfig';
 import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
 import { calcOverdueStatus } from '@/lib/topicRevisionEngine';
 
-function deepCleanMongo(obj: any): any {
+function deepClean(obj: any): any {
   if (obj === null || obj === undefined) return obj;
   if (typeof obj !== 'object') return obj;
-  if (Array.isArray(obj)) return obj.map(deepCleanMongo);
+  if (Array.isArray(obj)) return obj.map(deepClean);
   const result: any = {};
   for (const key of Object.keys(obj)) {
     if (['_id', '__v', 'userId', 'createdAt', 'updatedAt', 'configPayload'].includes(key)) continue;
-    result[key] = deepCleanMongo(obj[key]);
+    result[key] = deepClean(obj[key]);
   }
   return result;
 }
@@ -31,52 +20,59 @@ export async function GET() {
   try {
     const user = await getUserFromCookies();
     const userId = user?.userId || '000000000000000000000000';
-
-    await connectToDatabase();
-
     const todayStr = new Date().toISOString().split('T')[0];
-    const userFilter = { $or: [{ userId }, { userId: '000000000000000000000000' }] };
 
-    // Fetch all 11 data models
-    const habits = await HabitItem.find(userFilter).lean();
-    const lists = await CheckList.find(userFilter).lean();
-    const syllabus = await SyllabusItem.find(userFilter).lean();
-    const testLogs = await TestLog.find(userFilter).sort({ createdAt: -1 }).lean();
-    const topicRevisions = await TopicRevision.find(userFilter).lean();
-    const dbRuleSets = await SyllabusRuleSet.find(userFilter).lean();
-    const dailySnapshots = await DailySnapshot.find(userFilter).lean();
-    const monthlySnapshots = await MonthlySnapshot.find(userFilter).lean();
-    const consistencySnapshots = await ConsistencySnapshot.find(userFilter).lean();
-    const allTimeSnapshot = await AllTimeSnapshot.findOne(userFilter).lean();
-    const routineConfig = await RoutineConfig.findOne(userFilter).lean();
+    const [
+      habits,
+      lists,
+      syllabus,
+      testLogs,
+      topicRevisions,
+      dbRuleSets,
+      dailySnapshots,
+      monthlySnapshots,
+      consistencySnapshots,
+      allTimeSnapshot,
+      routineConfig,
+    ] = await Promise.all([
+      prisma.habitItem.findMany({ where: { userId } }),
+      prisma.checkList.findMany({ where: { userId } }),
+      prisma.syllabusItem.findMany({ where: { userId } }),
+      prisma.testLog.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } }),
+      prisma.topicRevision.findMany({ where: { userId } }),
+      prisma.syllabusRuleSet.findMany({ where: { userId } }),
+      prisma.dailySnapshot.findMany({ where: { userId } }),
+      prisma.monthlySnapshot.findMany({ where: { userId } }),
+      prisma.consistencySnapshot.findMany({ where: { userId } }),
+      prisma.allTimeSnapshot.findUnique({ where: { userId } }),
+      prisma.routineConfig.findUnique({ where: { userId } }),
+    ]);
 
-    const formattedHabits = habits.map((h: any) => ({
+    const formattedHabits = habits.map((h) => ({
       ...h,
-      id: h.customId || h._id.toString(),
-      _id: undefined
+      id: h.id,
     }));
 
-    const formattedLists = lists.map((l: any) => ({
+    const formattedLists = lists.map((l) => ({
       ...l,
-      id: l._id.toString(),
-      _id: undefined
+      id: l.id,
     }));
 
-    const formattedSyllabus = syllabus.map((item: any) => ({
-      id: item.customId || item._id.toString(),
-      customId: item.customId || item._id.toString(),
+    const formattedSyllabus = syllabus.map((item) => ({
+      id: item.customId || item.id,
+      customId: item.customId || item.id,
       subject: item.subject,
       category: item.category || 'GS1',
       status: item.status || 'Not Started',
       source: item.source || '',
       date: item.date || '',
       nextRev: item.nextRev || '',
-      rules: buildDynamicRulesFromLegacy(item, dbRuleSets)
+      rules: buildDynamicRulesFromLegacy(item, dbRuleSets),
     }));
 
-    const formattedTestLogs = testLogs.map((item: any) => ({
-      id: item.customId || item._id.toString(),
-      customId: item.customId || item._id.toString(),
+    const formattedTestLogs = testLogs.map((item) => ({
+      id: item.customId || item.id,
+      customId: item.customId || item.id,
       testName: item.testName || item.code || 'Untitled Mock Test',
       code: item.code || 'MOCK',
       type: item.type || 'PRELIMS',
@@ -96,14 +92,14 @@ export async function GET() {
       silly: item.silly || 0,
       timeP: item.timeP || 0,
       weakAreas: item.weakAreas || [],
-      takeaway: item.takeaway || ''
+      takeaway: item.takeaway || '',
     }));
 
-    const formattedTopicRevisions = topicRevisions.map((t: any) => {
+    const formattedTopicRevisions = topicRevisions.map((t) => {
       const overdueInfo = t.nextScheduledDate ? calcOverdueStatus(t.nextScheduledDate, todayStr) : { isOverdue: false, overdueDays: 0 };
       return {
-        id: t.customId || t._id.toString(),
-        customId: t.customId || t._id.toString(),
+        id: t.customId || t.id,
+        customId: t.customId || t.id,
         subject: t.subject,
         category: t.category,
         topic: t.topic,
@@ -114,49 +110,21 @@ export async function GET() {
         isOverdue: overdueInfo.isOverdue,
         overdueDays: overdueInfo.overdueDays,
         nextScheduledDate: t.nextScheduledDate,
-        revisions: t.revisions || []
+        revisions: t.revisions || [],
       };
     });
 
-    const formattedRuleSets = dbRuleSets.map((r: any) => ({
-      id: r._id.toString(),
+    const formattedRuleSets = dbRuleSets.map((r) => ({
+      id: r.id,
       name: r.name,
       category: r.category,
-      rules: r.rules || []
+      rules: r.rules || [],
     }));
-
-    const formattedDailySnapshots = dailySnapshots.map((d: any) => ({
-      ...d,
-      _id: undefined
-    }));
-
-    const formattedMonthlySnapshots = monthlySnapshots.map((m: any) => ({
-      ...m,
-      _id: undefined
-    }));
-
-    const formattedConsistencySnapshots = consistencySnapshots.map((c: any) => ({
-      ...c,
-      _id: undefined
-    }));
-
-    const formattedAllTimeSnapshot = allTimeSnapshot ? {
-      ...allTimeSnapshot,
-      _id: undefined
-    } : null;
 
     let formattedRoutineConfig = null;
     if (routineConfig) {
-      let data: any = routineConfig;
-      // Prefer configPayload if it has actual cell/table data
-      if (data.configPayload && typeof data.configPayload === 'object') {
-        const cp = data.configPayload;
-        if (cp.cells?.length || cp.timeSlots?.length || cp.tables?.length || cp.satakGoals?.length) {
-          data = cp;
-        }
-      }
-      // Deep-clean all mongo metadata recursively
-      formattedRoutineConfig = deepCleanMongo(data);
+      const payload = typeof routineConfig.configPayload === 'object' ? routineConfig.configPayload : routineConfig;
+      formattedRoutineConfig = deepClean(payload);
     }
 
     return NextResponse.json({
@@ -166,12 +134,12 @@ export async function GET() {
       syllabusList: formattedSyllabus,
       testLogs: formattedTestLogs,
       ruleSets: formattedRuleSets,
-      dailySnapshots: formattedDailySnapshots,
-      monthlySnapshots: formattedMonthlySnapshots,
-      consistencySnapshots: formattedConsistencySnapshots,
-      allTimeSnapshot: formattedAllTimeSnapshot,
+      dailySnapshots,
+      monthlySnapshots,
+      consistencySnapshots,
+      allTimeSnapshot,
       routineConfig: formattedRoutineConfig,
-      exportedAt: new Date().toISOString()
+      exportedAt: new Date().toISOString(),
     });
   } catch (error: any) {
     console.error('Export tracker data error:', error);

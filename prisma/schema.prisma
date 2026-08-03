@@ -1,0 +1,287 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?  @default("")
+  picture      String?  @default("")
+  passwordHash String?  @default("")
+  role         String   @default("user")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  habits               HabitItem[]
+  syllabusItems        SyllabusItem[]
+  syllabusRuleSets     SyllabusRuleSet[]
+  testLogs             TestLog[]
+  topicRevisions       TopicRevision[]
+  checkLists           CheckList[]
+  dailySnapshots       DailySnapshot[]
+  monthlySnapshots     MonthlySnapshot[]
+  allTimeSnapshots     AllTimeSnapshot[]
+  consistencySnapshots ConsistencySnapshot[]
+  weeklyData           WeeklyData[]
+  routineConfig        RoutineConfig?
+
+  @@index([email])
+}
+
+model HabitItem {
+  id                  String   @id @default(cuid())
+  userId              String
+  type                String   @default("habit")
+  title               String
+  category            Json
+  description         String?  @default("")
+  frequency           Json
+  target              Json
+  reminders           Json?    @default("[]")
+  startDate           String
+  endDate             String?
+  isStudyTask         Boolean  @default(false)
+  isAugmentedRevision Boolean  @default(true)
+  subject             String?  @default("")
+  topic               String?  @default("")
+  color               String?  @default("#6366F1")
+  icon                String?  @default("🏃")
+  streakCurrent       Int      @default(0)
+  streakBest          Int      @default(0)
+  history             Json     @default("[]")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([userId, startDate])
+}
+
+model SyllabusItem {
+  id               String   @id @default(cuid())
+  userId           String
+  customId         String?
+  subject          String
+  category         String
+  status           String   @default("Not Started")
+  source           String?  @default("")
+  date             String?  @default("")
+  nextRev          String?  @default("")
+  rules            Json     @default("[]")
+  topicRevisionIds Json     @default("[]")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, subject])
+  @@index([userId, category])
+}
+
+model SyllabusRuleSet {
+  id        String   @id @default(cuid())
+  userId    String
+  customId  String?
+  name      String
+  category  String?  @default("General")
+  rules     Json     @default("[]")
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model TestLog {
+  id               String   @id @default(cuid())
+  userId           String
+  customId         String?
+  testName         String?  @default("")
+  code             String?  @default("")
+  type             String?  @default("PRELIMS")
+  category         String?  @default("GS1")
+  subject          String?  @default("")
+  accuracy         String?  @default("")
+  score            Float    @default(0)
+  maxScore         Float    @default(200)
+  percent          Float    @default(0)
+  correctCount     Int      @default(0)
+  incorrectCount   Int      @default(0)
+  unattemptedCount Int      @default(0)
+  negMarks         Float    @default(0)
+  durationMins     Int      @default(120)
+  benchmarkCutoff  Float    @default(100)
+  concept          Float    @default(0)
+  silly            Float    @default(0)
+  timeP            Float    @default(0)
+  weakAreas        Json     @default("[]")
+  takeaway         String?  @default("")
+  date             String?  @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model TopicRevision {
+  id                  String   @id @default(cuid())
+  userId              String
+  customId            String?
+  subject             String
+  category            String
+  topic               String
+  firstReadDate       String   @default("")
+  lastRevisedDate     String?  @default("")
+  status              String?  @default("Pending")
+  isAugmentedRevision Boolean  @default(true)
+  nextScheduledDate   String?  @default("")
+  isOverdue           Boolean  @default(false)
+  overdueDays         Int      @default(0)
+  revisions           Json     @default("[]")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, subject, topic])
+  @@index([userId, nextScheduledDate])
+}
+
+model CheckList {
+  id        String   @id @default(cuid())
+  userId    String
+  customId  String?
+  title     String   @default("Checklist")
+  color     String?  @default("#6366F1")
+  items     Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model DailySnapshot {
+  id                      String   @id @default(cuid())
+  userId                  String
+  studyDayKey             String
+  monthKey                String
+  rawConsistencyScore     Float    @default(0)
+  finalConsistencyScore   Float    @default(0)
+  totalLoggedHours        Float    @default(0)
+  totalScheduledHours     Float    @default(0)
+  timeFulfillmentRatio    Float    @default(0)
+  habitsCompletionRatio   Float    @default(0)
+  topicsFulfillmentRatio  Float    @default(0)
+  syllabusCompletionRatio Float    @default(0)
+  streakDays              Int      @default(0)
+  detailedBreakdown       Json     @default("{}")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, studyDayKey])
+  @@index([userId, monthKey])
+}
+
+model MonthlySnapshot {
+  id                      String   @id @default(cuid())
+  userId                  String
+  monthKey                String
+  avgConsistencyScore     Float    @default(0)
+  totalStudyHours         Float    @default(0)
+  totalScheduledHours     Float    @default(0)
+  habitFulfillmentPercent Float    @default(0)
+  topicFulfillmentPercent Float    @default(0)
+  activeDaysCount         Int      @default(0)
+  streakDays              Int      @default(0)
+  categoryBreakdown       Json     @default("{}")
+  subjectBreakdown        Json     @default("{}")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, monthKey])
+  @@index([userId, monthKey])
+}
+
+model AllTimeSnapshot {
+  id                      String   @id @default(cuid())
+  userId                  String   @unique
+  overallConsistencyScore Float    @default(0)
+  totalStudyHours         Float    @default(0)
+  totalDaysLogged         Int      @default(0)
+  bestStreakDays          Int      @default(0)
+  currentStreakDays       Int      @default(0)
+  categoryBreakdown       Json     @default("{}")
+  subjectBreakdown        Json     @default("{}")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ConsistencySnapshot {
+  id                   String   @id @default(cuid())
+  userId               String
+  periodType           String
+  startDate            String
+  endDate              String
+  consistencyScore     Float    @default(0)
+  habitCompletionScore Float    @default(0)
+  studyHoursScore      Float    @default(0)
+  srsScore             Float    @default(0)
+  syllabusScore        Float    @default(0)
+  metrics              Json     @default("{}")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, periodType])
+}
+
+model WeeklyData {
+  id                   String   @id @default(cuid())
+  userId               String
+  weekKey              String
+  totalHours           Float    @default(0)
+  weeklyScore          Float    @default(0)
+  completedHabitsCount Int      @default(0)
+  completedTopicsCount Int      @default(0)
+  breakdown            Json     @default("{}")
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, weekKey])
+  @@index([userId, weekKey])
+}
+
+model RoutineConfig {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  configPayload Json?    @default("{}")
+  slotInterval  Int      @default(30)
+  startTime     String   @default("06:00")
+  endTime       String   @default("23:00")
+  categories    Json     @default("[]")
+  scheduleRules Json     @default("[]")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

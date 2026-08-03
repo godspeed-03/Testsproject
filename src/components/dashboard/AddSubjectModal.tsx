@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Plus, X, Loader2, ListChecks, BookOpen } from "lucide-react";
 import ShadcnSelect from "@/components/ui/ShadcnSelect";
-import { ISyllabusRuleState } from "@/models/SyllabusItem";
+import { ISyllabusRuleState } from "@/types";
 
 interface AddSubjectModalProps {
   isOpen: boolean;

@@ -427,7 +427,6 @@ export default function TimetableCodeEditorModal({
             type: item.type || 'habit',
             category: item.category || { id: 'general', label: 'General', icon: '📌', color: '#6366F1' },
             description: item.description || '',
-            priority: item.priority || 'medium',
             frequency: item.frequency || { mode: 'daily', days: [] },
             target: item.target || { value: 1, unit: 'times' },
             startDate: item.startDate || new Date().toISOString().split('T')[0],

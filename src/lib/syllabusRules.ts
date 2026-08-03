@@ -1,4 +1,4 @@
-import { ISyllabusRuleState } from '@/models/SyllabusItem';
+import { ISyllabusRuleState } from '@/types';
 
 export interface IRuleTemplate {
   key: string;
@@ -24,7 +24,7 @@ export function buildDynamicRulesFromLegacy(item: any, dbRuleSets: any[] = []): 
       key: r.key || (r.label ? r.label.toLowerCase().replace(/\s+/g, '_') : 'rule'),
       label: r.label || r.key || 'Rule',
       short: r.short || r.label || r.key || 'R',
-      completed: !!r.completed
+      completed: !!r.completed,
     }));
   }
 
@@ -33,7 +33,6 @@ export function buildDynamicRulesFromLegacy(item: any, dbRuleSets: any[] = []): 
     key: t.key,
     label: t.label,
     short: t.short,
-    completed: !!item[t.key]
+    completed: !!item[t.key],
   }));
 }
-

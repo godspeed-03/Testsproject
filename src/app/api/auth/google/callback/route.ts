@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/mongodb';
-import User from '@/models/User';
+import prisma from '@/lib/prisma';
 import { signToken } from '@/lib/auth';
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID as string;
@@ -26,8 +25,8 @@ export async function GET(req: Request) {
         client_id: GOOGLE_CLIENT_ID,
         client_secret: GOOGLE_CLIENT_SECRET,
         redirect_uri: `${appUrl}/api/auth/google/callback`,
-        grant_type: 'authorization_code'
-      })
+        grant_type: 'authorization_code',
+      }),
     });
 
     if (!tokenRes.ok) {
@@ -47,38 +46,39 @@ export async function GET(req: Request) {
       return NextResponse.redirect(`${appUrl}/login?error=${encodeURIComponent('No email received from Google')}`);
     }
 
-    await connectToDatabase();
-    let user = await User.findOne({ email: email.toLowerCase() });
+    const cleanEmail = email.toLowerCase().trim();
+    let user = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
     if (!user) {
-      user = await User.create({
-        email: email.toLowerCase(),
-        name: name,
-        picture: picture,
-        passwordHash: '',
-        role: 'user'
+      user = await prisma.user.create({
+        data: {
+          email: cleanEmail,
+          name: name,
+          picture: picture,
+          passwordHash: '',
+          role: 'user',
+        },
       });
     } else {
-      let updated = false;
-      if (name && !user.name) {
-        user.name = name;
-        updated = true;
-      }
-      if (picture && user.picture !== picture) {
-        user.picture = picture;
-        updated = true;
-      }
-      if (updated) {
-        await user.save();
+      const needsNameUpdate = name && !user.name;
+      const needsPicUpdate = picture && user.picture !== picture;
+      if (needsNameUpdate || needsPicUpdate) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            name: needsNameUpdate ? name : user.name,
+            picture: needsPicUpdate ? picture : user.picture,
+          },
+        });
       }
     }
 
     const token = signToken({
-      userId: user._id.toString(),
+      userId: user.id,
       email: user.email,
-      name: user.name,
-      picture: user.picture,
-      role: user.role
+      name: user.name || undefined,
+      picture: user.picture || undefined,
+      role: user.role as 'admin' | 'user',
     });
 
     const response = NextResponse.redirect(`${appUrl}/tracker/agenda`);
@@ -89,7 +89,7 @@ export async function GET(req: Request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 // 1 day
+      maxAge: 60 * 60 * 24, // 1 day
     });
 
     return response;

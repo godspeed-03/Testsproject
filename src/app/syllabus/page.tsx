@@ -23,7 +23,7 @@ import {
   Circle,
   ChevronDown,
 } from "lucide-react";
-import { ISyllabusRuleState } from "@/models/SyllabusItem";
+import { ISyllabusRuleState } from "@/types";
 
 interface StatusStage {
   value: string;

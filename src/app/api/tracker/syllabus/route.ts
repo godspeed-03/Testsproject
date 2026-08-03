@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import connectToDatabase from "@/lib/mongodb";
+import prisma from "@/lib/prisma";
 import { getUserFromCookies } from "@/lib/auth";
-import SyllabusItem from "@/models/SyllabusItem";
-import SyllabusRuleSet from "@/models/SyllabusRuleSet";
 import { buildDynamicRulesFromLegacy, getDefaultRulesForCategory } from "@/lib/syllabusRules";
 import { sortSyllabusItems } from "@/lib/utils";
 
@@ -18,25 +16,26 @@ export async function POST(req: Request) {
     const user = await getUserFromCookies();
     const userId = user?.userId || "000000000000000000000000";
 
-    await connectToDatabase();
     const body = await req.json();
     const { action, id, subject, category, status, source, date, nextRev, rules, ruleKey, completed } = body;
 
-    const isMongoId = id && id.match(/^[0-9a-fA-F]{24}$/);
-    const userFilter = { $or: [{ userId }, { userId: "000000000000000000000000" }] };
-
-    const queryFilter = isMongoId
-      ? { $and: [userFilter, { $or: [{ customId: id }, { _id: id }] }] }
-      : { $and: [userFilter, { $or: [{ customId: id }, { subject: id }] }] };
-
-    const dbRuleSets = await SyllabusRuleSet.find(userFilter).lean();
+    const dbRuleSets = await prisma.syllabusRuleSet.findMany({ where: { userId } });
 
     if (action === "delete") {
-      await SyllabusItem.deleteOne(queryFilter);
+      await prisma.syllabusItem.deleteMany({
+        where: {
+          userId,
+          OR: [{ id }, { customId: id }, { subject: id }],
+        },
+      });
     } else if (action === "toggle_rule" || action === "toggle_milestone") {
-      let item = await SyllabusItem.findOne(queryFilter);
+      let item = await prisma.syllabusItem.findFirst({
+        where: {
+          userId,
+          OR: [{ id }, { customId: id }, { subject: id }],
+        },
+      });
       if (item) {
-        item.userId = userId;
         let itemRules = buildDynamicRulesFromLegacy(item, dbRuleSets);
 
         const targetKey = ruleKey || Object.keys(body).find((k) => !["action", "id"].includes(k));
@@ -48,35 +47,47 @@ export async function POST(req: Request) {
           }
         }
 
-        item.rules = itemRules;
-        await item.save();
+        await prisma.syllabusItem.update({
+          where: { id: item.id },
+          data: { rules: itemRules as any },
+        });
       }
     } else if (action === "update_status") {
-      let item = await SyllabusItem.findOne(queryFilter);
+      let item = await prisma.syllabusItem.findFirst({
+        where: {
+          userId,
+          OR: [{ id }, { customId: id }, { subject: id }],
+        },
+      });
       if (item) {
-        item.userId = userId;
-        item.status = status;
-        await item.save();
+        await prisma.syllabusItem.update({
+          where: { id: item.id },
+          data: { status },
+        });
       }
     } else if (action === "update" || action === "update_rules") {
-      let item = await SyllabusItem.findOne(queryFilter);
+      let item = await prisma.syllabusItem.findFirst({
+        where: {
+          userId,
+          OR: [{ id }, { customId: id }, { subject: id }],
+        },
+      });
       if (item) {
-        item.userId = userId;
         const todayStr = new Date().toISOString().split("T")[0];
-        item.subject = subject ?? item.subject;
-        item.category = category ?? item.category;
-        item.status = status ?? item.status;
-        item.source = source ?? item.source;
-        item.date = date ?? (item.date || todayStr);
-        item.nextRev = nextRev ?? (item.nextRev || addDaysStr(item.date || todayStr, 7));
+        const newRules = (rules && Array.isArray(rules)) ? rules : buildDynamicRulesFromLegacy(item, dbRuleSets);
 
-        if (rules && Array.isArray(rules)) {
-          item.rules = rules;
-        } else {
-          item.rules = buildDynamicRulesFromLegacy(item, dbRuleSets);
-        }
-
-        await item.save();
+        await prisma.syllabusItem.update({
+          where: { id: item.id },
+          data: {
+            subject: subject ?? item.subject,
+            category: category ?? item.category,
+            status: status ?? item.status,
+            source: source ?? item.source,
+            date: date ?? (item.date || todayStr),
+            nextRev: nextRev ?? (item.nextRev || addDaysStr(item.date || todayStr, 7)),
+            rules: newRules as any,
+          },
+        });
       }
     } else if (action === "create") {
       const customId = "subj_" + Date.now();
@@ -94,24 +105,26 @@ export async function POST(req: Request) {
               completed: false,
             }));
 
-      await SyllabusItem.create({
-        userId,
-        customId,
-        subject,
-        category: category || "GS1",
-        status: status || "Not Started",
-        source: source || "",
-        date: initialDate,
-        nextRev: initialNextRev,
-        rules: initialRules,
+      await prisma.syllabusItem.create({
+        data: {
+          userId,
+          customId,
+          subject,
+          category: category || "GS1",
+          status: status || "Not Started",
+          source: source || "",
+          date: initialDate,
+          nextRev: initialNextRev,
+          rules: initialRules as any,
+        },
       });
     }
 
-    const syllabus = await SyllabusItem.find(userFilter).lean();
+    const syllabus = await prisma.syllabusItem.findMany({ where: { userId } });
 
     const formattedSyllabus = sortSyllabusItems(
-      syllabus.map((item: any) => ({
-        id: item.customId || item._id.toString(),
+      syllabus.map((item) => ({
+        id: item.customId || item.id,
         subject: item.subject,
         category: item.category || "GS1",
         status: item.status || "Not Started",

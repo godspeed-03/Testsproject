@@ -1,37 +1,28 @@
 import { NextResponse } from 'next/server';
-import connectToDatabase from '@/lib/mongodb';
+import prisma from '@/lib/prisma';
 import { getUserFromCookies } from '@/lib/auth';
-import RoutineConfig from '@/models/RoutineConfig';
 
-/**
- * Recursively strips all Mongo metadata (_id, __v, userId, createdAt, updatedAt)
- * from an object and all nested arrays/objects.
- */
-function deepCleanMongo(obj: any): any {
+function deepClean(obj: any): any {
   if (obj === null || obj === undefined) return obj;
   if (typeof obj !== 'object') return obj;
 
   if (Array.isArray(obj)) {
-    return obj.map(deepCleanMongo);
+    return obj.map(deepClean);
   }
 
   const result: any = {};
   for (const key of Object.keys(obj)) {
     if (['_id', '__v', 'userId', 'createdAt', 'updatedAt'].includes(key)) continue;
-    result[key] = deepCleanMongo(obj[key]);
+    result[key] = deepClean(obj[key]);
   }
   return result;
 }
 
-/**
- * Unwraps configPayload nesting and deep-cleans the result.
- */
 function cleanRoutinePayload(obj: any): any {
   if (!obj || typeof obj !== 'object') return obj;
 
   let data = obj;
 
-  // Prefer configPayload if it has actual cell/table data
   if (data.configPayload && typeof data.configPayload === 'object') {
     const cp = data.configPayload;
     if (cp.cells?.length || cp.timeSlots?.length || cp.tables?.length || cp.satakGoals?.length) {
@@ -39,7 +30,7 @@ function cleanRoutinePayload(obj: any): any {
     }
   }
 
-  return deepCleanMongo(data);
+  return deepClean(data);
 }
 
 export async function GET() {
@@ -47,20 +38,21 @@ export async function GET() {
     const user = await getUserFromCookies();
     const userId = user?.userId || '000000000000000000000000';
 
-    await connectToDatabase();
-
-    const config = await RoutineConfig.findOne({ userId }).lean();
+    const config = await prisma.routineConfig.findUnique({
+      where: { userId },
+    });
 
     if (!config) {
       return NextResponse.json({
-        routineConfig: null
+        routineConfig: null,
       });
     }
 
-    const cleanPayload = cleanRoutinePayload(config);
+    const payload = typeof config.configPayload === 'object' ? config.configPayload : config;
+    const cleanPayload = cleanRoutinePayload(payload);
 
     return NextResponse.json({
-      routineConfig: cleanPayload
+      routineConfig: cleanPayload,
     });
   } catch (error: any) {
     console.error('Fetch routine config error:', error);
@@ -85,31 +77,20 @@ export async function POST(req: Request) {
 
     const routineData = cleanRoutinePayload(rawRoutineData);
 
-    await connectToDatabase();
-
-    const updateDoc: any = {
-      userId,
-      configPayload: routineData,
-      title: routineData.title || 'Master Routine & Schedule',
-      subtitle: routineData.subtitle || '',
-      timeSlots: routineData.timeSlots || [],
-      cells: routineData.cells || [],
-      metrics: routineData.metrics || {},
-      satakGoals: routineData.satakGoals || [],
-      tables: routineData.tables || undefined,
-      weeklySummary: routineData.weeklySummary || undefined,
-      updatedAt: new Date()
-    };
-
-    await RoutineConfig.findOneAndUpdate(
-      { userId },
-      { $set: updateDoc },
-      { upsert: true, new: true }
-    );
+    const routineConfig = await prisma.routineConfig.upsert({
+      where: { userId },
+      update: {
+        configPayload: routineData,
+      },
+      create: {
+        userId,
+        configPayload: routineData,
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      routineConfig: routineData
+      routineConfig: routineData,
     });
   } catch (error: any) {
     console.error('Save routine config error:', error);

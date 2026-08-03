@@ -1,9 +1,4 @@
-import connectToDatabase from '@/lib/mongodb';
-import WeeklyData from '@/models/WeeklyData';
-import HabitItem from '@/models/HabitItem';
-import TopicRevision from '@/models/TopicRevision';
-import SyllabusItem from '@/models/SyllabusItem';
-import DailySnapshot from '@/models/DailySnapshot';
+import prisma from '@/lib/prisma';
 
 export function getStudyDayKey(d: Date = new Date()): string {
   const adjusted = new Date(d);
@@ -18,11 +13,11 @@ export function getStudyDayKey(d: Date = new Date()): string {
 
 export function getWeekKey(d: Date = new Date()): string {
   const now = new Date(d);
-  const dayOfWeek = now.getDay(); // 0 is Sunday, 1 is Mon
-  const diffToMon = (dayOfWeek === 0 ? -6 : 1 - dayOfWeek);
+  const dayOfWeek = now.getDay();
+  const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
   const mon = new Date(now);
   mon.setDate(now.getDate() + diffToMon);
-  
+
   const sun = new Date(mon);
   sun.setDate(mon.getDate() + 6);
 
@@ -36,79 +31,47 @@ export async function getEffectiveUserId(userId?: string): Promise<string> {
   return userId || '000000000000000000000000';
 }
 
-/**
- * Checks if a habit/task represents a study session or time-based activity.
- * Non-time habits (e.g. Water in liters, Gym with yes_no or times) are excluded from study hours.
- */
 function isTimeBasedActivity(h: any): boolean {
   if (h.isStudyTask) return true;
 
-  const unit = (h.target?.unit || '').toLowerCase().trim();
+  const targetObj = typeof h.target === 'object' && h.target !== null ? (h.target as any) : {};
+  const unit = (targetObj.unit || '').toLowerCase().trim();
   const nonStudyUnits = ['yes_no', 'boolean', 'times', 'time', 'count', 'liters', 'liter', 'glass', 'glasses', 'ml', 'l', 'steps', 'kg', 'reps'];
 
-  if (nonStudyUnits.includes(unit)) {
-    return false;
-  }
-
-  if (['hrs', 'hr', 'hours', 'hour', 'mins', 'min', 'minutes', 'minute'].includes(unit)) {
-    return true;
-  }
-
+  if (nonStudyUnits.includes(unit)) return false;
+  if (['hrs', 'hr', 'hours', 'hour', 'mins', 'min', 'minutes', 'minute'].includes(unit)) return true;
   return false;
 }
 
-/**
- * Gets hours spent on a habit/task item based on its target unit and history.
- */
 function getHabitItemHours(h: any, entry: any): number {
   if (!isTimeBasedActivity(h)) return 0;
 
-  const unit = (h.target?.unit || '').toLowerCase().trim();
+  const targetObj = typeof h.target === 'object' && h.target !== null ? (h.target as any) : {};
+  const unit = (targetObj.unit || '').toLowerCase().trim();
   let val = entry?.value;
 
   if (val === undefined || val === null || val === 0) {
-    if (entry?.status === 'done') {
-      val = h.target?.value || 1;
-    } else {
-      val = 0;
-    }
+    val = entry?.status === 'done' ? targetObj.value || 1 : 0;
   }
 
-  if (['hrs', 'hr', 'hours', 'hour'].includes(unit)) {
-    return val;
-  }
+  if (['hrs', 'hr', 'hours', 'hour'].includes(unit)) return val;
+  if (['mins', 'min', 'minutes', 'minute'].includes(unit)) return val / 60;
 
-  if (['mins', 'min', 'minutes', 'minute'].includes(unit)) {
-    return val / 60;
-  }
-
-  // Fallback to item duration or default 1.0 hr for study tasks
   const itemMin = h.durationMinutes || h.timeNeededMinutes || 60;
-  return val > 0 ? (val * (itemMin / 60)) : (entry?.status === 'done' ? (itemMin / 60) : 0);
+  return val > 0 ? val * (itemMin / 60) : entry?.status === 'done' ? itemMin / 60 : 0;
 }
 
 const INVALID_SUBJECT_NAMES = new Set(['study', 'general', 'gs1', 'gs2', 'gs3', 'gs4', 'csat', 'reading', 'revision', 'task', 'habit', 'uncategorized']);
 
-/**
- * Resolves a valid Subject name matching the Syllabus Matrix.
- * Never allows generic category names like 'Study' or 'GS1' to masquerade as subjects.
- */
 function resolveValidSubject(rawSubj: string | undefined, title: string | undefined, validSyllabusSubjects: string[]): string | null {
   const cleanSubj = (rawSubj || '').trim();
+  if (cleanSubj && !INVALID_SUBJECT_NAMES.has(cleanSubj.toLowerCase())) return cleanSubj;
 
-  if (cleanSubj && !INVALID_SUBJECT_NAMES.has(cleanSubj.toLowerCase())) {
-    return cleanSubj;
-  }
-
-  // Check if title has "Subject: Topic" pattern (e.g. "Differential Calculas: ghsgdhgsd")
   if (title && title.includes(':')) {
     const candidate = title.split(':')[0].trim();
-    if (candidate && !INVALID_SUBJECT_NAMES.has(candidate.toLowerCase())) {
-      return candidate;
-    }
+    if (candidate && !INVALID_SUBJECT_NAMES.has(candidate.toLowerCase())) return candidate;
   }
 
-  // Match title against known syllabus subjects
   if (title) {
     const matched = validSyllabusSubjects.find((s) => title.toLowerCase().includes(s.toLowerCase()));
     if (matched) return matched;
@@ -117,14 +80,8 @@ function resolveValidSubject(rawSubj: string | undefined, title: string | undefi
   return null;
 }
 
-/**
- * Calculates 7-day study velocity and subject/habit distributions directly from DB models,
- * then persists the record into the WeeklyData MongoDB collection.
- */
 export async function calculateAndSaveWeeklyData(userId?: string) {
-  await connectToDatabase();
   const effectiveUserId = await getEffectiveUserId(userId);
-
   const now = new Date();
   const weekKey = getWeekKey(now);
 
@@ -143,50 +100,36 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
       dateKey: dayKey,
       hours: 0,
       tasksCount: 0,
-      target: 8.0
+      target: 8.0,
     });
   }
 
   const startDate = dayKeys[0];
   const endDate = dayKeys[dayKeys.length - 1];
 
-  // Fetch daily snapshots, habits, syllabus items & revisions concurrently
   const [dailyDocs, habits, syllabusItems, topicRevisions] = await Promise.all([
-    DailySnapshot.find({ userId: effectiveUserId, studyDayKey: { $in: dayKeys } }).lean(),
-    HabitItem.find({ userId: effectiveUserId }).lean(),
-    SyllabusItem.find({ userId: effectiveUserId }).lean(),
-    TopicRevision.find({ userId: effectiveUserId }).lean()
+    prisma.dailySnapshot.findMany({
+      where: { userId: effectiveUserId, studyDayKey: { in: dayKeys } },
+    }),
+    prisma.habitItem.findMany({ where: { userId: effectiveUserId } }),
+    prisma.syllabusItem.findMany({ where: { userId: effectiveUserId } }),
+    prisma.topicRevision.findMany({ where: { userId: effectiveUserId } }),
   ]);
 
-  const dailyDocMap: Record<string, any> = {};
-  dailyDocs.forEach((doc: any) => {
-    dailyDocMap[doc.studyDayKey] = doc;
-  });
-
   let totalTasksDone = 0;
-  const habitStatsMap: Record<
-    string,
-    {
-      title: string;
-      unit: string;
-      totalValue: number;
-      completedDays: number;
-      color: string;
-    }
-  > = {};
+  const habitStatsMap: Record<string, { title: string; unit: string; totalValue: number; completedDays: number; color: string }> = {};
   const subjectHoursMap: Record<string, { subject: string; hours: number; color: string }> = {};
-
   const colors = ['bg-indigo-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-purple-500', 'bg-blue-500'];
 
-  // Initialize habitStatsMap ONLY for actual habits (excluding tasks / study tasks)
   habits.forEach((h, idx) => {
     if (h.type === 'habit' && !h.isStudyTask) {
-      habitStatsMap[h._id.toString()] = {
+      const targetObj = typeof h.target === 'object' && h.target !== null ? (h.target as any) : {};
+      habitStatsMap[h.id] = {
         title: h.title,
-        unit: (h.target?.unit || 'times').trim(),
+        unit: (targetObj.unit || 'times').trim(),
         totalValue: 0,
         completedDays: 0,
-        color: colors[idx % colors.length]
+        color: colors[idx % colors.length],
       };
     }
   });
@@ -194,7 +137,7 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
   const validSyllabusSubjects = Array.from(
     new Set([
       ...syllabusItems.map((s) => s.subject).filter(Boolean),
-      ...topicRevisions.map((t) => t.subject).filter(Boolean)
+      ...topicRevisions.map((t) => t.subject).filter(Boolean),
     ])
   ).filter((s) => !INVALID_SUBJECT_NAMES.has(s.toLowerCase()));
 
@@ -202,7 +145,7 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
     subjectHoursMap[subj] = {
       subject: subj,
       hours: 0,
-      color: colors[idx % colors.length]
+      color: colors[idx % colors.length],
     };
   });
 
@@ -211,18 +154,17 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
     let dayEstimatedHours = 0;
     let dayTasksCount = 0;
 
-    habits.forEach((h) => {
-      const hId = h._id.toString();
-      const entry = (h.history || []).find((e: any) => e.date === dKey);
-      
+    habits.forEach((h: any) => {
+      const hId = h.id;
+      const history = Array.isArray(h.history) ? h.history : [];
+      const entry = history.find((e: any) => e.date === dKey);
+
       if (entry && (entry.status === 'done' || (entry.value && entry.value > 0))) {
-        // Task/habit count ONLY for completed items
         if (entry.status === 'done') {
           dayTasksCount++;
           totalTasksDone++;
         }
 
-        // Track stats for actual Habits section (includes partial progress for display)
         if (habitStatsMap[hId]) {
           const val = entry.value || 1;
           habitStatsMap[hId].totalValue += val;
@@ -231,13 +173,12 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
           }
         }
 
-        // Track study hours & subject distribution for Study Tasks / Time-based activities
         if (isTimeBasedActivity(h)) {
           const itemHours = getHabitItemHours(h, entry);
           if (itemHours > 0) {
             dayEstimatedHours += itemHours;
 
-            const subj = resolveValidSubject(h.subject, h.title, validSyllabusSubjects);
+            const subj = resolveValidSubject(h.subject || undefined, h.title, validSyllabusSubjects);
             if (subj) {
               if (!subjectHoursMap[subj]) {
                 subjectHoursMap[subj] = { subject: subj, hours: 0, color: colors[Object.keys(subjectHoursMap).length % colors.length] };
@@ -249,9 +190,9 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
       }
     });
 
-    topicRevisions.forEach((tr) => {
+    topicRevisions.forEach((tr: any) => {
       const subj = resolveValidSubject(tr.subject, tr.topic, validSyllabusSubjects);
-      const stages = tr.revisions || [];
+      const stages = Array.isArray(tr.revisions) ? tr.revisions : [];
       stages.forEach((st: any) => {
         if (st.completedDate === dKey || (st.status === 'done' && st.scheduledDate === dKey)) {
           totalTasksDone++;
@@ -274,26 +215,27 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
 
   const weeklyTotalHours = Number(weeklyData.reduce((acc, d) => acc + d.hours, 0).toFixed(1));
   const dailyAverageHours = Number((weeklyTotalHours / 7).toFixed(1));
-  // Calculate Weekly Consistency Score based on Habit 2+ Days Consistency Rule in current 7 days
-  // Only count recurring habits/tasks (exclude one-time events and frequency.mode === 'once')
-  const recurringHabits = habits.filter((h) => h.frequency?.mode !== 'once' && h.type !== 'event');
+
+  const recurringHabits = habits.filter((h: any) => {
+    const freq = typeof h.frequency === 'object' && h.frequency !== null ? (h.frequency as any) : {};
+    return freq.mode !== 'once' && h.type !== 'event';
+  });
   const totalHabitsCount = recurringHabits.length;
   let consistentHabitsCount = 0;
   let consistencyPct = 0;
 
   if (totalHabitsCount > 0) {
-    recurringHabits.forEach((h) => {
+    recurringHabits.forEach((h: any) => {
       let completedDaysInWeek = 0;
       weeklyData.forEach((dayObj) => {
         const dKey = dayObj.dateKey;
-        const entry = (h.history || []).find((e: any) => e.date === dKey);
-        // Only count days where the task/habit was actually completed
+        const history = Array.isArray(h.history) ? h.history : [];
+        const entry = history.find((e: any) => e.date === dKey);
         if (entry && entry.status === 'done') {
           completedDaysInWeek++;
         }
       });
 
-      // A habit is consistent if completed >= 2 days in current week's 7 days
       if (completedDaysInWeek >= 2) {
         consistentHabitsCount++;
       }
@@ -302,7 +244,6 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
     const weightPerHabit = 100 / totalHabitsCount;
     consistencyPct = Number((consistentHabitsCount * weightPerHabit).toFixed(1));
   } else {
-    // Fallback if no habits defined: check active study days in current week
     const activeStudyDays = weeklyData.filter((d) => d.hours > 0 || d.tasksCount > 0).length;
     consistencyPct = Number(((activeStudyDays / 7) * 100).toFixed(1));
   }
@@ -314,7 +255,7 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
       subject: s.subject,
       hours: `${s.hours.toFixed(1)} hrs`,
       pct: Math.round((s.hours / totalSubjHours) * 100) || 0,
-      color: s.color
+      color: s.color,
     }))
     .sort((a, b) => b.pct - a.pct);
 
@@ -340,42 +281,60 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
         subject: h.title,
         hours: formattedVal,
         pct,
-        color: h.color
+        color: h.color,
       };
     })
     .sort((a, b) => b.pct - a.pct);
 
-  const calculatedAt = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const breakdown = {
+    weeklyTotalHours,
+    dailyAverageHours,
+    consistencyPct,
+    totalTasksDone,
+    weeklyData,
+    subjectDistribution,
+    habitDistribution,
+  };
 
-  // Save / Upsert into MongoDB WeeklyData collection
-  const weeklyDoc = await WeeklyData.findOneAndUpdate(
-    { userId: effectiveUserId, weekKey },
-    {
+  const weeklyDoc = await prisma.weeklyData.upsert({
+    where: {
+      userId_weekKey: {
+        userId: effectiveUserId,
+        weekKey,
+      },
+    },
+    update: {
+      totalHours: weeklyTotalHours,
+      weeklyScore: consistencyPct,
+      completedTopicsCount: totalTasksDone,
+      breakdown,
+    },
+    create: {
       userId: effectiveUserId,
       weekKey,
-      startDate,
-      endDate,
-      weeklyTotalHours,
-      dailyAverageHours,
-      consistencyPct,
-      totalTasksDone,
-      weeklyData,
-      subjectDistribution,
-      habitDistribution,
-      calculatedAt
+      totalHours: weeklyTotalHours,
+      weeklyScore: consistencyPct,
+      completedTopicsCount: totalTasksDone,
+      breakdown,
     },
-    { upsert: true, returnDocument: 'after' }
-  );
+  });
 
   return weeklyDoc;
 }
 
 export async function getLatestWeeklyData(userId?: string) {
-  await connectToDatabase();
   const effectiveUserId = await getEffectiveUserId(userId);
   const weekKey = getWeekKey();
 
-  let weeklyDoc = await WeeklyData.findOne({ userId: effectiveUserId, weekKey });
+  let weeklyDoc = await prisma.weeklyData.findUnique({
+    where: {
+      userId_weekKey: {
+        userId: effectiveUserId,
+        weekKey,
+      },
+    },
+  });
+
   if (!weeklyDoc) {
     weeklyDoc = await calculateAndSaveWeeklyData(effectiveUserId);
   }

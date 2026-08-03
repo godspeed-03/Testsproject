@@ -99,6 +99,10 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
       if (isDone) habitDoneCount++;
     }
 
+    const loggedVal = entry && typeof entry.value === 'number' ? entry.value : 0;
+    const progressRatio = isDone ? 1 : (isNumericGoal && targetVal > 0 ? Math.min(1, Math.max(0, loggedVal / targetVal)) : 0);
+    const itemScore = isScheduled ? Math.round(progressRatio * 100) : 100;
+
     const categoryObj = typeof h.category === 'object' && h.category !== null ? (h.category as any) : {};
 
     habitBreakdown.push({
@@ -110,7 +114,8 @@ export async function recalculateDailySnapshot(userId: string, studyDayKey?: str
       subject: h.subject || categoryObj.label || 'General',
       scheduled: isScheduled,
       done: isDone,
-      score: isScheduled ? (isDone ? 100 : 0) : 100,
+      progressRatio,
+      score: itemScore,
     });
   });
 

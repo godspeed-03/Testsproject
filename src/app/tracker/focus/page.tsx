@@ -155,7 +155,7 @@ export default function FocusPage() {
     }
   };
 
-  // INCREMENT & Log Focus Session to MongoDB
+  // INCREMENT & Log Focus Session
   const handleSessionComplete = async () => {
     if (!activeHabit) return;
 

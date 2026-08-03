@@ -278,7 +278,7 @@ export async function GET(req: Request) {
             if (!hMatch || !hMatch.scheduled) {
               return null;
             }
-            const itemScore = hMatch.done ? 100 : 0;
+            const itemScore = typeof hMatch.score === 'number' ? hMatch.score : (hMatch.done ? 100 : 0);
             return {
               studyDayKey: d.studyDayKey,
               overallScore: itemScore,

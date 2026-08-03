@@ -232,6 +232,9 @@ export default function AnalyticsPage() {
   // Toggle for Velocity Chart Metric: 'hours' vs 'tasks'
   const [velocityMetric, setVelocityMetric] = useState<"hours" | "tasks">("hours");
 
+  // Toggle for Velocity Chart Style: 'area' vs 'bar'
+  const [velocityChartStyle, setVelocityChartStyle] = useState<"area" | "bar">("area");
+
   // Distribution Mode in Velocity Tab: 'subject' vs 'habit'
   const [distributionMode, setDistributionMode] = useState<"subject" | "habit">("subject");
 
@@ -344,7 +347,7 @@ export default function AnalyticsPage() {
             json.data?.calculatedAt ||
             json.calculatedAt ||
             new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-          setToastMessage(`Recalculated & saved Weekly Velocity to MongoDB as of ${calculatedAt}`);
+          setToastMessage(`Recalculated & saved Weekly Velocity as of ${calculatedAt}`);
           await fetchWeeklyData();
         }
       } else {
@@ -355,7 +358,7 @@ export default function AnalyticsPage() {
         });
         if (res.ok) {
           const json = await res.json();
-          setToastMessage(`Recalculated Consistency Score & saved to MongoDB as of ${json.calculatedAt || "4:00 AM"}`);
+          setToastMessage(`Recalculated Consistency Score as of ${json.calculatedAt || "4:00 AM"}`);
           await fetchData();
         }
       }
@@ -621,6 +624,32 @@ export default function AnalyticsPage() {
                 </div>
 
                 <div className="flex items-center gap-2">
+                  {/* Chart Style Toggle: Line vs Bar */}
+                  <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => setVelocityChartStyle("area")}
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        velocityChartStyle === "area"
+                          ? "bg-accent-primary text-white shadow-2xs"
+                          : "text-slate-500 dark:text-slate-400"
+                      }`}
+                    >
+                      Line Graph
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVelocityChartStyle("bar")}
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                        velocityChartStyle === "bar"
+                          ? "bg-accent-primary text-white shadow-2xs"
+                          : "text-slate-500 dark:text-slate-400"
+                      }`}
+                    >
+                      Bar Chart
+                    </button>
+                  </div>
+
                   {/* Metric Toggle: Hours vs Tasks */}
                   <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                     <button
@@ -628,7 +657,7 @@ export default function AnalyticsPage() {
                       onClick={() => setVelocityMetric("hours")}
                       className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
                         velocityMetric === "hours"
-                          ? "bg-accent-primary text-white shadow-2xs"
+                          ? "bg-accent-secondary text-white shadow-2xs"
                           : "text-slate-500 dark:text-slate-400"
                       }`}
                     >
@@ -653,7 +682,7 @@ export default function AnalyticsPage() {
                 </div>
               </div>
 
-              {/* Dynamic ApexBar Chart */}
+              {/* Dynamic Apex Chart (Area Line or Bar) */}
               {weeklyData.length > 0 ? (
                 (() => {
                   const chartSeriesData = weeklyData.map((d: any) =>
@@ -671,10 +700,12 @@ export default function AnalyticsPage() {
                         ? maxVal + 1
                         : 5;
 
+                  const chartColor = velocityMetric === "hours" ? "var(--primary-accent, var(--accent))" : "var(--accent-secondary)";
+
                   return (
                     <div className="pt-2">
                       <ReactApexChart
-                        type="bar"
+                        type={velocityChartStyle}
                         height={230}
                         series={[
                           {
@@ -684,13 +715,33 @@ export default function AnalyticsPage() {
                         ]}
                         options={{
                           chart: {
-                            type: "bar",
+                            type: velocityChartStyle,
                             toolbar: { show: false },
                             fontFamily: "inherit",
                             background: "transparent",
                             animations: { enabled: true, speed: 300 },
                           },
-                          plotOptions: {
+                          stroke: {
+                            curve: "smooth",
+                            width: velocityChartStyle === "area" ? 3.5 : 2,
+                          },
+                          fill: velocityChartStyle === "area" ? {
+                            type: "gradient",
+                            gradient: {
+                              shadeIntensity: 1,
+                              opacityFrom: 0.45,
+                              opacityTo: 0.05,
+                              stops: [0, 90, 100],
+                            },
+                          } : undefined,
+                          markers: velocityChartStyle === "area" ? {
+                            size: 5,
+                            colors: [chartColor],
+                            strokeColors: "#fff",
+                            strokeWidth: 2,
+                            hover: { size: 7 },
+                          } : undefined,
+                          plotOptions: velocityChartStyle === "bar" ? {
                             bar: {
                               borderRadius: 8,
                               borderRadiusApplication: "end",
@@ -700,8 +751,8 @@ export default function AnalyticsPage() {
                                 position: "top",
                               },
                             },
-                          },
-                          colors: [velocityMetric === "hours" ? "var(--primary-accent, var(--accent))" : "var(--accent-secondary)"],
+                          } : undefined,
+                          colors: [chartColor],
                           dataLabels: {
                             enabled: true,
                             formatter: (val: number) =>
@@ -709,9 +760,9 @@ export default function AnalyticsPage() {
                             style: {
                               fontSize: "11px",
                               fontWeight: "800",
-                              colors: [velocityMetric === "hours" ? "var(--primary-accent, var(--accent))" : "var(--accent-secondary)"],
+                              colors: [chartColor],
                             },
-                            offsetY: -22,
+                            offsetY: velocityChartStyle === "bar" ? -22 : -10,
                           },
                           xaxis: {
                             categories: weeklyData.map((d: any) => d.day),

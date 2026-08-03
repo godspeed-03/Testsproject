@@ -249,7 +249,7 @@ export default function AgendaShowcase() {
                   <span className="flex items-center gap-2">
                     <CheckSquare size={14} /> Today Agenda
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black font-display ${
                     activeTab === 'agenda' ? 'bg-[#6D28D9] text-white' : 'bg-slate-100 text-slate-500'
                   }`}>
                     {agendaItems.length}
@@ -269,7 +269,7 @@ export default function AgendaShowcase() {
                   <span className="flex items-center gap-2">
                     <Flame size={14} className={activeTab === 'habits' ? 'text-amber-300' : 'text-amber-500'} /> Habits & Streaks
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black font-display ${
                     activeTab === 'habits' ? 'bg-[#6D28D9] text-white' : 'bg-slate-100 text-slate-500'
                   }`}>
                     11
@@ -315,7 +315,7 @@ export default function AgendaShowcase() {
                   <span className="flex items-center gap-2">
                     <Layers size={14} /> Checklists
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black font-display ${
                     activeTab === 'checklists' ? 'bg-[#6D28D9] text-white' : 'bg-slate-100 text-slate-500'
                   }`}>
                     {checklists.length}
@@ -343,7 +343,7 @@ export default function AgendaShowcase() {
                 </div>
                 <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200">
                   <span>Today's Completion</span>
-                  <span className="font-black text-emerald-600 dark:text-emerald-400">
+                  <span className="font-black font-display text-emerald-600 dark:text-emerald-400">
                     {agendaItems.filter((i) => i.done).length} / {agendaItems.length} Done
                   </span>
                 </div>
@@ -357,7 +357,7 @@ export default function AgendaShowcase() {
                 </div>
                 <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 pt-1">
                   <span>Hours Read Today</span>
-                  <span className="font-black text-slate-900 dark:text-white">1 hr</span>
+                  <span className="font-black font-display text-slate-900 dark:text-white">1 hr 48 mins / 8 hr 45 mins</span>
                 </div>
               </div>
             </div>
@@ -655,8 +655,15 @@ export default function AgendaShowcase() {
 
         {/* Modal: Create New Tracker Item (Exact Production UI) */}
         {isNewModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <form onSubmit={handleCreateTrackerItem} className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full p-6 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setIsNewModalOpen(false)}
+          >
+            <form
+              onSubmit={handleCreateTrackerItem}
+              className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full p-6 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div>

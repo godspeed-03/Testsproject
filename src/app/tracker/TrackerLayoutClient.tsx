@@ -20,6 +20,8 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Clock,
   Check,
   Edit3,
@@ -35,6 +37,96 @@ import {
   NON_SUBJECT_COLOR_OPTIONS,
   getSubjectTheme
 } from '@/lib/subjectThemeMap';
+function DailyTargetCard({
+  todayItems,
+  selectedDate,
+  cardBg,
+  textMuted
+}: {
+  todayItems: any[];
+  selectedDate: string;
+  cardBg: string;
+  textMuted: string;
+}) {
+  const isTimeBasedUnit = (h: any) => {
+    const unit = (h.target?.unit || '').toLowerCase().trim();
+    return ['hours', 'hrs', 'hour', 'mins', 'minutes', 'min', 'minute'].includes(unit);
+  };
+
+  const totalTodayLoggedHours = todayItems.reduce((acc: number, h: any) => {
+    if (!isTimeBasedUnit(h)) return acc;
+
+    const entry = (h.history || []).find((e: any) => e.date === selectedDate);
+    if (!entry) return acc;
+
+    const val = Number(entry.value || 0);
+    if (val <= 0 && entry.status !== 'done') return acc;
+
+    const unit = (h.target?.unit || '').toLowerCase().trim();
+    const effectiveVal = val > 0 ? val : (entry.status === 'done' ? Number(h.target?.value || 0) : 0);
+
+    if (['mins', 'minutes', 'min', 'minute'].includes(unit)) {
+      return acc + effectiveVal / 60;
+    }
+    return acc + effectiveVal;
+  }, 0);
+
+  const formatHoursAndMins = (hrsDecimal: number) => {
+    if (hrsDecimal <= 0) return '0 mins';
+    const totalMins = Math.round(hrsDecimal * 60);
+    const h = Math.floor(totalMins / 60);
+    const m = totalMins % 60;
+    if (h > 0 && m > 0) return `${h} hr ${m} mins`;
+    if (h > 0) return `${h} hr${h > 1 ? 's' : ''}`;
+    return `${m} mins`;
+  };
+
+  const totalTodayTargetHours = todayItems.reduce((acc: number, h: any) => {
+    if (!isTimeBasedUnit(h)) return acc;
+
+    const unit = (h.target?.unit || '').toLowerCase().trim();
+    const tgt = Number(h.target?.value || 0);
+
+    if (['mins', 'minutes', 'min', 'minute'].includes(unit)) {
+      return acc + tgt / 60;
+    }
+    return acc + tgt;
+  }, 0);
+
+  const doneCount = todayItems.filter((h: any) =>
+    (h.history || []).some((hist: any) => hist.date === selectedDate && hist.status === 'done')
+  ).length;
+
+  return (
+    <div className={`p-4 rounded-2xl border ${cardBg} space-y-3 shadow-xs`}>
+      <h4 className={`text-xs font-black uppercase tracking-wider ${textMuted} flex items-center gap-1.5`}>
+        <TrendingUp size={14} className="text-amber-500" /> Daily Target
+      </h4>
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs font-bold">
+          <span className={textMuted}>Today's Completion</span>
+          <span className="text-emerald-600 dark:text-emerald-400 font-black font-display">
+            {doneCount} / {todayItems.length} Done
+          </span>
+        </div>
+        <div className="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-accent-quaternary transition-all duration-500"
+            style={{
+              width: `${todayItems.length > 0 ? (doneCount / todayItems.length) * 100 : 0}%`
+            }}
+          />
+        </div>
+        <div className="flex justify-between text-xs font-bold pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
+          <span className={textMuted}>Hours Read Today</span>
+          <span className="text-accent-quaternary font-black font-display">
+            {formatHoursAndMins(totalTodayLoggedHours)} {totalTodayTargetHours > 0 ? `/ ${formatHoursAndMins(totalTodayTargetHours)}` : ''}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function TrackerLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -185,8 +277,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
           </div>
         </div>
 
-        {/* Mobile Horizontal Pill Navigation Bar (<768px) with Touch Snap & Smooth Scroll */}
-        <div className="md:hidden overflow-x-auto flex items-center gap-2 pb-1 pt-0.5 scrollbar-none -mx-4 px-4 snap-x snap-mandatory">
+        {/* Mobile Horizontal Pill Navigation Bar (<768px) with Touch Snap & Sticky Header */}
+        <div className="md:hidden sticky top-14 z-40 backdrop-blur-md bg-slate-50/90 dark:bg-slate-950/90 overflow-x-auto flex items-center gap-2 py-2.5 scrollbar-none -mx-4 px-4 border-b border-slate-200/80 dark:border-slate-800/80 snap-x snap-mandatory shadow-xs">
           {navTabs.map((tab) => {
             const Icon = tab.icon;
             const active = pathname === tab.href || (pathname === '/tracker' && tab.href === '/tracker/agenda');
@@ -204,7 +296,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && (
                   <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
+                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-black font-display ${
                       active ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                     }`}
                   >
@@ -216,9 +308,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
           })}
         </div>
 
+        {/* Mobile Daily Target Stats Card (<768px) */}
+        <div className="md:hidden mt-3">
+          <DailyTargetCard todayItems={todayItems} selectedDate={selectedDate} cardBg={cardBg} textMuted={textMuted} />
+        </div>
+
         {/* Sidebar + Content Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6">
-          <aside className="hidden md:block md:col-span-4 lg:col-span-3 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6 mt-4 md:mt-0">
+          <aside className="hidden md:block md:col-span-4 lg:col-span-3 space-y-4 sticky top-20 self-start">
             {/* Sidebar Route Tabs Navigation */}
             <div className={`p-3 rounded-2xl border ${cardBg} space-y-1.5 shadow-xs`}>
               {navTabs.map((tab) => {
@@ -240,7 +337,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     </div>
                     {tab.badge !== undefined && (
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-black font-display ${
                           active ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                         }`}
                       >
@@ -252,89 +349,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               })}
             </div>
 
-            {/* Quick Mini Stats Card */}
-            {(() => {
-              const isTimeBasedUnit = (h: any) => {
-                const unit = (h.target?.unit || '').toLowerCase().trim();
-                return ['hours', 'hrs', 'hour', 'mins', 'minutes', 'min', 'minute'].includes(unit);
-              };
-
-              // Calculate ONLY time-based task logged hours for todayItems on selectedDate
-              const totalTodayLoggedHours = todayItems.reduce((acc: number, h: any) => {
-                if (!isTimeBasedUnit(h)) return acc;
-
-                const entry = (h.history || []).find((e: any) => e.date === selectedDate);
-                if (!entry) return acc;
-
-                const val = Number(entry.value || 0);
-                if (val <= 0 && entry.status !== 'done') return acc;
-
-                const unit = (h.target?.unit || '').toLowerCase().trim();
-                const effectiveVal = val > 0 ? val : (entry.status === 'done' ? Number(h.target?.value || 0) : 0);
-
-                if (['mins', 'minutes', 'min', 'minute'].includes(unit)) {
-                  return acc + effectiveVal / 60;
-                }
-                return acc + effectiveVal;
-              }, 0);
-
-              const formatHoursAndMins = (hrsDecimal: number) => {
-                if (hrsDecimal <= 0) return '0 mins';
-                const totalMins = Math.round(hrsDecimal * 60);
-                const h = Math.floor(totalMins / 60);
-                const m = totalMins % 60;
-                if (h > 0 && m > 0) return `${h} hr ${m} mins`;
-                if (h > 0) return `${h} hr${h > 1 ? 's' : ''}`;
-                return `${m} mins`;
-              };
-
-              // Calculate total target hours for todayItems on selectedDate
-              const totalTodayTargetHours = todayItems.reduce((acc: number, h: any) => {
-                if (!isTimeBasedUnit(h)) return acc;
-
-                const unit = (h.target?.unit || '').toLowerCase().trim();
-                const tgt = Number(h.target?.value || 0);
-
-                if (['mins', 'minutes', 'min', 'minute'].includes(unit)) {
-                  return acc + tgt / 60;
-                }
-                return acc + tgt;
-              }, 0);
-
-              const doneCount = todayItems.filter((h: any) =>
-                (h.history || []).some((hist: any) => hist.date === selectedDate && hist.status === 'done')
-              ).length;
-
-              return (
-                <div className={`p-4 rounded-2xl border ${cardBg} space-y-3 shadow-xs`}>
-                  <h4 className={`text-xs font-black uppercase tracking-wider ${textMuted} flex items-center gap-1.5`}>
-                    <TrendingUp size={14} className="text-amber-500" /> Daily Target
-                  </h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs font-bold">
-                      <span className={textMuted}>Today's Completion</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-black">
-                        {doneCount} / {todayItems.length} Done
-                      </span>
-                    </div>
-                    <div className="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-accent-quaternary transition-all duration-500"
-                        style={{
-                          width: `${todayItems.length > 0 ? (doneCount / todayItems.length) * 100 : 0}%`
-                        }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs font-bold pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
-                      <span className={textMuted}>Hours Read Today</span>
-                      <span className="text-accent-quaternary font-black">
-                        {formatHoursAndMins(totalTodayLoggedHours)} {totalTodayTargetHours > 0 ? `/ ${formatHoursAndMins(totalTodayTargetHours)}` : ''}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
+            {/* Desktop Quick Mini Stats Card */}
+            <DailyTargetCard todayItems={todayItems} selectedDate={selectedDate} cardBg={cardBg} textMuted={textMuted} />
           </aside>
 
           {/* Main Content Area */}
@@ -353,8 +369,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
       {/* CREATE / EDIT ITEM MODAL */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in">
-          <div className={`w-full max-w-xl max-h-[92vh] flex flex-col p-5 sm:p-6 rounded-3xl border ${cardBg} shadow-2xl space-y-4 bg-white/95 dark:bg-slate-900/95`}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
+          onClick={() => setShowCreateModal(false)}
+        >
+          <div
+            className={`w-full max-w-xl max-h-[92vh] flex flex-col p-5 sm:p-6 rounded-3xl border ${cardBg} shadow-2xl space-y-4 bg-white/95 dark:bg-slate-900/95`}
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between shrink-0 pb-1 border-b border-slate-100 dark:border-slate-800/80">
               <div>
@@ -980,8 +1002,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
       {/* HABIT NUMERIC PROGRESS LOG MODAL */}
       {showProgressModal && progressModalHabit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in">
-          <div className={`w-full max-w-md rounded-3xl border ${cardBg} shadow-2xl overflow-hidden p-6 space-y-6 bg-white/95 dark:bg-slate-900/95`}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-fade-in"
+          onClick={() => setShowProgressModal(false)}
+        >
+          <div
+            className={`w-full max-w-md rounded-3xl border ${cardBg} shadow-2xl overflow-hidden p-6 space-y-6 bg-white/95 dark:bg-slate-900/95`}
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-3.5">
@@ -1015,7 +1043,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 <div className="w-2 h-2 rounded-full bg-accent-primary animate-pulse" />
                 <span>Logged Till Now Today</span>
               </div>
-              <span className="px-3 py-1 rounded-xl bg-white dark:bg-slate-800 text-accent-primary font-black text-xs shadow-xs border border-accent-primary/20">
+              <span className="px-3 py-1 rounded-xl bg-white dark:bg-slate-800 text-accent-primary font-black font-display text-xs shadow-xs border border-accent-primary/20">
                 {existingModalVal} {progressModalHabit.target?.unit || 'hours'}
               </span>
             </div>
@@ -1032,7 +1060,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
                   }`}
                 >
-                  <Plus size={14} /> Add to {existingModalVal} {progressModalHabit.target?.unit || 'h'}
+                  <Plus size={14} /> Add to <span className="font-display">{existingModalVal} {progressModalHabit.target?.unit || 'h'}</span>
                 </button>
 
                 <button
@@ -1051,14 +1079,20 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
             {/* Hero Stepper / Hours & Minutes Slider Controls */}
             {(() => {
-              const unitStr = (progressModalHabit.target?.unit || '').toLowerCase();
+              const unitStr = (progressModalHabit.target?.unit || '').toLowerCase().trim();
+              const isHoursOnly = ['hours', 'hrs', 'hour'].includes(unitStr);
+              const isMinsOnly = ['mins', 'minutes', 'min'].includes(unitStr);
+              const nonTimeUnits = ['pages', 'page', 'times', 'time', 'questions', 'question', 'chapters', 'chapter', 'items', 'item', 'modules', 'module', 'words', 'word', 'count', 'number', 'boolean', 'yes_no'];
+              const isExplicitlyNonTime = nonTimeUnits.includes(unitStr);
+
               const isTimeBased =
-                ['hours', 'hrs', 'hour', 'mins', 'minutes', 'min'].includes(unitStr) ||
-                progressModalHabit.isStudyTask ||
-                progressModalHabit.subject;
+                (isHoursOnly || isMinsOnly) ||
+                (!isExplicitlyNonTime &&
+                  (unitStr === '' || unitStr === 'time' || unitStr === 'duration') &&
+                  (progressModalHabit.isStudyTask || progressModalHabit.subject));
 
               const formatDuration = (hrsDecimal: number) => {
-                const totalMins = Math.round(hrsDecimal * 60);
+                const totalMins = Math.round((hrsDecimal || 0) * 60);
                 const h = Math.floor(totalMins / 60);
                 const m = totalMins % 60;
                 if (h > 0 && m > 0) return `${h} hr ${m} mins`;
@@ -1066,17 +1100,18 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 return `${m} mins`;
               };
 
-              const hoursVal = Math.floor(progressModalValue || 0);
-              const minsVal = Math.round(((progressModalValue || 0) % 1) * 60);
+              const totalMinsVal = Math.round((progressModalValue || 0) * 60);
+              const hoursVal = Math.floor(totalMinsVal / 60);
+              const minsVal = totalMinsVal % 60;
 
               const setHours = (h: number) => {
-                const newTotal = h + minsVal / 60;
-                setProgressModalValue(Number(newTotal.toFixed(2)));
+                const newTotalMins = h * 60 + minsVal;
+                setProgressModalValue(Number((newTotalMins / 60).toFixed(4)));
               };
 
               const setMinutes = (m: number) => {
-                const newTotal = hoursVal + m / 60;
-                setProgressModalValue(Number(newTotal.toFixed(2)));
+                const newTotalMins = hoursVal * 60 + m;
+                setProgressModalValue(Number((newTotalMins / 60).toFixed(4)));
               };
 
               const projectedTotal =
@@ -1090,105 +1125,77 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               if (isTimeBased) {
                 return (
                   <div className="space-y-5 text-center">
-                    {/* Time Display Badge */}
-                    <div className="py-3 px-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 inline-block shadow-inner">
-                      <div className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400">
+                    {/* Selected Duration Hero Display */}
+                    <div className="text-center pt-1 pb-2">
+                      <div className="text-3xl sm:text-4xl font-black font-display text-amber-600 dark:text-amber-400 tracking-tight">
                         {formatDuration(progressModalValue)}
                       </div>
-                      <div className="text-[10px] font-black uppercase tracking-widest text-amber-600/70 dark:text-amber-400/70 mt-0.5">
+                      <div className="text-[10px] font-black uppercase tracking-widest font-display text-slate-400 dark:text-slate-500 mt-1">
                         Selected Duration
                       </div>
                     </div>
 
-                    {/* Dual Sliders: Hours & Minutes */}
-                    <div className="space-y-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 text-left">
-                      {/* Hours Slider */}
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs font-black">
-                          <span className="text-slate-600 dark:text-slate-300">Hours</span>
-                          <span className="text-amber-600 dark:text-amber-400 font-extrabold">{hoursVal} hr{hoursVal !== 1 ? 's' : ''}</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="12"
-                          step="1"
+                    {/* Dual Column Timer Wheel Picker */}
+                    <div className="py-4 px-2 rounded-3xl bg-slate-100/70 dark:bg-slate-900/70 space-y-4">
+                      <div className="flex items-center justify-center gap-6 sm:gap-10">
+                        <TimerWheelColumn
+                          columnTitle="Hours"
+                          unitLabel="H"
+                          options={Array.from({ length: 13 }, (_, i) => i)}
                           value={hoursVal}
-                          onChange={(e) => setHours(Number(e.target.value))}
-                          className="w-full accent-amber-500 cursor-pointer h-2 bg-slate-200 dark:bg-slate-800 rounded-lg outline-none"
+                          onChange={(h) => setHours(h)}
                         />
-                      </div>
 
-                      {/* Minutes Slider */}
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-xs font-black">
-                          <span className="text-slate-600 dark:text-slate-300">Minutes</span>
-                          <span className="text-amber-600 dark:text-amber-400 font-extrabold">{minsVal} mins</span>
-                        </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max="55"
-                          step="5"
+                        <div className="text-2xl font-black font-display text-slate-300 dark:text-slate-700 self-center pt-5">:</div>
+
+                        <TimerWheelColumn
+                          columnTitle="Minutes"
+                          unitLabel="M"
+                          options={Array.from({ length: 60 }, (_, i) => i)}
                           value={minsVal}
-                          onChange={(e) => setMinutes(Number(e.target.value))}
-                          className="w-full accent-amber-500 cursor-pointer h-2 bg-slate-200 dark:bg-slate-800 rounded-lg outline-none"
+                          onChange={(m) => setMinutes(m)}
                         />
                       </div>
 
-                      {/* Quick Minute Step Pills */}
-                      <div className="flex items-center justify-between gap-1.5 pt-1">
-                        {[0, 15, 30, 45].map((m) => (
+                      {/* Quick Duration Preset Chips */}
+                      <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                        {[
+                          { label: '+15m', mins: 15 },
+                          { label: '+30m', mins: 30 },
+                          { label: '+1h', mins: 60 },
+                          { label: '+2h', mins: 120 },
+                          { label: 'Reset (0m)', mins: 0, reset: true }
+                        ].map((preset) => (
                           <button
-                            key={m}
+                            key={preset.label}
                             type="button"
-                            onClick={() => setMinutes(m)}
-                            className={`flex-1 py-1 rounded-xl text-xs font-black border transition-all ${
-                              minsVal === m
-                                ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
-                                : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
+                            onClick={() => {
+                              if (preset.reset) {
+                                setProgressModalValue(0);
+                              } else {
+                                const curMins = Math.round((progressModalValue || 0) * 60);
+                                const newMins = curMins + preset.mins;
+                                setProgressModalValue(Number((newMins / 60).toFixed(4)));
+                              }
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-amber-500/10 text-slate-700 dark:text-slate-300 text-xs font-black font-display transition-all active:scale-95 cursor-pointer shadow-xs border border-slate-200/60 dark:border-slate-700/60"
                           >
-                            :{m === 0 ? '00' : m}m
+                            {preset.label}
                           </button>
                         ))}
                       </div>
                     </div>
 
-                    {/* Quick Add Presets */}
-                    <div className="flex items-center justify-center gap-2">
-                      {[
-                        { label: '+15m', val: 0.25 },
-                        { label: '+30m', val: 0.5 },
-                        { label: '+45m', val: 0.75 },
-                        { label: '+1h', val: 1.0 },
-                        { label: '+2h', val: 2.0 },
-                      ].map((preset) => (
-                        <button
-                          key={preset.label}
-                          type="button"
-                          onClick={() => setProgressModalValue(preset.val)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-black border transition-all ${
-                            progressModalValue === preset.val
-                              ? 'bg-amber-500 text-white border-amber-500 shadow-sm scale-105'
-                              : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                          }`}
-                        >
-                          {preset.label}
-                        </button>
-                      ))}
-                    </div>
-
                     {/* Projected Progress & Total Bar */}
-                    <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 space-y-2.5">
+                    <div className="pt-2 space-y-2">
                       <div className="flex items-center justify-between text-xs font-black">
-                        <span className="text-slate-500 dark:text-slate-400">Projected Total</span>
-                        <span className={`font-black ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                        <span className="text-slate-500 dark:text-slate-400 font-bold">Projected Total</span>
+                        <span className={`font-black font-display ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
                           {formatDuration(projectedTotal)} / {formatDuration(targetVal)} ({pct}%)
                         </span>
                       </div>
 
-                      <div className="w-full bg-slate-200 dark:bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 shadow-inner">
+                      <div className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5">
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${
                             isComplete
@@ -1223,7 +1230,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         min="0"
                         value={progressModalValue}
                         onChange={(e) => setProgressModalValue(Math.max(0, Number(e.target.value)))}
-                        className="w-32 text-center text-4xl font-black bg-transparent text-slate-900 dark:text-slate-100 outline-none focus:scale-105 transition-transform"
+                        className="w-32 text-center text-4xl font-black font-display bg-transparent text-slate-900 dark:text-slate-100 outline-none focus:scale-105 transition-transform"
                       />
                       <span className="text-2xs font-black text-accent-primary uppercase tracking-widest mt-0.5">
                         {progressModalHabit.target?.unit || 'times'}
@@ -1246,7 +1253,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         key={preset}
                         type="button"
                         onClick={() => setProgressModalValue(preset)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black border transition-all ${
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black font-display border transition-all ${
                           progressModalValue === preset
                             ? 'bg-accent-gradient text-white border-accent-primary shadow-md shadow-accent/30 scale-105'
                             : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -1260,8 +1267,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   {/* Projected Progress & Total Bar */}
                   <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 space-y-2.5">
                     <div className="flex items-center justify-between text-xs font-black">
-                      <span className="text-slate-500 dark:text-slate-400">Projected Total</span>
-                      <span className={`font-black ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                      <span className="text-slate-500 dark:text-slate-400 font-bold">Projected Total</span>
+                      <span className={`font-black font-display ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
                         {projectedTotal} / {targetVal} {progressModalHabit.target?.unit || 'times'} ({pct}%)
                       </span>
                     </div>
@@ -1313,6 +1320,136 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
           if (fetchTrackerData) fetchTrackerData();
         }}
       />
+    </div>
+  );
+}
+
+function TimerWheelColumn({
+  options,
+  value,
+  onChange,
+  unitLabel,
+  columnTitle,
+}: {
+  options: number[];
+  value: number;
+  onChange: (val: number) => void;
+  unitLabel: string;
+  columnTitle: string;
+}) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const isUserScrollingRef = React.useRef(false);
+  const scrollTimeoutRef = React.useRef<any>(null);
+
+  const itemHeight = 44; // 44px height per item
+
+  const selectedIdx = React.useMemo(() => {
+    let closestIdx = 0;
+    let minDiff = Infinity;
+    options.forEach((opt, idx) => {
+      const diff = Math.abs(opt - value);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = idx;
+      }
+    });
+    return closestIdx;
+  }, [options, value]);
+
+  // Sync scroll position instantly when value changes programmatically
+  React.useEffect(() => {
+    if (containerRef.current && !isUserScrollingRef.current) {
+      containerRef.current.scrollTo({
+        top: selectedIdx * itemHeight,
+        behavior: 'auto',
+      });
+    }
+  }, [selectedIdx]);
+
+  const handleScroll = () => {
+    if (!containerRef.current) return;
+    isUserScrollingRef.current = true;
+
+    // Real-time calculation during scroll for instant feedback
+    const scrollTop = containerRef.current.scrollTop;
+    const rawIndex = Math.round(scrollTop / itemHeight);
+    const clampedIndex = Math.max(0, Math.min(options.length - 1, rawIndex));
+    const activeValue = options[clampedIndex];
+
+    if (activeValue !== value) {
+      onChange(activeValue);
+    }
+
+    if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+
+    // Fast 40ms snap after scroll pauses
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (containerRef.current && isUserScrollingRef.current) {
+        containerRef.current.scrollTo({
+          top: clampedIndex * itemHeight,
+          behavior: 'smooth',
+        });
+      }
+      isUserScrollingRef.current = false;
+    }, 40);
+  };
+
+  const handleItemClick = (opt: number, idx: number) => {
+    isUserScrollingRef.current = false;
+    onChange(opt);
+    if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: idx * itemHeight,
+        behavior: 'auto',
+      });
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <span className="text-[10px] font-black uppercase tracking-widest font-display text-slate-400 dark:text-slate-500 mb-1.5">
+        {columnTitle}
+      </span>
+      <div className="relative w-24 sm:w-28 h-48 overflow-hidden">
+        {/* Selection Overlay Bar */}
+        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[44px] rounded-2xl bg-amber-500/15 border border-amber-500/30 pointer-events-none z-0 shadow-2xs" />
+
+        {/* Scrollable Container (Invisible Scrollbar) */}
+        <div
+          ref={containerRef}
+          onScroll={handleScroll}
+          className="h-full overflow-y-auto [ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex flex-col items-center relative z-10"
+        >
+          {/* Top Spacer Element for exact 74px vertical centering */}
+          <div className="h-[74px] shrink-0 w-full pointer-events-none" />
+
+          {options.map((opt, idx) => {
+            const isSelected = idx === selectedIdx;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => handleItemClick(opt, idx)}
+                className={`shrink-0 h-[44px] w-full flex items-center justify-center gap-1 transition-all duration-100 cursor-pointer ${
+                  isSelected
+                    ? 'text-2xl font-black font-display text-amber-600 dark:text-amber-400 scale-105'
+                    : 'text-sm font-bold font-display text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 opacity-60'
+                }`}
+              >
+                <span className="font-display tracking-wider">{String(opt).padStart(2, '0')}</span>
+                {isSelected && (
+                  <span className="text-xs font-black uppercase tracking-wider font-display text-amber-600 dark:text-amber-400">
+                    {unitLabel}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+
+          {/* Bottom Spacer Element for exact 74px vertical centering */}
+          <div className="h-[74px] shrink-0 w-full pointer-events-none" />
+        </div>
+      </div>
     </div>
   );
 }

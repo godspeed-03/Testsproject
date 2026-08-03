@@ -264,14 +264,14 @@ export default function FocusPage() {
             />
           </div>
 
-          {/* CIRCULAR CLOCK DISPLAY */}
+          {/* CIRCULAR CLOCK DISPLAY — Inspired by shadcn timer tools */}
           <div className="flex flex-col items-center py-4 sm:py-6">
-            <div className="relative w-52 h-52 sm:w-64 sm:h-64 md:w-72 md:h-72 flex items-center justify-center">
+            <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center">
               {/* Outer glow ring */}
               <div
                 className={`absolute inset-0 rounded-full transition-all duration-700 ${
                   timerRunning
-                    ? "shadow-[0_0_40px_rgba(99,102,241,0.2)] dark:shadow-[0_0_40px_rgba(99,102,241,0.3)]"
+                    ? "shadow-[0_0_50px_rgba(99,102,241,0.25)] dark:shadow-[0_0_60px_rgba(99,102,241,0.35)]"
                     : ""
                 }`}
               />
@@ -281,18 +281,18 @@ export default function FocusPage() {
                 <circle
                   cx="50"
                   cy="50"
-                  r="44"
-                  strokeWidth="4"
-                  className="stroke-slate-200 dark:stroke-white/5"
+                  r="46"
+                  strokeWidth="3"
+                  className="stroke-slate-200 dark:stroke-white/10"
                   fill="transparent"
                 />
-                {/* Tick marks */}
+                {/* Precision Dial Tick Marks (60 ticks around circumference) */}
                 {Array.from({ length: 60 }).map((_, i) => {
                   const angle = (i / 60) * 360 - 90;
                   const rad = (angle * Math.PI) / 180;
                   const isMajor = i % 5 === 0;
-                  const r1 = isMajor ? 38 : 40;
-                  const r2 = 43;
+                  const r1 = isMajor ? 41 : 43.5;
+                  const r2 = 46;
                   return (
                     <line
                       key={i}
@@ -301,9 +301,11 @@ export default function FocusPage() {
                       x2={50 + r2 * Math.cos(rad)}
                       y2={50 + r2 * Math.sin(rad)}
                       className={
-                        isMajor ? "stroke-slate-300 dark:stroke-white/15" : "stroke-slate-200 dark:stroke-white/5"
+                        isMajor
+                          ? "stroke-indigo-500 dark:stroke-indigo-400"
+                          : "stroke-slate-300 dark:stroke-white/20"
                       }
-                      strokeWidth={isMajor ? 1 : 0.5}
+                      strokeWidth={isMajor ? 1.2 : 0.6}
                     />
                   );
                 })}
@@ -311,11 +313,11 @@ export default function FocusPage() {
                 <circle
                   cx="50"
                   cy="50"
-                  r="44"
+                  r="46"
                   stroke="url(#focusTimerGrad)"
-                  strokeWidth="4.5"
-                  strokeDasharray="276"
-                  strokeDashoffset={276 - (276 * progressPct) / 100}
+                  strokeWidth="4"
+                  strokeDasharray="289"
+                  strokeDashoffset={289 - (289 * progressPct) / 100}
                   strokeLinecap="round"
                   className="transition-all duration-300 ease-linear"
                   fill="transparent"
@@ -324,7 +326,7 @@ export default function FocusPage() {
                 <circle
                   cx="50"
                   cy="50"
-                  r="36"
+                  r="37"
                   strokeWidth="2"
                   className="stroke-slate-100 dark:stroke-white/5"
                   fill="transparent"
@@ -332,11 +334,11 @@ export default function FocusPage() {
                 <circle
                   cx="50"
                   cy="50"
-                  r="36"
+                  r="37"
                   stroke="url(#goalProgressGrad)"
                   strokeWidth="2.5"
-                  strokeDasharray="226"
-                  strokeDashoffset={226 - (226 * goalProgressPct) / 100}
+                  strokeDasharray="232"
+                  strokeDashoffset={232 - (232 * goalProgressPct) / 100}
                   strokeLinecap="round"
                   className="transition-all duration-700 ease-out"
                   fill="transparent"
@@ -354,12 +356,29 @@ export default function FocusPage() {
                 </defs>
               </svg>
 
-              {/* Center Content */}
+              {/* Center Digital Display — Inspired by shadcn timer UI */}
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-                <span className="text-2xl sm:text-3xl md:text-4xl font-black font-display tracking-tight text-slate-900 dark:text-white tabular-nums">
-                  {displayTime}
-                </span>
-                <div className="mt-2 sm:mt-3 flex flex-col items-center gap-1">
+                <div className="flex items-center gap-1 sm:gap-1.5 font-display font-black text-slate-900 dark:text-white">
+                  {displayTime.split("").map((char, idx) => {
+                    if (char === ":") {
+                      return (
+                        <span key={idx} className="text-indigo-600 dark:text-indigo-400 animate-pulse text-lg sm:text-2xl font-black px-0.5">
+                          :
+                        </span>
+                      );
+                    }
+                    return (
+                      <span
+                        key={idx}
+                        className="w-6 h-9 sm:w-8 sm:h-11 md:w-10 md:h-13 bg-slate-100 dark:bg-slate-950/90 border border-slate-300/80 dark:border-indigo-500/30 rounded-lg sm:rounded-xl flex items-center justify-center shadow-xs font-display text-slate-900 dark:text-indigo-300 text-sm sm:text-xl md:text-2xl font-black"
+                      >
+                        {char}
+                      </span>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-2.5 sm:mt-4 flex flex-col items-center gap-1">
                   <span className="text-[10px] font-extrabold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider max-w-[140px] sm:max-w-[180px] truncate px-2.5 py-0.5 rounded-full bg-indigo-500/10 dark:bg-indigo-500/15 border border-indigo-500/20">
                     {activeHabit ? activeHabit.title : "Study Task"}
                   </span>

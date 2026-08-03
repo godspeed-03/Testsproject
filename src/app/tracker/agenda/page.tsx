@@ -174,7 +174,7 @@ export default function AgendaPage() {
 
             return (
               <div
-                key={h._id}
+                key={h.id || h._id}
                 className={`p-4 rounded-2xl border ${cardBg} flex items-center justify-between gap-4 transition-all hover:border-accent-primary hover:shadow-neon-glow shadow-xs`}
               >
                 <div className="flex items-center gap-3.5">
@@ -313,16 +313,16 @@ export default function AgendaPage() {
                         ? "Backdate editing is disabled"
                         : "Log completion"
                     }
-                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all ${
+                    className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all ${
                       selectedDate < new Date().toISOString().split("T")[0]
                         ? "opacity-60 cursor-not-allowed bg-slate-200 dark:bg-slate-800 text-slate-400"
                         : isDone
                           ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
-                          : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400"
+                          : "bg-slate-100 dark:bg-slate-800/80 hover:bg-emerald-500/10 hover:text-emerald-500 text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-emerald-500"
                     }`}
                   >
-                    {togglingId === `${h._id}_${selectedDate}` ? (
-                      <Loader2 size={18} className="animate-spin text-indigo-500" />
+                    {togglingId === `${h.id || h._id}_${selectedDate}` ? (
+                      <Loader2 size={18} className={`animate-spin ${isDone ? "text-white" : "text-indigo-600 dark:text-indigo-400"}`} />
                     ) : isDone ? (
                       <Check size={20} className="stroke-[3]" />
                     ) : (

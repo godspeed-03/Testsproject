@@ -230,8 +230,14 @@ export default function AddSubjectModal({
   }));
 
   const modalContent = (
-    <div className="fixed inset-0 z-[999999] overflow-y-auto bg-slate-950/80 backdrop-blur-md px-3 sm:px-4 py-6 text-center animate-fade-in flex items-center justify-center">
-      <div className="inline-block w-full max-w-lg text-left align-middle transition-all transform bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto glass-panel">
+    <div
+      className="fixed inset-0 z-[999999] overflow-y-auto bg-slate-950/80 backdrop-blur-md px-3 sm:px-4 py-6 text-center animate-fade-in flex items-center justify-center"
+      onClick={onClose}
+    >
+      <div
+        className="inline-block w-full max-w-lg text-left align-middle transition-all transform bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-auto glass-panel"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">

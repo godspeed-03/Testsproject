@@ -42,24 +42,18 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className={`px-3 py-1.5 rounded-xl border transition-all duration-300 cursor-pointer flex items-center gap-2 font-black text-xs shadow-sm hover:scale-105 active:scale-95 ${
+      className={`p-2.5 rounded-xl border transition-all duration-300 cursor-pointer flex items-center justify-center shadow-xs hover:scale-105 active:scale-95 group ${
         isDark
-          ? 'bg-slate-900 border-amber-500/40 text-amber-300 shadow-amber-500/10'
-          : 'bg-amber-50 border-amber-300 text-amber-800 shadow-amber-200/50'
+          ? 'bg-slate-900/90 border-amber-500/30 text-amber-300 shadow-amber-500/10 hover:border-amber-400/50'
+          : 'bg-amber-500/10 border-amber-400/40 text-amber-600 shadow-amber-200/40 hover:bg-amber-500/15'
       }`}
-      title={isDark ? 'Currently in Dark Mode. Click to switch to Light.' : 'Currently in Light Mode. Click to switch to Dark.'}
+      title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
       aria-label="Toggle Light/Dark Theme"
     >
       {isDark ? (
-        <>
-          <Moon size={15} className="text-amber-400 fill-amber-400/20 animate-pulse" />
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-400 font-display">Dark</span>
-        </>
+        <Moon size={18} strokeWidth={2.2} className="text-amber-400 fill-amber-400/25 group-hover:-rotate-12 transition-transform" />
       ) : (
-        <>
-          <Sun size={15} className="text-amber-600 fill-amber-500/30" />
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-700 font-display">Light</span>
-        </>
+        <Sun size={18} strokeWidth={2.2} className="text-amber-600 fill-amber-500/40 group-hover:rotate-45 transition-transform" />
       )}
     </button>
   );

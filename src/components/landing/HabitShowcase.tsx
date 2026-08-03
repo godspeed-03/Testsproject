@@ -285,8 +285,15 @@ export default function HabitShowcase() {
 
         {/* Modal: + New Habit */}
         {isNewModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <form onSubmit={handleCreateHabit} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setIsNewModalOpen(false)}
+          >
+            <form
+              onSubmit={handleCreateHabit}
+              className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
                 <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
                   <Sparkles size={16} className="text-indigo-600 dark:text-indigo-400" /> + Add New Habit

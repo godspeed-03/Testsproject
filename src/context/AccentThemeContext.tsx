@@ -121,22 +121,37 @@ const AccentThemeContext = createContext<AccentThemeContextType>({
   themes: ThemeOptionList
 });
 
+const updateMetaThemeColor = (themeId: AccentTheme) => {
+  if (typeof document === 'undefined') return;
+  const isDark = document.documentElement.classList.contains('dark');
+  const themeObj = ThemeOptionList.find((t) => t.id === themeId);
+  const headerColor = isDark 
+    ? (themeObj?.darkHex || themeObj?.colorHex || '#10B981')
+    : (themeObj?.lightHex || themeObj?.colorHex || '#10B981');
+
+  const metaTags = document.querySelectorAll('meta[name="theme-color"]');
+  if (metaTags.length > 0) {
+    metaTags.forEach((meta) => {
+      meta.removeAttribute('media');
+      meta.setAttribute('content', headerColor);
+    });
+  } else {
+    const meta = document.createElement('meta');
+    meta.setAttribute('name', 'theme-color');
+    meta.setAttribute('content', headerColor);
+    document.head.appendChild(meta);
+  }
+};
+
 export const AccentThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [accentTheme, setAccentThemeState] = useState<AccentTheme>('neon-teal');
 
   const applyThemeToDocument = (themeId: AccentTheme) => {
+    if (typeof document === 'undefined') return;
+
     const root = document.documentElement;
 
-    // Remove any hardcoded inline style overrides so globals.css rules take effect cleanly
-    root.style.removeProperty('--accent');
-    root.style.removeProperty('--accent-glow');
-    root.style.removeProperty('--primary-accent');
-    root.style.removeProperty('--accent-start');
-    root.style.removeProperty('--accent-mid');
-    root.style.removeProperty('--accent-end');
-    root.style.removeProperty('--accent-text');
-
-    // Remove existing theme-neon-* classes
+    // Remove existing theme classes
     Array.from(root.classList).forEach((cls) => {
       if (cls.startsWith('theme-neon-') || cls.startsWith('theme-')) {
         root.classList.remove(cls);
@@ -147,24 +162,8 @@ export const AccentThemeProvider = ({ children }: { children: React.ReactNode })
     root.classList.add(themeClass);
     root.setAttribute('data-accent-theme', themeId);
 
-    // Dynamically update mobile browser & PWA status bar theme-color
-    if (typeof document !== 'undefined') {
-      const isDark = root.classList.contains('dark');
-      const themeObj = ThemeOptionList.find((t) => t.id === themeId);
-      const headerColor = isDark
-        ? '#020617'
-        : (themeObj?.colorHex || '#FFFFFF');
-
-      const metaTags = document.querySelectorAll('meta[name="theme-color"]');
-      if (metaTags.length > 0) {
-        metaTags.forEach((meta) => meta.setAttribute('content', headerColor));
-      } else {
-        const meta = document.createElement('meta');
-        meta.setAttribute('name', 'theme-color');
-        meta.setAttribute('content', headerColor);
-        document.head.appendChild(meta);
-      }
-    }
+    // Update meta theme color without triggering infinite loop
+    updateMetaThemeColor(themeId);
   };
 
   useEffect(() => {
@@ -172,6 +171,22 @@ export const AccentThemeProvider = ({ children }: { children: React.ReactNode })
     const activeTheme = (saved && ThemeOptionList.some((t) => t.id === saved)) ? saved : 'neon-teal';
     setAccentThemeState(activeTheme);
     applyThemeToDocument(activeTheme);
+
+    // Observe dark mode toggle (class attribute changes on root) without infinite loop
+    const observer = new MutationObserver((mutations) => {
+      const isClassChange = mutations.some((m) => m.attributeName === 'class');
+      if (isClassChange) {
+        const currentSaved = (localStorage.getItem('upsc_tracker_accent_theme') as AccentTheme) || 'neon-teal';
+        updateMetaThemeColor(currentSaved);
+      }
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+
+    return () => observer.disconnect();
   }, []);
 
   const setAccentTheme = (theme: AccentTheme) => {

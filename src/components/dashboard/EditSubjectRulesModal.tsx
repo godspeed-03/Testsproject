@@ -182,8 +182,14 @@ export default function EditSubjectRulesModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl p-5 sm:p-7 shadow-2xl space-y-5 border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto glass-panel">
+    <div
+      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl p-5 sm:p-7 shadow-2xl space-y-5 border border-slate-200 dark:border-slate-800 max-h-[90vh] overflow-y-auto glass-panel"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-4">
           <div className="flex items-center gap-3">

@@ -560,6 +560,8 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       setShowProgressModal(false);
       return;
     }
+    const habitId = progressModalHabit.id || progressModalHabit._id;
+    setTogglingId(`${habitId}_${progressModalDate}`);
     const inputVal = valToSave !== undefined ? valToSave : progressModalValue;
     const existingVal = existingModalVal || 0;
     const finalVal = progressModalMode === 'add'
@@ -568,7 +570,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
 
     const targetVal = progressModalHabit.target?.value || 1;
     const finalStatus = finalVal >= targetVal ? 'done' : (finalVal > 0 ? 'pending' : 'pending');
-    await handleToggleLog(progressModalHabit.id || progressModalHabit._id, progressModalDate, finalStatus, finalVal);
+    await handleToggleLog(habitId, progressModalDate, finalStatus, finalVal);
     setShowProgressModal(false);
   };
 

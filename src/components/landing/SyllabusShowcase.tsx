@@ -546,8 +546,15 @@ export default function SyllabusShowcase() {
 
         {/* MODAL 1: + Add Subject */}
         {activeModal === 'addSubject' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <form onSubmit={handleAddSubject} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setActiveModal(null)}
+          >
+            <form
+              onSubmit={handleAddSubject}
+              className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
                 <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
                   <PlusCircle size={16} className="text-indigo-600 dark:text-indigo-400" /> Add New Subject
@@ -615,8 +622,15 @@ export default function SyllabusShowcase() {
 
         {/* MODAL 2: ✨ Bulk Add */}
         {activeModal === 'bulk' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <form onSubmit={handleBulkAdd} className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setActiveModal(null)}
+          >
+            <form
+              onSubmit={handleBulkAdd}
+              className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
                 <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
                   <Sparkles size={16} className="text-cyan-600 dark:text-cyan-400" /> Bulk Add Subjects
@@ -681,8 +695,14 @@ export default function SyllabusShowcase() {
 
         {/* MODAL 3: ⚙️ Ruleset Templates */}
         {activeModal === 'rulesets' && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setActiveModal(null)}
+          >
+            <div
+              className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
                 <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
                   <Settings size={16} className="text-amber-500" /> Ruleset Templates
@@ -726,8 +746,14 @@ export default function SyllabusShowcase() {
 
         {/* MODAL 4: ⊞ Topic Revisions */}
         {activeModal === 'topics' && activeSubjectObj && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setActiveModal(null)}
+          >
+            <div
+              className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
                 <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
                   <Table size={16} className="text-purple-600 dark:text-purple-400" /> Topics — {activeSubjectObj.subject}
@@ -785,8 +811,14 @@ export default function SyllabusShowcase() {
 
         {/* MODAL 5: + Edit Rules */}
         {activeModal === 'editRules' && activeSubjectObj && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-            <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs"
+            onClick={() => setActiveModal(null)}
+          >
+            <div
+              className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-2xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
                 <h4 className="font-black text-base text-slate-900 dark:text-white flex items-center gap-2">
                   <Settings size={16} className="text-indigo-600 dark:text-indigo-400" /> Edit Rules — {activeSubjectObj.subject}

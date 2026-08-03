@@ -68,8 +68,14 @@ export default function SubjectTopicsModal({
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in">
-      <div className="bg-white dark:bg-slate-900/95 rounded-3xl w-full max-w-6xl lg:max-w-7xl p-5 sm:p-7 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto border border-slate-200 dark:border-slate-800/80 glass-panel">
+    <div
+      className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-slate-900/95 rounded-3xl w-full max-w-6xl lg:max-w-7xl p-5 sm:p-7 shadow-2xl space-y-5 max-h-[92vh] overflow-y-auto border border-slate-200 dark:border-slate-800/80 glass-panel"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header Bar */}
         <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-4">

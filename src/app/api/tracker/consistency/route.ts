@@ -267,18 +267,26 @@ export async function GET(req: Request) {
 
       const overallScore = currentMonthDoc.avgConsistencyScore || 0;
 
-      const trend = dailyDocs
+      let trend = dailyDocs
         .map((d: any) => {
           const habitBreakdown = Array.isArray(d.habitBreakdown) ? d.habitBreakdown : [];
           const categoryBreakdown = Array.isArray(d.categoryBreakdown) ? d.categoryBreakdown : [];
           const subjectBreakdown = Array.isArray(d.subjectBreakdown) ? d.subjectBreakdown : [];
 
           if (habitIdFilter) {
-            const hMatch = habitBreakdown.find((h: any) => String(h.habitId) === String(habitIdFilter));
-            if (!hMatch || !hMatch.scheduled) {
+            const filterLower = String(habitIdFilter).toLowerCase().trim();
+            const hMatch = habitBreakdown.find(
+              (h: any) =>
+                String(h.habitId || '').toLowerCase().trim() === filterLower ||
+                String(h.id || '').toLowerCase().trim() === filterLower ||
+                String(h.title || '').toLowerCase().trim() === filterLower
+            );
+            if (!hMatch) {
               return null;
             }
-            const itemScore = typeof hMatch.score === 'number' ? hMatch.score : (hMatch.done ? 100 : 0);
+            const itemScore = typeof hMatch.score === 'number'
+              ? hMatch.score
+              : (hMatch.done ? 100 : 0);
             return {
               studyDayKey: d.studyDayKey,
               overallScore: itemScore,
@@ -361,6 +369,28 @@ export async function GET(req: Request) {
           };
         })
         .filter(Boolean);
+
+      if (trend.length === 0 && habitIdFilter) {
+        const filterLower = String(habitIdFilter).toLowerCase().trim();
+        const matchedHabit = allHabits.find(
+          (h: any) =>
+            String(h.id || '').toLowerCase().trim() === filterLower ||
+            String(h.title || '').toLowerCase().trim() === filterLower
+        );
+        if (matchedHabit && Array.isArray(matchedHabit.history)) {
+          trend = matchedHabit.history.map((e: any) => {
+            const isDone = e.status === 'done' || (typeof e.value === 'number' && e.value > 0);
+            const score = isDone ? 100 : 0;
+            return {
+              studyDayKey: e.date,
+              overallScore: score,
+              habitScore: score,
+              taskScore: score,
+              revisionScore: score,
+            };
+          }).sort((a: any, b: any) => a.studyDayKey.localeCompare(b.studyDayKey));
+        }
+      }
 
       return NextResponse.json({
         range: 'month',

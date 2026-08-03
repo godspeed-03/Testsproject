@@ -560,7 +560,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       <div className="relative min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
                           {/* Icon button on left of title */}
-                          {!formIsStudyTask ? (
+                          {createType === 'habit' || !formIsStudyTask ? (
                             <button
                               type="button"
                               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -592,7 +592,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         </div>
 
                         {/* Floating Popover: Icon & Theme Color Selector */}
-                        {showEmojiPicker && !formIsStudyTask && (
+                        {showEmojiPicker && (createType === 'habit' || !formIsStudyTask) && (
                           <div className="absolute top-full left-0 mt-1.5 w-80 sm:w-[420px] max-w-[calc(100vw-2.5rem)] p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-indigo-500/30 shadow-2xl space-y-3 animate-fade-in z-[99999]">
                             {/* Popover Header */}
                             <div className="flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2">

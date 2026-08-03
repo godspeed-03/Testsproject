@@ -413,8 +413,9 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   };
 
   const handleOpenEditModal = (item: any) => {
+    const itemType = item.type || 'habit';
     setEditingHabitId(item._id || item.id);
-    setCreateType(item.type || 'habit');
+    setCreateType(itemType);
     setFormTitle(item.title || '');
     setFormCategory(item.category || { id: 'general', label: 'General', icon: '📌', color: '#6366F1' });
     setFormDescription(item.description || '');
@@ -436,7 +437,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormReminderTime(r?.time || '08:00');
     setFormStartDate(item.startDate || new Date().toISOString().split('T')[0]);
     setFormEndDate(item.endDate || '');
-    setFormIsStudyTask(!!item.isStudyTask);
+    setFormIsStudyTask(itemType === 'habit' ? false : !!item.isStudyTask);
     setFormIsAugmentedRevision(item.isAugmentedRevision !== undefined ? !!item.isAugmentedRevision : true);
     setFormSubject(item.subject || '');
     setFormTopic(item.topic || '');

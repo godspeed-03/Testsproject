@@ -623,39 +623,13 @@ export default function AnalyticsPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {/* Chart Style Toggle: Line vs Bar */}
-                  <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                    <button
-                      type="button"
-                      onClick={() => setVelocityChartStyle("area")}
-                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                        velocityChartStyle === "area"
-                          ? "bg-accent-primary text-white shadow-2xs"
-                          : "text-slate-500 dark:text-slate-400"
-                      }`}
-                    >
-                      Line Graph
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVelocityChartStyle("bar")}
-                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
-                        velocityChartStyle === "bar"
-                          ? "bg-accent-primary text-white shadow-2xs"
-                          : "text-slate-500 dark:text-slate-400"
-                      }`}
-                    >
-                      Bar Chart
-                    </button>
-                  </div>
-
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   {/* Metric Toggle: Hours vs Tasks */}
-                  <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
                     <button
                       type="button"
                       onClick={() => setVelocityMetric("hours")}
-                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
                         velocityMetric === "hours"
                           ? "bg-accent-secondary text-white shadow-2xs"
                           : "text-slate-500 dark:text-slate-400"
@@ -666,7 +640,7 @@ export default function AnalyticsPage() {
                     <button
                       type="button"
                       onClick={() => setVelocityMetric("tasks")}
-                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
                         velocityMetric === "tasks"
                           ? "bg-accent-secondary text-white shadow-2xs"
                           : "text-slate-500 dark:text-slate-400"
@@ -676,7 +650,7 @@ export default function AnalyticsPage() {
                     </button>
                   </div>
 
-                  <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-accent-tertiary text-white border border-accent-tertiary/30 text-xs font-black">
+                  <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-accent-tertiary text-white border border-accent-tertiary/30 text-xs font-black whitespace-nowrap shrink-0">
                     Past 7 Days
                   </span>
                 </div>
@@ -722,26 +696,28 @@ export default function AnalyticsPage() {
                             animations: { enabled: true, speed: 300 },
                           },
                           stroke: {
+                            show: true,
                             curve: "smooth",
                             width: velocityChartStyle === "area" ? 3.5 : 2,
                           },
-                          fill: velocityChartStyle === "area" ? {
-                            type: "gradient",
+                          fill: {
+                            type: velocityChartStyle === "area" ? "gradient" : "solid",
+                            opacity: velocityChartStyle === "area" ? 1 : 1,
                             gradient: {
                               shadeIntensity: 1,
                               opacityFrom: 0.45,
                               opacityTo: 0.05,
                               stops: [0, 90, 100],
                             },
-                          } : undefined,
-                          markers: velocityChartStyle === "area" ? {
-                            size: 5,
+                          },
+                          markers: {
+                            size: velocityChartStyle === "area" ? 5 : 0,
                             colors: [chartColor],
                             strokeColors: "#fff",
                             strokeWidth: 2,
                             hover: { size: 7 },
-                          } : undefined,
-                          plotOptions: velocityChartStyle === "bar" ? {
+                          },
+                          plotOptions: {
                             bar: {
                               borderRadius: 8,
                               borderRadiusApplication: "end",
@@ -751,7 +727,7 @@ export default function AnalyticsPage() {
                                 position: "top",
                               },
                             },
-                          } : undefined,
+                          },
                           colors: [chartColor],
                           dataLabels: {
                             enabled: true,
@@ -829,7 +805,7 @@ export default function AnalyticsPage() {
                     <button
                       type="button"
                       onClick={() => setDistributionMode("subject")}
-                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
                         distributionMode === "subject"
                           ? "bg-accent-primary text-white shadow-2xs"
                           : "text-slate-500 dark:text-slate-400"
@@ -841,7 +817,7 @@ export default function AnalyticsPage() {
                     <button
                       type="button"
                       onClick={() => setDistributionMode("habit")}
-                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
                         distributionMode === "habit"
                           ? "bg-accent-secondary text-white shadow-2xs"
                           : "text-slate-500 dark:text-slate-400"
@@ -852,7 +828,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-1">
+                <div className="space-y-3 pt-1 max-h-72 overflow-y-auto pr-1">
                   {(distributionMode === "subject"
                     ? weeklyDoc?.subjectDistribution || []
                     : weeklyDoc?.habitDistribution || []
@@ -867,11 +843,11 @@ export default function AnalyticsPage() {
                           <div className="flex justify-between text-xs">
                             <span className={`font-bold ${textTitle} truncate pr-2`}>{item.subject}</span>
                             <span className="font-black shrink-0">
-                              {item.hours} ({item.pct}%)
+                              {distributionMode === "subject" ? item.hours : `${item.hours} (${item.pct}%)`}
                             </span>
                           </div>
                           <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                            <div className={`h-full rounded-full ${barColorClass}`} style={{ width: `${item.pct}%` }} />
+                            <div className={`h-full rounded-full ${barColorClass}`} style={{ width: `${Math.min(100, item.pct)}%` }} />
                           </div>
                         </div>
                       );

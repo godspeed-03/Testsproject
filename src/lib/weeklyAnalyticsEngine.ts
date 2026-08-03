@@ -30,6 +30,51 @@ export async function getEffectiveUserId(userId?: string): Promise<string> {
   return userId || '';
 }
 
+export function formatMinutes(totalMins: number): string {
+  const roundedMins = Math.round(totalMins);
+  if (roundedMins < 60) {
+    return `${roundedMins} mins`;
+  }
+  const hrs = Math.floor(roundedMins / 60);
+  const remMins = roundedMins % 60;
+  if (remMins === 0) {
+    return `${hrs} ${hrs === 1 ? 'hr' : 'hrs'}`;
+  }
+  return `${hrs} ${hrs === 1 ? 'hr' : 'hrs'} ${remMins} mins`;
+}
+
+export function isHabitScheduledOnDate(h: any, dayKey: string): boolean {
+  if (h.startDate && h.startDate > dayKey) return false;
+  if (h.endDate && h.endDate < dayKey) return false;
+
+  const freq = typeof h.frequency === 'object' && h.frequency !== null ? (h.frequency as any) : {};
+  const mode = freq.mode || 'daily';
+
+  if (mode === 'daily' || mode === 'everyday') return true;
+
+  if (mode === 'once') return h.startDate === dayKey;
+
+  if (mode === 'specific_days' || mode === 'specific' || mode === 'weekly') {
+    const days = freq.days || [];
+    if (days.length === 0) return true;
+    const dayObj = new Date(dayKey + 'T00:00:00');
+    const dayShort = dayObj.toLocaleString('en-US', { weekday: 'short' }).toLowerCase();
+    const dayFull = dayObj.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+    return days.some((d: any) => {
+      const lowerD = String(d).toLowerCase().trim();
+      return lowerD === dayShort || lowerD === dayFull || lowerD.startsWith(dayShort) || dayShort.startsWith(lowerD);
+    });
+  }
+
+  if (mode === 'monthly') {
+    const dayObj = new Date(dayKey + 'T00:00:00');
+    const targetDay = freq.monthlyDay || 1;
+    return dayObj.getDate() === targetDay;
+  }
+
+  return true;
+}
+
 function isTimeBasedActivity(h: any): boolean {
   const targetObj = typeof h.target === 'object' && h.target !== null ? (h.target as any) : {};
   const unit = (targetObj.unit || '').toLowerCase().trim();
@@ -122,16 +167,34 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
   ]);
 
   let totalTasksDone = 0;
-  const habitStatsMap: Record<string, { title: string; unit: string; totalValue: number; completedDays: number; color: string }> = {};
+  const habitStatsMap: Record<
+    string,
+    {
+      title: string;
+      unit: string;
+      targetValue: number | null;
+      scheduledDaysCount: number;
+      totalValue: number;
+      completedDays: number;
+      color: string;
+    }
+  > = {};
   const subjectHoursMap: Record<string, { subject: string; hours: number; color: string }> = {};
   const colors = ['bg-indigo-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-purple-500', 'bg-blue-500'];
 
   habits.forEach((h, idx) => {
-    if (h.type === 'habit' && !h.isStudyTask) {
+    if (h.type === 'habit') {
       const targetObj = typeof h.target === 'object' && h.target !== null ? (h.target as any) : {};
+      const unit = (targetObj.unit || 'times').trim();
+      const val = typeof targetObj.value === 'number' && targetObj.value > 0 ? targetObj.value : null;
+
+      const scheduledDaysCount = dayKeys.filter((dk) => isHabitScheduledOnDate(h, dk)).length || 1;
+
       habitStatsMap[h.id] = {
         title: h.title,
-        unit: (targetObj.unit || 'times').trim(),
+        unit,
+        targetValue: val,
+        scheduledDaysCount,
         totalValue: 0,
         completedDays: 0,
         color: colors[idx % colors.length],
@@ -248,22 +311,30 @@ export async function calculateAndSaveWeeklyData(userId?: string) {
     .sort((a, b) => b.pct - a.pct);
 
   const habitDistribution = Object.values(habitStatsMap)
-    .filter((h) => h.completedDays > 0 || h.totalValue > 0)
     .map((h) => {
       const unitLower = h.unit.toLowerCase();
       let formattedVal = '';
+      let pct = 0;
 
-      if (['yes_no', 'boolean'].includes(unitLower)) {
-        formattedVal = `${h.completedDays} days`;
+      if (['yes_no', 'boolean'].includes(unitLower) || h.targetValue === null) {
+        formattedVal = `${h.completedDays} / ${h.scheduledDaysCount} days`;
+        pct = Math.min(100, Math.round((h.completedDays / Math.max(1, h.scheduledDaysCount)) * 100));
       } else if (['hrs', 'hr', 'hours', 'hour'].includes(unitLower)) {
-        formattedVal = `${h.totalValue.toFixed(1)} hrs`;
+        const weeklyTargetHours = h.targetValue * h.scheduledDaysCount;
+        const loggedMins = Math.round(h.totalValue * 60);
+        const weeklyTargetMins = Math.round(weeklyTargetHours * 60);
+        formattedVal = `${formatMinutes(loggedMins)} / ${formatMinutes(weeklyTargetMins)}`;
+        pct = Math.min(100, Math.round((h.totalValue / Math.max(0.1, weeklyTargetHours)) * 100));
       } else if (['mins', 'min', 'minutes', 'minute'].includes(unitLower)) {
-        formattedVal = `${h.totalValue} mins`;
+        const weeklyTargetMins = h.targetValue * h.scheduledDaysCount;
+        const loggedMins = h.totalValue;
+        formattedVal = `${formatMinutes(loggedMins)} / ${formatMinutes(weeklyTargetMins)}`;
+        pct = Math.min(100, Math.round((h.totalValue / Math.max(1, weeklyTargetMins)) * 100));
       } else {
-        formattedVal = `${h.totalValue} ${h.unit}`;
+        const weeklyTarget = h.targetValue * h.scheduledDaysCount;
+        formattedVal = `${h.totalValue} / ${weeklyTarget} ${h.unit}`;
+        pct = Math.min(100, Math.round((h.totalValue / Math.max(0.1, weeklyTarget)) * 100));
       }
-
-      const pct = Math.min(100, Math.round((h.completedDays / 7) * 100));
 
       return {
         subject: h.title,

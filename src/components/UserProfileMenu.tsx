@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronDown, PlusCircle, Upload, Download } from 'lucide-react';
+import { ChevronDown, PlusCircle, Upload, Download, FileText } from 'lucide-react';
 import LogoutButton from './LogoutButton';
 import ImportDataModal from './dashboard/ImportDataModal';
 import { useRouter, usePathname } from 'next/navigation';
@@ -22,6 +22,8 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [reportError, setReportError] = useState<string | null>(null);
   const [imgError, setImgError] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const { accentTheme, setAccentTheme, themes } = useAccentTheme();
@@ -67,6 +69,26 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
       console.error('Export failed', e);
     } finally {
       setExporting(false);
+      setIsOpen(false);
+    }
+  };
+
+  const handleExportReport = async () => {
+    try {
+      setGeneratingReport(true);
+      setReportError(null);
+      const res = await fetch('/api/tracker/report');
+      if (!res.ok) {
+        throw new Error('Failed to fetch report data');
+      }
+      const data = await res.json();
+      const { generateTrackerReportPdf } = await import('@/lib/generateTrackerReportPdf');
+      generateTrackerReportPdf(data);
+    } catch (e) {
+      console.error('Report generation failed', e);
+      setReportError('Could not generate report. Please try again.');
+    } finally {
+      setGeneratingReport(false);
       setIsOpen(false);
     }
   };
@@ -167,6 +189,19 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
                 <Download size={15} className="text-emerald-500" />
                 <span>{exporting ? 'Exporting...' : 'Export Backup (JSON)'}</span>
               </button>
+
+              <button
+                type="button"
+                disabled={generatingReport}
+                onClick={handleExportReport}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <FileText size={15} className="text-amber-500" />
+                <span>{generatingReport ? 'Generating Report...' : 'Export Report (PDF)'}</span>
+              </button>
+              {reportError && (
+                <p className="px-3 pt-1 text-[10px] font-semibold text-red-500">{reportError}</p>
+              )}
             </div>
 
             {/* Theme Accent Picker */}

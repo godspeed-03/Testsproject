@@ -22,6 +22,8 @@ import {
   CheckCircle2,
   Circle,
   ChevronDown,
+  ChevronUp,
+  LayoutGrid,
 } from "lucide-react";
 import { ISyllabusRuleState } from "@/types";
 
@@ -138,6 +140,14 @@ export default function SyllabusPage() {
   const [bulkMilestoneShort, setBulkMilestoneShort] = useState("");
   const [bulkSaving, setBulkSaving] = useState(false);
   const [showBulkAddPanel, setShowBulkAddPanel] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [expandedSubjectIds, setExpandedSubjectIds] = useState<string[]>([]);
+
+  const toggleExpandSubject = (subjectId: string) => {
+    setExpandedSubjectIds((prev) =>
+      prev.includes(subjectId) ? prev.filter((id) => id !== subjectId) : [...prev, subjectId]
+    );
+  };
 
   const cardBg = "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80";
   const textTitle = "text-slate-900 dark:text-slate-100";
@@ -281,6 +291,16 @@ export default function SyllabusPage() {
     if (c.includes("GS4")) return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30";
     if (c.includes("MATHS")) return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30";
     return "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30";
+  };
+
+  const getCategoryColor = (category: string) => {
+    const c = category?.toUpperCase() || "";
+    if (c.includes("GS1")) return "#3b82f6";
+    if (c.includes("GS2")) return "#10b981";
+    if (c.includes("GS3")) return "#f59e0b";
+    if (c.includes("GS4")) return "#a855f7";
+    if (c.includes("MATHS")) return "#f43f5e";
+    return "#06b6d4";
   };
 
   const categories = [
@@ -449,25 +469,57 @@ export default function SyllabusPage() {
           </div>
         </div>
 
-        {/* Filter Bar */}
+        {/* Filter Bar & View Control */}
         <div className={`p-4 rounded-2xl border ${cardBg} shadow-xs`}>
           <div className="flex flex-col gap-3.5">
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-none">
-              <Filter size={15} className="text-slate-400 shrink-0 hidden sm:block mr-1" />
-              {categories.map((cat) => (
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-none">
+                <Filter size={15} className="text-slate-400 shrink-0 hidden sm:block mr-1" />
+                {categories.map((cat) => (
+                  <button
+                    key={cat.value}
+                    type="button"
+                    onClick={() => setCategoryFilter(cat.value)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all border whitespace-nowrap shrink-0 cursor-pointer ${
+                      categoryFilter === cat.value
+                        ? "bg-accent-gradient text-white border-transparent shadow-md"
+                        : "bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-indigo-500/50"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* View Switcher Toggle (Grid Cards vs Table) */}
+              <div className="flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
                 <button
-                  key={cat.value}
                   type="button"
-                  onClick={() => setCategoryFilter(cat.value)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all border whitespace-nowrap shrink-0 cursor-pointer ${
-                    categoryFilter === cat.value
-                      ? "bg-accent-gradient text-white border-transparent shadow-md"
-                      : "bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-indigo-500/50"
+                  onClick={() => setViewMode("grid")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                    viewMode === "grid"
+                      ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
+                  title="Grid Card View"
                 >
-                  {cat.label}
+                  <LayoutGrid size={15} />
+                  <span>Cards</span>
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => setViewMode("table")}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                    viewMode === "table"
+                      ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                  }`}
+                  title="Table View"
+                >
+                  <Table size={15} />
+                  <span>Table</span>
+                </button>
+              </div>
             </div>
 
             <div className="relative">
@@ -568,7 +620,233 @@ export default function SyllabusPage() {
               <Plus size={16} /> Add Subject Now
             </button>
           </div>
+        ) : viewMode === "grid" ? (
+          /* GRID PATTERN CARDS VIEW */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredSubjects.map((s) => {
+              const rulesList: ISyllabusRuleState[] = s.rules || [];
+              const subTopicsCount = topicRevisions.filter(
+                (tr: any) => tr.subject?.toLowerCase() === s.subject?.toLowerCase(),
+              ).length;
+              const completedCount = rulesList.filter((r) => r.completed).length;
+              const progressPercent = rulesList.length > 0 ? Math.round((completedCount / rulesList.length) * 100) : 0;
+
+              const currentStatus =
+                s.status ||
+                (completedCount === 0
+                  ? "Not Started"
+                  : completedCount === rulesList.length
+                    ? "Completed"
+                    : "In Progress");
+
+              const isStatusUpdating = updatingStatusId === s.id;
+              const isSelected = selectedSubjectIds.includes(s.id);
+              const themeColor = s.color || getCategoryColor(s.category);
+
+              const DEFAULT_VISIBLE_RULES = 5;
+              const isExpanded = expandedSubjectIds.includes(s.id);
+              const visibleRules = isExpanded ? rulesList : rulesList.slice(0, DEFAULT_VISIBLE_RULES);
+              const hiddenCount = rulesList.length - visibleRules.length;
+
+              return (
+                <div
+                  key={s.id}
+                  className={`relative rounded-2xl border ${cardBg} p-5 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between space-y-4 group overflow-hidden ${
+                    isSelected ? "ring-2 ring-indigo-500 bg-indigo-50/20 dark:bg-indigo-950/20" : ""
+                  }`}
+                >
+                  {/* Top Color Accent Line */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1.5 transition-all"
+                    style={{ backgroundColor: themeColor }}
+                  />
+
+                  {/* Card Header & Title */}
+                  <div className="space-y-3 pt-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        {showBulkAddPanel && (
+                          <button
+                            type="button"
+                            onClick={() => toggleSubjectSelection(s.id)}
+                            className="text-slate-400 hover:text-indigo-600 cursor-pointer mt-1"
+                          >
+                            {isSelected ? (
+                              <CheckSquare size={18} className="text-indigo-600" />
+                            ) : (
+                              <Square size={18} />
+                            )}
+                          </button>
+                        )}
+
+                        {(s.icon || s.color) ? (
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 shadow-xs border border-black/10 dark:border-white/10"
+                            style={{
+                              backgroundColor: s.color ? `${s.color}22` : 'transparent',
+                              borderColor: s.color ? `${s.color}44` : undefined,
+                            }}
+                          >
+                            {s.icon ? <span>{s.icon}</span> : null}
+                          </div>
+                        ) : (
+                          <div
+                            className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 text-white shadow-xs"
+                            style={{ backgroundColor: themeColor }}
+                          >
+                            {s.subject ? s.subject.substring(0, 2).toUpperCase() : "SB"}
+                          </div>
+                        )}
+
+                        <div className="min-w-0 flex-1">
+                          <h3
+                            onClick={() => setSelectedSubjectModal(s)}
+                            className="font-black text-base sm:text-lg text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors leading-snug truncate"
+                            title={s.subject}
+                          >
+                            {s.subject}
+                          </h3>
+                          {s.source && (
+                            <p className="text-xs text-slate-400 font-medium truncate mt-0.5">
+                              Source: {s.source}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <span
+                        className={`px-2.5 py-1 rounded-lg text-xs font-black border inline-block whitespace-nowrap shrink-0 ${getCategoryBadge(s.category)}`}
+                      >
+                        {s.category}
+                      </span>
+                    </div>
+
+                    {/* Status Dropdown Row */}
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                      <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Status Stage</span>
+                      <ShadcnStatusDropdown
+                        currentStatus={currentStatus}
+                        onSelectStatus={(nextStatus) => handleUpdateStatus(s, nextStatus)}
+                        isUpdating={isStatusUpdating}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Progress Pipeline & Rules Grid */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[11px] font-black">
+                        Progress Pipeline
+                      </span>
+                      <span className="text-slate-700 dark:text-slate-300 font-black">
+                        {completedCount}/{rulesList.length} ({progressPercent}%)
+                      </span>
+                    </div>
+
+                    {/* Dynamic Gradient Progress Bar */}
+                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-300 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+
+                    {/* Milestone Rules Buttons Grid */}
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
+                      {visibleRules.map((m) => {
+                        const isDone = !!m.completed;
+                        const isToggling = togglingKey === `${s.id}_${m.key}`;
+                        const displayLabel = m.label || m.short || "Rule";
+
+                        return (
+                          <button
+                            key={m.key}
+                            type="button"
+                            disabled={isToggling}
+                            onClick={() => handleToggleRule(s, m.key)}
+                            className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                              isDone
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 shadow-2xs"
+                                : "bg-slate-50 text-slate-600 border-slate-200/90 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700 hover:border-indigo-400"
+                            }`}
+                          >
+                            {isToggling ? (
+                              <Loader2 size={12} className="animate-spin text-indigo-500 shrink-0" />
+                            ) : isDone ? (
+                              <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                            ) : (
+                              <Circle size={13} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                            )}
+                            <span>{displayLabel}</span>
+                          </button>
+                        );
+                      })}
+
+                      {rulesList.length > DEFAULT_VISIBLE_RULES && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpandSubject(s.id)}
+                          className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-black border transition-all flex items-center gap-1 cursor-pointer bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-400 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 whitespace-nowrap"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <span>Show Less</span>
+                              <ChevronUp size={14} className="shrink-0" />
+                            </>
+                          ) : (
+                            <>
+                              <span>+{hiddenCount} More</span>
+                              <ChevronDown size={14} className="shrink-0" />
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card Actions Footer */}
+                  <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSubjectModal(s)}
+                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs rounded-xl font-extrabold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+                        title="View Topics"
+                      >
+                        <Table size={13} />
+                        <span>({subTopicsCount})</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditingSubjectRules(s)}
+                        className="px-2.5 py-1.5 rounded-xl text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-extrabold border border-slate-200 dark:border-slate-700 transition-all cursor-pointer whitespace-nowrap"
+                        title="Customize rules for this subject"
+                      >
+                        <Plus size={12} className="inline mr-0.5" /> Rules
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={deletingId === s.id}
+                      onClick={() => handleDeleteSubject(s.id)}
+                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
+                      title="Delete Subject"
+                    >
+                      {deletingId === s.id ? (
+                        <Loader2 size={14} className="animate-spin text-rose-500" />
+                      ) : (
+                        <Trash2 size={14} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
+          /* MATRIX TABLE VIEW */
           <div className={`border rounded-2xl overflow-hidden shadow-xs ${cardBg}`}>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[1100px]">
@@ -673,50 +951,69 @@ export default function SyllabusPage() {
 
                         {/* Progress Pipeline */}
                         <td className="py-4.5 px-5">
-                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-                            {rulesList.map((m) => {
-                              const isDone = !!m.completed;
-                              const isToggling = togglingKey === `${s.id}_${m.key}`;
-                              const displayCode = m.short || m.label || "R";
+                          {(() => {
+                            const DEFAULT_VISIBLE_RULES = 5;
+                            const isExpanded = expandedSubjectIds.includes(s.id);
+                            const visibleRules = isExpanded ? rulesList : rulesList.slice(0, DEFAULT_VISIBLE_RULES);
+                            const hiddenCount = rulesList.length - visibleRules.length;
 
-                              return (
-                                <div key={m.key} className="relative group inline-block">
+                            return (
+                              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                {visibleRules.map((m) => {
+                                  const isDone = !!m.completed;
+                                  const isToggling = togglingKey === `${s.id}_${m.key}`;
+                                  const displayLabel = m.label || m.short || "Rule";
+
+                                  return (
+                                    <button
+                                      key={m.key}
+                                      type="button"
+                                      disabled={isToggling}
+                                      onClick={() => handleToggleRule(s, m.key)}
+                                      className={`px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                                        isDone
+                                          ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 shadow-xs"
+                                          : "bg-slate-50 text-slate-600 border-slate-200/90 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700 hover:border-indigo-400"
+                                      }`}
+                                    >
+                                      {isToggling ? (
+                                        <Loader2 size={12} className="animate-spin text-indigo-500 shrink-0" />
+                                      ) : isDone ? (
+                                        <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                                      ) : (
+                                        <Circle size={13} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                                      )}
+                                      <span>{displayLabel}</span>
+                                    </button>
+                                  );
+                                })}
+
+                                {rulesList.length > DEFAULT_VISIBLE_RULES && (
                                   <button
                                     type="button"
-                                    disabled={isToggling}
-                                    onClick={() => handleToggleRule(s, m.key)}
-                                    className={`px-2.5 sm:px-3 py-1 rounded-full text-xs font-black border transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                                      isDone
-                                        ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 shadow-xs"
-                                        : "bg-slate-50 text-slate-500 border-slate-200/90 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700 hover:border-indigo-400"
-                                    }`}
+                                    onClick={() => toggleExpandSubject(s.id)}
+                                    className="px-2.5 sm:px-3 py-1 rounded-xl text-xs font-black border transition-all flex items-center gap-1 cursor-pointer bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-400 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 whitespace-nowrap"
                                   >
-                                    {isToggling ? (
-                                      <Loader2 size={12} className="animate-spin text-indigo-500 shrink-0" />
-                                    ) : isDone ? (
-                                      <CheckCircle2 size={12} className="text-emerald-500 shrink-0" />
+                                    {isExpanded ? (
+                                      <>
+                                        <span>Show Less</span>
+                                        <ChevronUp size={14} className="shrink-0" />
+                                      </>
                                     ) : (
-                                      <Circle size={12} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                                      <>
+                                        <span>+{hiddenCount} More</span>
+                                        <ChevronDown size={14} className="shrink-0" />
+                                      </>
                                     )}
-                                    <span>{displayCode}</span>
                                   </button>
+                                )}
 
-                                  {/* Custom Tooltip on Hover */}
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-30 pointer-events-none whitespace-nowrap">
-                                    <div className="bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-xs font-black px-3 py-1.5 rounded-lg shadow-xl border border-slate-700 dark:border-slate-300 flex items-center gap-1.5">
-                                      <span>{m.label}</span>
-                                      {isDone && <span className="text-emerald-400 dark:text-emerald-600 font-black">(Completed)</span>}
-                                    </div>
-                                    <div className="w-2 h-2 bg-slate-900 dark:bg-slate-100 rotate-45 mx-auto -mt-1" />
-                                  </div>
-                                </div>
-                              );
-                            })}
-
-                            <span className="text-slate-400 dark:text-slate-500 text-xs font-black ml-1.5 whitespace-nowrap">
-                              {completedCount}/{rulesList.length}
-                            </span>
-                          </div>
+                                <span className="text-slate-400 dark:text-slate-500 text-xs font-black ml-1.5 whitespace-nowrap">
+                                  {completedCount}/{rulesList.length}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         {/* Actions */}

@@ -1098,8 +1098,6 @@ export default function SyllabusPage() {
           selectedSubjectTopics={selectedSubjectModal}
           onClose={() => setSelectedSubjectModal(null)}
           topicRevisions={topicRevisions}
-          onBatchLogCluster={async () => {}}
-          onDeleteTopic={async () => {}}
           getCategoryBadge={getCategoryBadge}
           isLight={false}
           cardBg="bg-white dark:bg-slate-900"

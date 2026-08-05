@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getSubjectTheme } from '@/lib/subjectThemeMap';
+import BatchRevisionCompletionModal from '@/components/dashboard/BatchRevisionCompletionModal';
 
 export const calculateHabitStreak = (h: any) => {
   if (!h || !h.history) return { current: 0, best: 0 };
@@ -228,19 +229,30 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [syllabusSubjects, setSyllabusSubjects] = useState<string[]>([]);
   const [syllabusItems, setSyllabusItems] = useState<any[]>([]);
   const [formIsStudyTask, setFormIsStudyTask] = useState(true);
+  const [formStudyTaskMode, setFormStudyTaskMode] = useState<'none' | 'single' | 'batch_revision'>('single');
+  const [formIsBatchRevision, setFormIsBatchRevision] = useState(false);
+  const [formRevisionClusterBadges, setFormRevisionClusterBadges] = useState<Array<{ category: string; subject: string; topic: string }>>([]);
   const [formSubject, setFormSubject] = useState('');
   const [formTopic, setFormTopic] = useState('');
+  const [formSelectedMicroTopics, setFormSelectedMicroTopics] = useState<string[]>([]);
   const [formIsAugmentedRevision, setFormIsAugmentedRevision] = useState(true);
 
-  // Auto-default Spaced Repetition SRS toggle: OFF for CSAT/Maths/Series/Reasoning, ON for GS1-4
+  // Auto-default Spaced Repetition SRS toggle: ON for GS1, GS2, GS3, GS4, OFF for CSAT/Maths/Reasoning
   useEffect(() => {
-    if (formIsStudyTask) {
+    if (formIsStudyTask && formStudyTaskMode === 'single') {
       const catStr = typeof formCategory === 'string' ? formCategory : formCategory?.label || formCategory?.id || '';
+      const GS_REGEX = /gs\s*[1-4]|gs1|gs2|gs3|gs4|general\s*studies/i;
       const NON_AUGMENTED_REGEX = /csat|math|maths|mathematics|series|reasoning|aptitude|mental|comprehension|verbal/i;
-      const isNonAug = NON_AUGMENTED_REGEX.test(formSubject) || NON_AUGMENTED_REGEX.test(catStr);
-      setFormIsAugmentedRevision(!isNonAug);
+
+      if (GS_REGEX.test(catStr) || GS_REGEX.test(formSubject)) {
+        setFormIsAugmentedRevision(true);
+      } else if (NON_AUGMENTED_REGEX.test(formSubject) || NON_AUGMENTED_REGEX.test(catStr)) {
+        setFormIsAugmentedRevision(false);
+      } else {
+        setFormIsAugmentedRevision(true);
+      }
     }
-  }, [formSubject, formCategory, formIsStudyTask]);
+  }, [formSubject, formCategory, formIsStudyTask, formStudyTaskMode]);
 
   // Auto-fill Icon & Theme Color from selected Syllabus subject when formIsStudyTask is true
   useEffect(() => {
@@ -277,6 +289,11 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [formListItemsText, setFormListItemsText] = useState('');
   const [newListInput, setNewListInput] = useState<{ [key: string]: string }>({});
   const [editingHabitId, setEditingHabitId] = useState<string | null>(null);
+
+  // Batch Revision Multi-Topic Completion Modal State
+  const [showBatchRevModal, setShowBatchRevModal] = useState(false);
+  const [batchRevModalHabit, setBatchRevModalHabit] = useState<any | null>(null);
+  const [batchRevModalDate, setBatchRevModalDate] = useState<string>('');
 
   // Timer & Background Persistent Stopwatch State
   const [timerHabitId, setTimerHabitId] = useState<string>('');
@@ -451,6 +468,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormTitle('');
     setFormDescription('');
     setFormTopic('');
+    setFormSelectedMicroTopics([]);
     const initialCategoryLabel = categories.length > 0 ? categories[0] : '';
     setFormCategory({ id: initialCategoryLabel.toLowerCase(), label: initialCategoryLabel, icon: '📚', color: '#6366F1' });
     const matchedSubjects = initialCategoryLabel
@@ -475,6 +493,11 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormStartDate(new Date().toISOString().split('T')[0]);
     setFormEndDate('');
     setFormIsStudyTask(type === 'task');
+    setFormStudyTaskMode(type === 'task' ? 'single' : 'none');
+    setFormIsBatchRevision(false);
+    setFormRevisionClusterBadges([]);
+    setFormSelectedMicroTopics([]);
+    setFormTopic('');
     setFormIsAugmentedRevision(true);
   };
 
@@ -499,7 +522,14 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setShowCreateModal(true);
   };
 
-  const handleToggleLog = async (habitId: string, date: string, status: string = 'toggle', value?: number, increment: boolean = false) => {
+  const handleToggleLog = async (
+    habitId: string,
+    date: string,
+    status: string = 'toggle',
+    value?: number,
+    increment: boolean = false,
+    completedTopics?: string[]
+  ) => {
     const todayStr = new Date().toISOString().split('T')[0];
     if (date < todayStr) {
       alert('Backdating is disabled: You cannot edit or log completion for past dates.');
@@ -511,7 +541,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       const res = await fetch('/api/tracker/habits', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'toggle_log', habitId, date, status, value, increment })
+        body: JSON.stringify({ action: 'toggle_log', habitId, date, status, value, increment, completedTopics })
       });
       if (res.ok) {
         const data = await res.json();
@@ -535,6 +565,21 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       alert('This habit is not scheduled for this date.');
       return;
     }
+
+    // Check if task is a Batch Revision item
+    const isBatchRev = Boolean(
+      h.isBatchRevision ||
+      (Array.isArray(h.selectedMicroTopicsCluster) && h.selectedMicroTopicsCluster.length > 0) ||
+      (typeof h.title === 'string' && h.title.includes('Batch Revision'))
+    );
+
+    if (isBatchRev) {
+      setBatchRevModalHabit(h);
+      setBatchRevModalDate(date);
+      setShowBatchRevModal(true);
+      return;
+    }
+
     const isRevision = typeof h.title === 'string' && /^\[R[123]\s+Revision\]/i.test(h.title);
     const isYesNoUnit = h.target?.unit === 'yes_no' || h.target?.unit === 'boolean';
     
@@ -550,6 +595,13 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       setProgressModalValue(1);
       setShowProgressModal(true);
     }
+  };
+
+  const handleSaveBatchRevProgress = async (completedTopicKeys: string[], isAllDone: boolean) => {
+    if (!batchRevModalHabit) return;
+    const habitId = batchRevModalHabit.id || batchRevModalHabit._id;
+    const statusToSave = isAllDone ? 'done' : 'pending';
+    await handleToggleLog(habitId, batchRevModalDate, statusToSave, 1, false, completedTopicKeys);
   };
 
   const handleSaveHabitProgress = async (valToSave?: number) => {
@@ -615,12 +667,36 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           setFormListTitle('');
         }
       } else {
+        const isStudyTask = createType === 'task' ? (formStudyTaskMode !== 'none') : false;
+        const isBatchRevision = createType === 'task' ? (formStudyTaskMode === 'batch_revision') : false;
+
+        let selectedClusterPayload: Array<{ category: string; subject: string; topic: string }> = [];
+
+        if (isBatchRevision) {
+          selectedClusterPayload = formRevisionClusterBadges;
+        } else if (isStudyTask) {
+          const catLabel = typeof formCategory === 'string' ? formCategory : (formCategory?.label || 'GS1');
+          if (formSelectedMicroTopics.length > 0) {
+            selectedClusterPayload = formSelectedMicroTopics.map((t) => ({ category: catLabel, subject: formSubject, topic: t }));
+          } else if (formTopic.trim()) {
+            selectedClusterPayload = [{ category: catLabel, subject: formSubject, topic: formTopic.trim() }];
+          }
+        }
+
         let computedTitle = formTitle.trim();
+        const activeTopics = isBatchRevision
+          ? formRevisionClusterBadges.map((b) => b.topic).join(', ')
+          : formSelectedMicroTopics.length > 0
+          ? formSelectedMicroTopics.join(', ')
+          : formTopic;
+
         if (!computedTitle) {
-          if (createType === 'task' && formIsStudyTask) {
-            computedTitle = formTopic ? `${formSubject}: ${formTopic}` : (formSubject || 'Study Task');
+          if (createType === 'task' && isBatchRevision) {
+            computedTitle = `Batch Revision (${formRevisionClusterBadges.length} Topics)`;
+          } else if (createType === 'task' && isStudyTask) {
+            computedTitle = activeTopics ? `${formSubject}: ${activeTopics}` : (formSubject || 'Study Task');
           } else if (createType === 'task') {
-            computedTitle = formTopic || 'New Task';
+            computedTitle = 'New Task';
           } else {
             computedTitle = 'New Habit';
           }
@@ -652,10 +728,14 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           ],
           startDate: formStartDate,
           endDate: formEndDate || undefined,
-          isStudyTask: createType === 'task' ? formIsStudyTask : false,
-          subject: createType === 'task' && formIsStudyTask ? formSubject : undefined,
-          topic: createType === 'task' && formIsStudyTask ? formTopic : undefined,
-          isAugmentedRevision: createType === 'task' && formIsStudyTask ? formIsAugmentedRevision : undefined,
+          isStudyTask,
+          isBatchRevision,
+          studyTaskMode: formStudyTaskMode,
+          subject: isStudyTask ? (isBatchRevision ? (formRevisionClusterBadges[0]?.subject || formSubject) : formSubject) : undefined,
+          topic: isStudyTask ? activeTopics : undefined,
+          selectedMicroTopics: formSelectedMicroTopics,
+          selectedMicroTopicsCluster: selectedClusterPayload,
+          isAugmentedRevision: isStudyTask ? (isBatchRevision ? false : formIsAugmentedRevision) : undefined,
           icon: formIcon,
           color: formColor
         };
@@ -891,10 +971,18 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     syllabusItems,
     formIsStudyTask,
     setFormIsStudyTask,
+    formStudyTaskMode,
+    setFormStudyTaskMode,
+    formIsBatchRevision,
+    setFormIsBatchRevision,
+    formRevisionClusterBadges,
+    setFormRevisionClusterBadges,
     formSubject,
     setFormSubject,
     formTopic,
     setFormTopic,
+    formSelectedMicroTopics,
+    setFormSelectedMicroTopics,
     formIsAugmentedRevision,
     setFormIsAugmentedRevision,
     showProgressModal,

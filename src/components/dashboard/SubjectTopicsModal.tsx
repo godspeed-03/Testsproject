@@ -1,14 +1,10 @@
-'use client';
-
 import { useState } from 'react';
-import { X, Search, BookOpen, Trash2, Loader2, Sparkles, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { X, Search, BookOpen, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 
 interface SubjectTopicsModalProps {
   selectedSubjectTopics: any | null;
   onClose: () => void;
   topicRevisions: any[];
-  onBatchLogCluster: (subject: string, category: string, clusterTitle: string, topicNames: string[]) => Promise<void>;
-  onDeleteTopic: (topicId: string, subject: string, topic: string) => Promise<void>;
   getCategoryBadge: (category: string) => string;
   isLight: boolean;
   cardBg: string;
@@ -22,8 +18,6 @@ export default function SubjectTopicsModal({
   selectedSubjectTopics,
   onClose,
   topicRevisions,
-  onBatchLogCluster,
-  onDeleteTopic,
   getCategoryBadge,
   isLight,
   cardBg,
@@ -33,31 +27,8 @@ export default function SubjectTopicsModal({
   tableHeaderBg,
 }: SubjectTopicsModalProps) {
   const [modalTopicSearch, setModalTopicSearch] = useState('');
-  const [selectedTopicNames, setSelectedTopicNames] = useState<string[]>([]);
-  const [clusterTitleInput, setClusterTitleInput] = useState('');
-  const [deletingTopicId, setDeletingTopicId] = useState<string | null>(null);
 
   if (!selectedSubjectTopics) return null;
-
-  const toggleSelectTopicName = (topicName: string) => {
-    if (selectedTopicNames.includes(topicName)) {
-      setSelectedTopicNames(selectedTopicNames.filter((t) => t !== topicName));
-    } else {
-      setSelectedTopicNames([...selectedTopicNames, topicName]);
-    }
-  };
-
-  const handleClusterSubmit = async () => {
-    if (selectedTopicNames.length === 0) return;
-    await onBatchLogCluster(
-      selectedSubjectTopics.subject,
-      selectedSubjectTopics.category || 'GS1',
-      clusterTitleInput,
-      selectedTopicNames
-    );
-    setSelectedTopicNames([]);
-    setClusterTitleInput('');
-  };
 
   const allSubjTopics = topicRevisions.filter(
     (tr: any) => tr.subject?.toLowerCase() === selectedSubjectTopics.subject?.toLowerCase()
@@ -123,42 +94,6 @@ export default function SubjectTopicsModal({
             )}
           </div>
 
-          {/* Batch Cluster Revision Card */}
-          {selectedTopicNames.length > 0 && (
-            <div className="bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/30 rounded-2xl p-4 space-y-3 animate-fade-in shadow-lg">
-              <div className="flex justify-between items-center flex-wrap gap-2">
-                <span className="font-black text-amber-700 dark:text-amber-300 text-xs sm:text-sm flex items-center gap-2">
-                  <Sparkles size={16} className="text-amber-500 animate-pulse" />
-                  <span>Batch Cluster Revision ({selectedTopicNames.length} topics selected)</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSelectedTopicNames([])}
-                  className="text-xs text-slate-400 hover:text-amber-500 font-extrabold underline transition-colors"
-                >
-                  Deselect All
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-                <input
-                  type="text"
-                  placeholder={`Optional Cluster Title (e.g., "Block 1 Revision")...`}
-                  value={clusterTitleInput}
-                  onChange={(e) => setClusterTitleInput(e.target.value)}
-                  className="flex-1 bg-white dark:bg-slate-950 rounded-xl px-4 py-2.5 text-xs sm:text-sm outline-none border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 focus:border-amber-500"
-                />
-                <button
-                  type="button"
-                  onClick={handleClusterSubmit}
-                  className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs sm:text-sm font-black flex items-center gap-2 shadow-md shrink-0 transition-all active:scale-95 cursor-pointer"
-                >
-                  <span>Log Revision Today ({selectedTopicNames.length})</span>
-                </button>
-              </div>
-            </div>
-          )}
-
           {allSubjTopics.length === 0 ? (
             <div className="text-center py-12 text-slate-400 font-bold space-y-3 max-w-md mx-auto">
               <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto shadow-inner">
@@ -188,31 +123,17 @@ export default function SubjectTopicsModal({
               <table className="w-full text-xs sm:text-sm text-left border-collapse min-w-[980px]">
                 <thead>
                   <tr className="bg-slate-100/90 dark:bg-slate-950/80 uppercase text-[11px] font-black tracking-wider text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
-                    <th className="p-4 w-12 text-center">
-                      <input
-                        type="checkbox"
-                        checked={subjTopics.length > 0 && selectedTopicNames.length === subjTopics.length}
-                        onChange={() => {
-                          if (selectedTopicNames.length === subjTopics.length) setSelectedTopicNames([]);
-                          else setSelectedTopicNames(subjTopics.map((tr: any) => tr.topic));
-                        }}
-                        className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-amber-500 focus:ring-amber-500 cursor-pointer"
-                        title="Select / Deselect all topics"
-                      />
-                    </th>
                     <th className="p-4 font-black">Topic / Chapter</th>
                     <th className="p-4 font-black">First Read Date</th>
                     <th className="p-4 font-black">R1 Target (+7d)</th>
                     <th className="p-4 font-black">R2 Target (+21d)</th>
                     <th className="p-4 font-black">R3 Target (+45d)</th>
                     <th className="p-4 font-black">Current Status</th>
-                    <th className="p-4 font-black text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 font-bold">
                   {subjTopics.map((t: any) => {
                     const topicKey = t.id || t._id || t.customId;
-                    const isSelected = selectedTopicNames.includes(t.topic);
                     const isAugmented = t.isAugmentedRevision;
                     const revisions = t.revisions || [];
                     const r1 = revisions.find((r: any) => r.stage === 'R1');
@@ -232,16 +153,8 @@ export default function SubjectTopicsModal({
                     return (
                       <tr 
                         key={topicKey} 
-                        className={`transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${isSelected ? 'bg-amber-500/10 dark:bg-amber-500/15' : ''}`}
+                        className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       >
-                        <td className="p-4 text-center">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleSelectTopicName(t.topic)}
-                            className="w-4 h-4 rounded border-slate-300 dark:border-slate-700 text-amber-500 focus:ring-amber-500 cursor-pointer"
-                          />
-                        </td>
 
                         <td className="p-4 font-black text-slate-900 dark:text-slate-100 min-w-[200px]">
                           <span className="hover:text-amber-500 transition-colors">{t.topic}</span>
@@ -348,33 +261,6 @@ export default function SubjectTopicsModal({
                           >
                             {stageLabel}
                           </span>
-                        </td>
-
-                        {/* Actions */}
-                        <td className="p-4 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              type="button"
-                              disabled={deletingTopicId === (t.id || t._id || t.customId)}
-                              onClick={async () => {
-                                const tid = t.id || t._id || t.customId;
-                                setDeletingTopicId(tid);
-                                try {
-                                  await onDeleteTopic(tid, t.subject, t.topic);
-                                } finally {
-                                  setDeletingTopicId(null);
-                                }
-                              }}
-                              className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-all shrink-0 cursor-pointer active:scale-95 disabled:opacity-50"
-                              title="Delete topic"
-                            >
-                              {deletingTopicId === (t.id || t._id || t.customId) ? (
-                                <Loader2 size={16} className="animate-spin text-rose-500" />
-                              ) : (
-                                <Trash2 size={16} />
-                              )}
-                            </button>
-                          </div>
                         </td>
                       </tr>
                     );

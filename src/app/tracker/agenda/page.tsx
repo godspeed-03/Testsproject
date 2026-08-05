@@ -221,7 +221,6 @@ export default function AgendaPage() {
                         } else {
                           return null;
                         }
-                        return null;
                       })()}
                       <h4
                         className={`font-black font-display text-sm sm:text-base truncate max-w-[180px] sm:max-w-none ${isDone ? "line-through opacity-60" : textTitle}`}

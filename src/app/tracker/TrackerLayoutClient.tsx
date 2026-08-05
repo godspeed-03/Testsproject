@@ -32,6 +32,7 @@ import ShadcnDatePicker from '@/components/ui/ShadcnDatePicker';
 import ShadcnSelect from '@/components/ui/ShadcnSelect';
 import ShadcnTimePicker from '@/components/ui/ShadcnTimePicker';
 import TimetableCodeEditorModal from '@/components/TimetableCodeEditorModal';
+import BatchRevisionCompletionModal from '@/components/dashboard/BatchRevisionCompletionModal';
 import {
   SUBJECT_COLOR_OPTIONS,
   NON_SUBJECT_COLOR_OPTIONS,
@@ -178,10 +179,18 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     syllabusItems,
     formIsStudyTask,
     setFormIsStudyTask,
+    formStudyTaskMode,
+    setFormStudyTaskMode,
+    formIsBatchRevision,
+    setFormIsBatchRevision,
+    formRevisionClusterBadges,
+    setFormRevisionClusterBadges,
     formSubject,
     setFormSubject,
     formTopic,
     setFormTopic,
+    formSelectedMicroTopics,
+    setFormSelectedMicroTopics,
     formIsAugmentedRevision,
     setFormIsAugmentedRevision,
     showProgressModal,
@@ -193,6 +202,11 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     existingModalVal,
     progressModalMode,
     setProgressModalMode,
+    showBatchRevModal,
+    setShowBatchRevModal,
+    batchRevModalHabit,
+    batchRevModalDate,
+    handleSaveBatchRevProgress,
     selectedHabitForDetail,
     setSelectedHabitForDetail,
     habitDetailTab,
@@ -227,11 +241,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     return () => window.removeEventListener('open-create-modal', handleOpen);
   }, [handleOpenCreateModal]);
 
-  useEffect(() => {
-    if (formIsStudyTask) {
-      setShowEmojiPicker(false);
-    }
-  }, [formIsStudyTask]);
+
 
   const cardBg = 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80';
   const textTitle = 'text-slate-900 dark:text-slate-100';
@@ -394,12 +404,12 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               </button>
             </div>
 
-            {/* Type Selector Segmented Tabs */}
-            <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 shrink-0">
+            {/* Type Selector Segmented Tabs (One Word Each) */}
+            <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800 shrink-0 shadow-inner">
               {[
-                { id: 'habit', label: 'Recurring Habit', icon: '🔥' },
-                { id: 'task', label: 'One-time Task', icon: '📝' },
-                { id: 'list', label: 'Checklist List', icon: '📋' }
+                { id: 'habit', label: 'Habit', icon: '🔥' },
+                { id: 'task', label: 'Task', icon: '📝' },
+                { id: 'list', label: 'List', icon: '📋' }
               ].map((t) => (
                 <button
                   key={t.id}
@@ -422,13 +432,13 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       }
                     }
                   }}
-                  className={`py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
+                  className={`py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                     createType === t.id
-                      ? 'bg-accent-secondary text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                      ? 'bg-accent-secondary text-white shadow-md shadow-accent-secondary/20'
+                      : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
                   }`}
                 >
-                  <span>{t.icon}</span>
+                  <span className="text-sm">{t.icon}</span>
                   <span>{t.label}</span>
                 </button>
               ))}
@@ -452,37 +462,76 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 </div>
               ) : (
                 <>
-                  {/* Task / Habit Mode selection (Only for One-Time Tasks) */}
+                  {/* 3-Option Task / Event Linkage Selector (Only for One-Time Tasks) */}
                   {createType === 'task' && formFrequencyMode === 'once' && (
-                    <div className="p-3.5 rounded-2xl bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-indigo-500/5 border border-indigo-500/20 space-y-3 shadow-xs">
+                    <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 space-y-3.5 shadow-xs">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">🎓</span>
-                          <span className="font-black text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm">Link to UPSC Syllabus Matrix?</span>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formIsStudyTask}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setFormIsStudyTask(checked);
-                              if (checked) {
-                                setFormFrequencyMode('once');
-                              } else {
-                                if (formTitle === formSubject || (formSubject && formTitle.startsWith(formSubject))) {
-                                  setFormTitle('');
-                                }
-                              }
-                            }}
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
-                        </label>
+                        <span className="font-extrabold text-slate-700 dark:text-slate-300 text-xs">
+                          Task Mode & Syllabus Linkage
+                        </span>
                       </div>
 
-                      {formIsStudyTask && (
-                        <div className="space-y-3 pt-1">
+                      {/* 3-Tab Segment Selector */}
+                      <div className="grid grid-cols-3 gap-1.5 p-1 bg-white dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-2xs">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormStudyTaskMode('none');
+                            setFormIsStudyTask(false);
+                            setFormIsBatchRevision(false);
+                            if (formTitle === formSubject || (formSubject && formTitle.startsWith(formSubject))) {
+                              setFormTitle('');
+                            }
+                          }}
+                          className={`py-2 px-2 text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            formStudyTaskMode === 'none'
+                              ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-white shadow-xs'
+                              : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          <span>📝</span>
+                          <span>No Link</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormStudyTaskMode('single');
+                            setFormIsStudyTask(true);
+                            setFormIsBatchRevision(false);
+                          }}
+                          className={`py-2 px-2 text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            formStudyTaskMode === 'single'
+                              ? 'bg-indigo-600 text-white shadow-xs'
+                              : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          <span>🎓</span>
+                          <span>UPSC Single</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormStudyTaskMode('batch_revision');
+                            setFormIsStudyTask(true);
+                            setFormIsBatchRevision(true);
+                            setFormIsAugmentedRevision(false);
+                          }}
+                          className={`py-2 px-2 text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                            formStudyTaskMode === 'batch_revision'
+                              ? 'bg-purple-600 text-white shadow-xs'
+                              : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                          }`}
+                        >
+                          <span>⚡</span>
+                          <span>Batch Revision</span>
+                        </button>
+                      </div>
+
+                      {/* OPTION 2: Single Syllabus Topic (Restored Simple Layout) */}
+                      {formStudyTaskMode === 'single' && (
+                        <div className="space-y-3.5 pt-1">
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
                               <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Category</label>
@@ -539,21 +588,24 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                               <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Topic Name</label>
                               <input
                                 type="text"
-                                placeholder="e.g., Ocean Currents & Tides"
+                                placeholder="e.g., Ocean Currents, Plate Tectonics"
                                 value={formTopic}
                                 onChange={(e) => {
                                   const val = e.target.value;
                                   setFormTopic(val);
-                                  const autoTitle = formSubject && val ? `${formSubject}: ${val}` : (val || formSubject);
-                                  if (autoTitle) setFormTitle(autoTitle);
+                                  if (formSubject) {
+                                    setFormTitle(val ? `${formSubject}: ${val}` : formSubject);
+                                  } else if (val) {
+                                    setFormTitle(val);
+                                  }
                                 }}
-                                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-bold outline-none focus:border-indigo-500"
+                                className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-indigo-500 text-xs"
                               />
                             </div>
                           </div>
 
                           {/* Augmented Revision SRS Toggle */}
-                          <div className="flex items-center justify-between p-2.5 rounded-xl bg-white/70 dark:bg-slate-900/70 border border-indigo-500/20">
+                          <div className="flex items-center justify-between p-3 rounded-xl bg-white/90 dark:bg-slate-950/80 border border-indigo-500/20 dark:border-indigo-500/40 shadow-xs">
                             <div>
                               <span className="font-black text-slate-800 dark:text-slate-200 block text-xs">
                                 Spaced Repetition SRS (R1, R2, R3)?
@@ -566,8 +618,197 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                 onChange={(e) => setFormIsAugmentedRevision(e.target.checked)}
                                 className="sr-only peer"
                               />
-                              <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600"></div>
+                              <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-checked:bg-indigo-600 dark:peer-checked:bg-indigo-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all shadow-xs"></div>
                             </label>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* OPTION 3: Batch Revision Topics across Multiple Subjects */}
+                      {formStudyTaskMode === 'batch_revision' && (
+                        <div className="space-y-3.5 pt-1">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Select Category</label>
+                              <ShadcnSelect
+                                value={typeof formCategory === 'string' ? formCategory : (formCategory?.label || '')}
+                                onChange={(val: string) => {
+                                  const newCatObj = { id: val.toLowerCase(), label: val, icon: '📚', color: '#6366F1' };
+                                  setFormCategory(newCatObj);
+                                  const matchedSubjects = (syllabusItems || [])
+                                    .filter((item: any) => String(item.category || '').trim().toLowerCase() === val.trim().toLowerCase())
+                                    .map((item: any) => item.subject)
+                                    .filter(Boolean);
+                                  const nextSubject = matchedSubjects.length > 0 ? matchedSubjects[0] : '';
+                                  setFormSubject(nextSubject);
+                                }}
+                                options={categories.map((c: string) => ({ value: c, label: c }))}
+                              />
+                            </div>
+
+                            <div>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Select Subject</label>
+                              <ShadcnSelect
+                                value={formSubject}
+                                onChange={(val: string) => {
+                                  setFormSubject(val);
+                                }}
+                                options={
+                                  getFilteredCategorySubjects().length > 0
+                                    ? getFilteredCategorySubjects().map((s: string) => ({ value: s, label: s }))
+                                    : syllabusSubjects.map((s: string) => ({ value: s, label: s }))
+                                }
+                              />
+                            </div>
+                          </div>
+
+                          {/* Topic Selection for active subject */}
+                          <div className="space-y-2.5 bg-white/90 dark:bg-slate-950/80 p-3.5 rounded-2xl border border-purple-500/30 dark:border-purple-500/40 shadow-xs">
+                            <div className="flex items-center justify-between">
+                              <label className="font-black text-xs text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
+                                <span>Select Topics for {formSubject || 'Subject'}</span>
+                              </label>
+                            </div>
+
+                            {/* Direct Multi-Topic Selection from DB (Pills + Select All) */}
+                            {(() => {
+                              const fromHabits = (habits || [])
+                                .filter((h: any) => h.subject?.toLowerCase() === formSubject?.toLowerCase() && h.topic)
+                                .flatMap((h: any) => String(h.topic).split(',').map((t: string) => t.trim()));
+
+                              const fromSyllabus = (syllabusItems || [])
+                                .filter((s: any) => s.subject?.toLowerCase() === formSubject?.toLowerCase() && (s.topics || s.topic))
+                                .flatMap((s: any) => (Array.isArray(s.topics) ? s.topics : String(s.topics || s.topic).split(',').map((t: string) => t.trim())));
+
+                              const existingTopics: string[] = Array.from(
+                                new Set([...fromHabits, ...fromSyllabus].filter(Boolean))
+                              );
+
+                              if (existingTopics.length === 0) return null;
+
+                              const catLabel = typeof formCategory === 'string' ? formCategory : (formCategory?.label || 'GS1');
+                              const allSelected = existingTopics.every((top: string) =>
+                                formRevisionClusterBadges.some(
+                                  (b: any) => b.subject?.toLowerCase() === formSubject.toLowerCase() && b.topic.toLowerCase() === top.toLowerCase()
+                                )
+                              );
+
+                              return (
+                                <div className="space-y-2 pt-2 border-t border-purple-500/20 dark:border-purple-800/40">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 block">
+                                      Select Topics for {formSubject} ({existingTopics.length} in DB)
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        if (allSelected) {
+                                          // Remove all topics for this subject
+                                          setFormRevisionClusterBadges(
+                                            formRevisionClusterBadges.filter((b: any) => b.subject?.toLowerCase() !== formSubject.toLowerCase())
+                                          );
+                                        } else {
+                                          // Add all remaining topics for this subject
+                                          const existingForSubj = formRevisionClusterBadges.filter(
+                                            (b: any) => b.subject?.toLowerCase() === formSubject.toLowerCase()
+                                          );
+                                          const existingTopicNames = new Set(existingForSubj.map((b: any) => b.topic.toLowerCase()));
+                                          const newBadges = existingTopics
+                                            .filter((top: string) => !existingTopicNames.has(top.toLowerCase()))
+                                            .map((top: string) => ({ category: catLabel, subject: formSubject, topic: top }));
+                                          
+                                          const updatedBadges = [...formRevisionClusterBadges, ...newBadges];
+                                          setFormRevisionClusterBadges(updatedBadges);
+                                          if (!formTitle) setFormTitle(`Batch Revision (${updatedBadges.length} Topics)`);
+                                        }
+                                      }}
+                                      className="text-[10px] font-black text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
+                                    >
+                                      {allSelected ? 'Clear All for Subject' : '+ Select All Topics'}
+                                    </button>
+                                  </div>
+
+                                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-1">
+                                    {existingTopics.map((top: string) => {
+                                      const isSelected = formRevisionClusterBadges.some(
+                                        (b: any) => b.subject?.toLowerCase() === formSubject.toLowerCase() && b.topic.toLowerCase() === top.toLowerCase()
+                                      );
+                                      return (
+                                        <button
+                                          key={top}
+                                          type="button"
+                                          onClick={() => {
+                                            if (isSelected) {
+                                              setFormRevisionClusterBadges(
+                                                formRevisionClusterBadges.filter(
+                                                  (b: any) => !(b.subject?.toLowerCase() === formSubject.toLowerCase() && b.topic.toLowerCase() === top.toLowerCase())
+                                                )
+                                              );
+                                            } else {
+                                              const nextBadges = [...formRevisionClusterBadges, { category: catLabel, subject: formSubject, topic: top }];
+                                              setFormRevisionClusterBadges(nextBadges);
+                                              if (!formTitle) setFormTitle(`Batch Revision (${nextBadges.length} Topics)`);
+                                            }
+                                          }}
+                                          className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs border ${
+                                            isSelected
+                                              ? 'bg-purple-600 border-purple-500 text-white shadow-purple-500/20'
+                                              : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-purple-500 hover:text-purple-600'
+                                          }`}
+                                        >
+                                          {isSelected ? '✓ ' : '+ '}{top}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Selected Revision Cluster Badges (Shows accumulated topics across different subjects & categories!) */}
+                          <div className="space-y-1.5 p-3 rounded-2xl bg-purple-500/10 border border-purple-500/30 dark:bg-purple-950/30 dark:border-purple-800/50">
+                            <div className="flex items-center justify-between">
+                              <span className="font-black text-xs text-purple-900 dark:text-purple-200 flex items-center gap-1.5">
+                                <span>Selected Revision Cluster ({formRevisionClusterBadges.length} Topics)</span>
+                              </span>
+                              {formRevisionClusterBadges.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => setFormRevisionClusterBadges([])}
+                                  className="text-[11px] font-extrabold text-slate-400 hover:text-rose-500 underline transition-colors cursor-pointer"
+                                >
+                                  Clear All Badges
+                                </button>
+                              )}
+                            </div>
+
+                            {formRevisionClusterBadges.length === 0 ? (
+                              <p className="text-[11px] text-purple-700/70 dark:text-purple-300/70 font-medium italic">
+                                No topics added yet. Select a category & subject above, then pick topics to build your multi-subject revision cluster!
+                              </p>
+                            ) : (
+                              <div className="flex flex-wrap gap-1.5 pt-1 max-h-32 overflow-y-auto custom-scrollbar">
+                                {formRevisionClusterBadges.map((badge: any, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-600/15 border border-purple-500/30 text-purple-900 dark:text-purple-200 font-black text-xs shadow-2xs"
+                                  >
+                                    <span className="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400">[{badge.subject}]</span>
+                                    <span>{badge.topic}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setFormRevisionClusterBadges(formRevisionClusterBadges.filter((_: any, i: number) => i !== idx));
+                                      }}
+                                      className="hover:text-rose-500 font-black text-xs leading-none ml-1 cursor-pointer"
+                                    >
+                                      ✕
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       )}
@@ -581,27 +822,16 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
                       <div className="relative min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
-                          {/* Icon button on left of title */}
-                          {createType === 'habit' || !formIsStudyTask ? (
-                            <button
-                              type="button"
-                              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                              title="Click to select icon & color"
-                              className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 hover:border-indigo-500 transition-all shrink-0 active:scale-95 shadow-2xs cursor-pointer"
-                              style={{ borderColor: formColor || undefined }}
-                            >
-                              <span>{formIcon || '🏃'}</span>
-                              <span className="text-[9px] text-slate-400">▾</span>
-                            </button>
-                          ) : (
-                            <div
-                              title="Fixed Icon & Theme Color from Syllabus Matrix"
-                              className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 shrink-0 cursor-not-allowed opacity-90 shadow-2xs"
-                              style={{ borderColor: formColor || '#6366F1', backgroundColor: formColor ? `${formColor}15` : undefined }}
-                            >
-                              <span>{formIcon || '📚'}</span>
-                            </div>
-                          )}
+                          {/* Icon button on left of title (Choosable for all modes) */}
+                          <button
+                            type="button"
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            title="Click to select icon & color"
+                            className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 hover:border-indigo-500 transition-all shrink-0 active:scale-95 shadow-2xs cursor-pointer"
+                            style={{ borderColor: formColor || undefined, backgroundColor: formColor ? `${formColor}15` : undefined }}
+                          >
+                            <span>{formIcon || (formStudyTaskMode === 'batch_revision' ? '⚡' : '📚')}</span>
+                          </button>
 
                           {/* Title Input */}
                           <input
@@ -871,73 +1101,77 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     )}
                   </div>
 
-                  {/* Target Goal & Unit */}
-                  {formTargetUnit === 'yes_no' || formTargetUnit === 'boolean' ? (
-                    <div>
-                      <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Unit Selector</label>
-                      <ShadcnSelect
-                        value={formTargetUnit}
-                        onChange={(val: string) => {
-                          setFormTargetUnit(val);
-                          if (val === 'yes_no' || val === 'boolean') {
-                            setFormTargetVal(1);
-                          }
-                        }}
-                        options={[
-                          { value: 'yes_no', label: 'Mark Done' },
-                          { value: 'hours', label: 'Hours' },
-                          { value: 'minutes', label: 'Minutes' },
-                          { value: 'times', label: 'Times' },
-                          { value: 'pages', label: 'Pages' },
-                          { value: 'answers', label: 'Answers' },
-                          { value: 'custom', label: 'Custom Unit...' }
-                        ]}
-                      />
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Target Quantity</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={formTargetVal}
-                          onChange={(e) => setFormTargetVal(Number(e.target.value))}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-accent-primary"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Unit Selector</label>
-                        <ShadcnSelect
-                          value={formTargetUnit}
-                          onChange={(val: string) => {
-                            setFormTargetUnit(val);
-                            if (val === 'yes_no' || val === 'boolean') {
-                              setFormTargetVal(1);
-                            }
-                          }}
-                          options={[
-                            { value: 'yes_no', label: 'Mark Done' },
-                            { value: 'hours', label: 'Hours' },
-                            { value: 'minutes', label: 'Minutes' },
-                            { value: 'times', label: 'Times' },
-                            { value: 'pages', label: 'Pages' },
-                            { value: 'answers', label: 'Answers' },
-                            { value: 'custom', label: 'Custom Unit...' }
-                          ]}
-                        />
-                        {formTargetUnit === 'custom' && (
-                          <input
-                            type="text"
-                            placeholder="e.g. Quizzes, MCQs"
-                            value={formCustomUnit}
-                            onChange={(e) => setFormCustomUnit(e.target.value)}
-                            className="w-full mt-2 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold outline-none"
+                  {/* Target Goal & Unit (Hidden for Batch Revision Tasks) */}
+                  {formStudyTaskMode !== 'batch_revision' && !formIsBatchRevision && (
+                    <>
+                      {formTargetUnit === 'yes_no' || formTargetUnit === 'boolean' ? (
+                        <div>
+                          <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Unit Selector</label>
+                          <ShadcnSelect
+                            value={formTargetUnit}
+                            onChange={(val: string) => {
+                              setFormTargetUnit(val);
+                              if (val === 'yes_no' || val === 'boolean') {
+                                setFormTargetVal(1);
+                              }
+                            }}
+                            options={[
+                              { value: 'yes_no', label: 'Mark Done' },
+                              { value: 'hours', label: 'Hours' },
+                              { value: 'minutes', label: 'Minutes' },
+                              { value: 'times', label: 'Times' },
+                              { value: 'pages', label: 'Pages' },
+                              { value: 'answers', label: 'Answers' },
+                              { value: 'custom', label: 'Custom Unit...' }
+                            ]}
                           />
-                        )}
-                      </div>
-                    </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Target Quantity</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={formTargetVal}
+                              onChange={(e) => setFormTargetVal(Number(e.target.value))}
+                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-accent-primary"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Unit Selector</label>
+                            <ShadcnSelect
+                              value={formTargetUnit}
+                              onChange={(val: string) => {
+                                setFormTargetUnit(val);
+                                if (val === 'yes_no' || val === 'boolean') {
+                                  setFormTargetVal(1);
+                                }
+                              }}
+                              options={[
+                                { value: 'yes_no', label: 'Mark Done' },
+                                { value: 'hours', label: 'Hours' },
+                                { value: 'minutes', label: 'Minutes' },
+                                { value: 'times', label: 'Times' },
+                                { value: 'pages', label: 'Pages' },
+                                { value: 'answers', label: 'Answers' },
+                                { value: 'custom', label: 'Custom Unit...' }
+                              ]}
+                            />
+                            {formTargetUnit === 'custom' && (
+                              <input
+                                type="text"
+                                placeholder="e.g. Quizzes, MCQs"
+                                value={formCustomUnit}
+                                onChange={(e) => setFormCustomUnit(e.target.value)}
+                                className="w-full mt-2 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold outline-none"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* Start Date & Reminders */}
@@ -961,7 +1195,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             onChange={(e) => setFormEnableReminder(e.target.checked)}
                             className="sr-only peer"
                           />
-                          <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-accent-primary"></div>
+                          <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-checked:bg-accent-primary dark:peer-checked:bg-indigo-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all shadow-xs"></div>
                         </label>
                         <div className="flex-1">
                           <ShadcnTimePicker
@@ -1311,6 +1545,15 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
           </div>
         </div>
       )}
+
+      {/* BATCH REVISION MULTI-TOPIC CHECKLIST MODAL */}
+      <BatchRevisionCompletionModal
+        isOpen={showBatchRevModal}
+        onClose={() => setShowBatchRevModal(false)}
+        habit={batchRevModalHabit}
+        date={batchRevModalDate}
+        onSave={handleSaveBatchRevProgress}
+      />
 
       {/* Timetable Code Editor & Live UI Preview Modal */}
       <TimetableCodeEditorModal

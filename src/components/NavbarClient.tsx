@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Target, Menu, X, RotateCcw, Calendar, BookOpen, FileText, Clock, Zap, Plus, Timer } from 'lucide-react';
+import { Target, Menu, X, RotateCcw, BookOpen, FileText, Clock, Zap, Plus, Timer, ListTodo } from 'lucide-react';
 import UserProfileMenu from './UserProfileMenu';
 import ThemeToggle from './ThemeToggle';
 import BrandLogoIcon from './BrandLogoIcon';
@@ -85,25 +85,42 @@ export default function NavbarClient({ user }: NavbarClientProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 sm:gap-2.5">
             <ThemeToggle />
             {user && (
-              <Link
-                href="/tracker/focus"
-                className={`relative p-2.5 rounded-xl border transition-all duration-300 flex items-center justify-center shadow-xs hover:scale-105 active:scale-95 group ${
-                  pathname === '/tracker/focus'
-                    ? 'bg-accent-gradient text-white border-transparent shadow-neon-glow'
-                    : 'bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-indigo-500/10 border-indigo-500/30 dark:border-indigo-400/30 text-indigo-600 dark:text-indigo-400 hover:border-indigo-500/60 hover:shadow-md'
-                }`}
-                title="Focus Timer Shortcut"
-                aria-label="Focus Timer Shortcut"
-              >
-                <Timer size={18} strokeWidth={2.2} className="group-hover:rotate-12 transition-transform" />
-                <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                </span>
-              </Link>
+              <>
+                {/* Direct Agenda Shortcut Icon (ListTodo) */}
+                <Link
+                  href="/tracker/agenda"
+                  className={`p-2.5 rounded-xl border transition-all duration-300 flex items-center justify-center shadow-xs hover:scale-105 active:scale-95 group ${
+                    pathname === '/tracker/agenda'
+                      ? 'bg-emerald-600 text-white border-transparent shadow-emerald-500/20'
+                      : 'bg-emerald-500/10 border-emerald-500/30 dark:border-emerald-400/30 text-emerald-600 dark:text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/20 hover:shadow-md'
+                  }`}
+                  title="Daily Agenda & Log"
+                  aria-label="Daily Agenda & Log"
+                >
+                  <ListTodo size={18} strokeWidth={2.2} className="group-hover:scale-110 transition-transform" />
+                </Link>
+
+                {/* Focus Timer Shortcut Icon */}
+                <Link
+                  href="/tracker/focus"
+                  className={`relative p-2.5 rounded-xl border transition-all duration-300 flex items-center justify-center shadow-xs hover:scale-105 active:scale-95 group ${
+                    pathname === '/tracker/focus'
+                      ? 'bg-accent-gradient text-white border-transparent shadow-neon-glow'
+                      : 'bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-indigo-500/10 border-indigo-500/30 dark:border-indigo-400/30 text-indigo-600 dark:text-indigo-400 hover:border-indigo-500/60 hover:shadow-md'
+                  }`}
+                  title="Focus Timer Shortcut"
+                  aria-label="Focus Timer Shortcut"
+                >
+                  <Timer size={18} strokeWidth={2.2} className="group-hover:rotate-12 transition-transform" />
+                  <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                  </span>
+                </Link>
+              </>
             )}
             {user ? (
               <UserProfileMenu user={user} />
@@ -121,9 +138,22 @@ export default function NavbarClient({ user }: NavbarClientProps) {
         {/* Mobile Dropdown Menu */}
         {user && mobileMenuOpen && (
           <div className="md:hidden border-t border-slate-200 dark:border-slate-800 py-2 space-y-1 animate-fade-in">
+            <Link
+              href="/tracker/agenda"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black flex items-center gap-2.5 transition-all ${
+                pathname === '/tracker/agenda'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10'
+              }`}
+            >
+              <ListTodo size={15} />
+              <span>Daily Agenda</span>
+            </Link>
+
             {navLinks.map((link) => {
               const Icon = link.icon;
-              const isActive = pathname === link.href || (link.href === '/tracker' && pathname.startsWith('/tracker'));
+              const isActive = pathname === link.href || (link.href === '/tracker' && pathname.startsWith('/tracker') && pathname !== '/tracker/agenda');
               return (
                 <Link
                   key={link.href}

@@ -134,7 +134,7 @@ export default function RootLayout({
         <meta name="twitter:card" content="summary_large_image" />
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var t=localStorage.getItem("upsc_tracker_accent_theme")||"neon-teal";var r=document.documentElement;r.classList.add("theme-"+t);r.setAttribute("data-accent-theme",t);}catch(e){}`
+            __html: `try{var t=localStorage.getItem("upsc_tracker_accent_theme")||"neon-teal";var r=document.documentElement;r.classList.add("theme-"+t);r.setAttribute("data-accent-theme",t);var st=localStorage.getItem("theme");if(st==="dark"||(!st&&window.matchMedia("(prefers-color-scheme: dark)").matches)){r.classList.add("dark");}else{r.classList.remove("dark");}}catch(e){}`
           }}
         />
       </head>

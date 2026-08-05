@@ -45,7 +45,9 @@ export default function CalendarPage() {
   const todayIso = new Date().toISOString().split('T')[0];
   const habitList = habits.filter((h: any) => h.type === 'habit');
   const isAllView = activeHabitId === 'all';
-  const activeHabit = isAllView ? null : habits.find((h: any) => h._id === activeHabitId) || habitList[0] || habits[0];
+  const activeHabit = isAllView
+    ? null
+    : habitList.find((h: any) => (h._id || h.id) === activeHabitId) || habitList[0];
 
   // Helper for calculating month days based on offset
   const getMonthData = (offset: number) => {
@@ -75,7 +77,7 @@ export default function CalendarPage() {
     const isPast = d.iso < todayIso;
     const isToday = d.iso === todayIso;
 
-    const scheduledItems = (isAllView ? habits : activeHabit ? [activeHabit] : habits).filter((h: any) =>
+    const scheduledItems = (isAllView ? habitList : activeHabit ? [activeHabit] : habitList).filter((h: any) =>
       isHabitScheduledForDate(h, d.iso)
     );
     const totalSched = scheduledItems.length;
@@ -168,7 +170,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {habits.length === 0 ? (
+      {habitList.length === 0 ? (
         <div className={`p-10 rounded-2xl border ${cardBg} text-center space-y-3`}>
           <CalendarIcon size={32} className="text-accent-primary mx-auto" />
           <h4 className={`font-black text-base ${textTitle}`}>No Habits Available</h4>
@@ -183,23 +185,24 @@ export default function CalendarPage() {
               onClick={() => setActiveHabitId('all')}
               className={`px-4 py-2.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-2 ${
                 isAllView
-                  ? 'bg-accent-gradient shadow-neon-glow ring-2 ring-accent-primary/50'
+                  ? 'bg-accent-gradient shadow-neon-glow ring-2 ring-accent-primary/50 text-white'
                   : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800'
               }`}
             >
               <Layers size={15} />
-              <span>All Tasks & Habits Combined</span>
+              <span>All Habits Combined</span>
             </button>
 
-            {habits.map((h: any, idx: number) => {
+            {habitList.map((h: any, idx: number) => {
+              const hId = h._id || h.id;
               const pillTheme = idx % 2 === 0 ? 'bg-accent-tertiary' : 'bg-accent-quinary';
               return (
                 <button
-                  key={h._id}
+                  key={hId}
                   type="button"
-                  onClick={() => setActiveHabitId(h._id)}
+                  onClick={() => setActiveHabitId(hId)}
                   className={`px-4 py-2.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-2 ${
-                    activeHabitId === h._id
+                    activeHabitId === hId
                       ? `${pillTheme} text-white shadow-md`
                       : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800'
                   }`}
@@ -227,7 +230,7 @@ export default function CalendarPage() {
                 </div>
                 <div>
                   <h3 className={`font-black text-base sm:text-lg ${textTitle}`}>
-                    {isAllView ? 'All Tasks & Habits Combined' : activeHabit?.title}
+                    {isAllView ? 'All Habits Combined' : activeHabit?.title}
                   </h3>
                   <p className={`text-xs ${textMuted}`}>
                     {monthName} {year} {viewMode === 'calendar' ? 'Heatmap Matrix' : 'Completion Line Trend & Boolean Matrix'}
@@ -314,7 +317,7 @@ export default function CalendarPage() {
                       const isToday = d.iso === todayIso;
 
                       if (isAllView) {
-                        const scheduledItems = habits.filter((h: any) => isHabitScheduledForDate(h, d.iso));
+                        const scheduledItems = habitList.filter((h: any) => isHabitScheduledForDate(h, d.iso));
                         const totalSched = scheduledItems.length;
 
                         const doneCount = scheduledItems.filter((h: any) =>

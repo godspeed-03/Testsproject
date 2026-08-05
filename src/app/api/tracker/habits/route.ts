@@ -268,6 +268,9 @@ export async function POST(req: Request) {
       const targetVal = targetObj.value;
 
       if (existingIdx >= 0) {
+        if (body.completedTopics !== undefined) {
+          history[existingIdx].completedTopics = body.completedTopics;
+        }
         if (status === 'toggle') {
           const currentStatus = history[existingIdx].status;
           history[existingIdx].status = currentStatus === 'done' ? 'pending' : 'done';
@@ -305,6 +308,7 @@ export async function POST(req: Request) {
           status: finalStatus,
           value: newValue,
           note: note || '',
+          ...(body.completedTopics !== undefined ? { completedTopics: body.completedTopics } : {}),
         });
       }
 
@@ -324,74 +328,174 @@ export async function POST(req: Request) {
       );
 
       // Synchronize TopicRevision & SyllabusItem status when tasks are toggled
-      if (habit.isStudyTask || habit.subject || habit.topic || habit.title.includes(':')) {
+      const habitAny = habit as any;
+      if (habit.isStudyTask || habit.subject || habit.topic || habit.title.includes(':') || habitAny.selectedMicroTopicsCluster) {
         try {
           const isDone = history.some((h: any) => h.date === date && h.status === 'done');
-          let cleanSubj = habit.subject?.trim() || '';
-          let cleanTop = habit.topic?.trim() || '';
+          const currentHist = history.find((h: any) => h.date === date);
+          const completedTopicsSet = new Set<string>(
+            Array.isArray(currentHist?.completedTopics) ? currentHist.completedTopics : []
+          );
 
-          if (!cleanSubj || !cleanTop) {
-            const cleanTitle = habit.title.replace(/^\[R[123]\s+Revision\]\s*/i, '').trim();
-            if (cleanTitle.includes(':')) {
-              const parts = cleanTitle.split(':');
-              if (parts.length >= 2) {
-                cleanSubj = parts[0].trim();
-                cleanTop = parts.slice(1).join(':').trim();
+          // Assemble list of topics to sync
+          let topicsToSync: Array<{ subject: string; topic: string; isTopicDone: boolean }> = [];
+
+          const habitObj = habit as any;
+          if (Array.isArray(habitObj.selectedMicroTopicsCluster) && habitObj.selectedMicroTopicsCluster.length > 0) {
+            topicsToSync = habitObj.selectedMicroTopicsCluster.map((item: any) => {
+              const topicKey = `${item.category || ''}|${item.subject}|${item.topic}`;
+              const isTopicDone = isDone || completedTopicsSet.has(topicKey) || completedTopicsSet.has(item.topic);
+              return { subject: item.subject, topic: item.topic, isTopicDone };
+            });
+          } else {
+            let cleanSubj = habit.subject?.trim() || '';
+            let cleanTop = habit.topic?.trim() || '';
+
+            if (!cleanSubj || !cleanTop) {
+              const cleanTitle = habit.title.replace(/^\[R[123]\s+Revision\]\s*/i, '').trim();
+              if (cleanTitle.includes(':')) {
+                const parts = cleanTitle.split(':');
+                if (parts.length >= 2) {
+                  cleanSubj = parts[0].trim();
+                  cleanTop = parts.slice(1).join(':').trim();
+                }
               }
+            }
+
+            if (cleanSubj && cleanTop) {
+              const subTopics = cleanTop.split(',').map((t: string) => t.trim()).filter(Boolean);
+              topicsToSync = subTopics.map((topName: string) => ({
+                subject: cleanSubj,
+                topic: topName,
+                isTopicDone: isDone,
+              }));
             }
           }
 
-          if (cleanSubj && cleanTop) {
-            const topicDoc = await prisma.topicRevision.findFirst({
+          // Loop & sync each TopicRevision record in DB
+          for (const item of topicsToSync) {
+            if (!item.subject || !item.topic) continue;
+            let topicDoc = await prisma.topicRevision.findFirst({
               where: {
                 userId,
-                subject: { equals: cleanSubj, mode: 'insensitive' },
-                topic: { equals: cleanTop, mode: 'insensitive' },
+                subject: { equals: item.subject, mode: 'insensitive' },
+                topic: { equals: item.topic, mode: 'insensitive' },
               },
             });
 
+            if (!topicDoc && item.isTopicDone) {
+              topicDoc = await processTopicTag(
+                userId,
+                {
+                  subject: item.subject,
+                  topic: item.topic,
+                  category: 'GS1',
+                  isRevision: true,
+                  isAugmentedRevision: true,
+                },
+                date
+              );
+            }
+
             if (topicDoc) {
               const revisionsArr: any[] = Array.isArray(topicDoc.revisions) ? [...(topicDoc.revisions as any[])] : [];
-              let targetStage = 'First Read';
+              let targetStage = '';
               if (habit.title.startsWith('[R1 Revision]')) targetStage = 'R1';
               else if (habit.title.startsWith('[R2 Revision]')) targetStage = 'R2';
               else if (habit.title.startsWith('[R3 Revision]')) targetStage = 'R3';
+              else {
+                // Find next pending stage or create a stage entry
+                const pendingRev = revisionsArr.find((r: any) => r.status === 'Pending' || !r.completedDate);
+                targetStage = pendingRev ? pendingRev.stage : (revisionsArr.length > 0 ? `R${revisionsArr.length}` : 'First Read');
+              }
 
               let revEntry = revisionsArr.find((r: any) => r.stage === targetStage);
-              if (!revEntry && targetStage !== 'First Read') {
+              if (!revEntry) {
                 revEntry = { stage: targetStage, scheduledDate: date, completedDate: '', status: 'Pending' };
                 revisionsArr.push(revEntry);
               }
 
               if (revEntry) {
-                revEntry.status = isDone ? 'Completed' : 'Pending';
-                revEntry.completedDate = isDone ? date : '';
+                revEntry.status = item.isTopicDone ? 'Completed' : 'Pending';
+                revEntry.completedDate = item.isTopicDone ? date : '';
               }
 
-              let nextScheduledDate = topicDoc.nextScheduledDate;
-              if (topicDoc.isAugmentedRevision !== false) {
-                const r1 = revisionsArr.find((r: any) => r.stage === 'R1');
-                const r2 = revisionsArr.find((r: any) => r.stage === 'R2');
-                const r3 = revisionsArr.find((r: any) => r.stage === 'R3');
-
-                if (r1 && r1.status !== 'Completed') nextScheduledDate = r1.scheduledDate || '';
-                else if (r2 && r2.status !== 'Completed') nextScheduledDate = r2.scheduledDate || '';
-                else if (r3 && r3.status !== 'Completed') nextScheduledDate = r3.scheduledDate || '';
-                else nextScheduledDate = '';
+              // Compute next scheduled revision date
+              let nextSched = topicDoc.nextScheduledDate || '';
+              if (item.isTopicDone) {
+                if (targetStage === 'First Read' || targetStage === 'R1') {
+                  nextSched = addDaysStr(date, 14);
+                } else if (targetStage === 'R2') {
+                  nextSched = addDaysStr(date, 24);
+                } else if (targetStage === 'R3') {
+                  nextSched = addDaysStr(date, 30);
+                }
               }
 
               await prisma.topicRevision.update({
                 where: { id: topicDoc.id },
                 data: {
                   revisions: revisionsArr,
-                  lastRevisedDate: isDone ? date : topicDoc.lastRevisedDate,
-                  firstReadDate: (isDone && targetStage === 'First Read' && !topicDoc.firstReadDate) ? date : topicDoc.firstReadDate,
-                  nextScheduledDate,
+                  lastRevisedDate: item.isTopicDone ? date : topicDoc.lastRevisedDate,
+                  firstReadDate: topicDoc.firstReadDate || (item.isTopicDone ? date : ''),
+                  nextScheduledDate: nextSched,
                   isOverdue: false,
+                  overdueDays: 0,
+                  status: item.isTopicDone ? 'Completed' : 'Pending',
                 },
               });
             }
+          }
 
+          // Sync linked BatchedRevisionItem table record in PostgreSQL
+          try {
+            const existingBatchRecord = await prisma.batchedRevisionItem.findFirst({
+              where: { userId, habitId: habit.id },
+            });
+
+            const updatedStatuses = topicsToSync.map((t) => ({
+              topicId: t.topic,
+              topic: t.topic,
+              subject: t.subject,
+              isDone: t.isTopicDone,
+            }));
+
+            if (existingBatchRecord) {
+              await prisma.batchedRevisionItem.update({
+                where: { id: existingBatchRecord.id },
+                data: {
+                  topicStatuses: updatedStatuses as any,
+                  isAllDone: isDone,
+                  completedDate: isDone ? date : '',
+                },
+              });
+            } else {
+              await prisma.batchedRevisionItem.create({
+                data: {
+                  userId,
+                  habitId: habit.id,
+                  topicStatuses: updatedStatuses as any,
+                  isAllDone: isDone,
+                  completedDate: isDone ? date : '',
+                },
+              });
+            }
+          } catch (batchErr) {
+            console.error('Failed to sync BatchedRevisionItem table:', batchErr);
+          }
+
+          let cleanSubj = habit.subject?.trim() || '';
+          if (!cleanSubj) {
+            const cleanTitle = habit.title.replace(/^\[R[123]\s+Revision\]\s*/i, '').trim();
+            if (cleanTitle.includes(':')) {
+              const parts = cleanTitle.split(':');
+              if (parts.length >= 2) {
+                cleanSubj = parts[0].trim();
+              }
+            }
+          }
+
+          if (cleanSubj) {
             const sysItem = await prisma.syllabusItem.findFirst({
               where: {
                 userId,
@@ -470,11 +574,76 @@ export async function POST(req: Request) {
         },
       });
 
-      if (isStudyTask && frequency?.mode === 'once' && subject && topic) {
-        try {
-          const taskStartDate = startDate || new Date().toISOString().split('T')[0];
-          const cleanTopic = topic.trim();
+      const taskStartDate = startDate || new Date().toISOString().split('T')[0];
+      const rawCluster: Array<{ category?: string; subject?: string; topic?: string }> =
+        Array.isArray(body.selectedMicroTopicsCluster) && body.selectedMicroTopicsCluster.length > 0
+          ? body.selectedMicroTopicsCluster
+          : [];
 
+      if (rawCluster.length > 0) {
+        try {
+          const topicStatusesList: Array<{ topicId: string; syllabusItemId?: string | null; topic: string; subject: string; category: string; isDone: boolean }> = [];
+
+          for (const item of rawCluster) {
+            if (!item.subject || !item.topic) continue;
+            const itemSubj = item.subject.trim();
+            const itemTopic = item.topic.trim();
+            const itemCat = item.category?.trim() || categoryLabel;
+
+            const sysItem = await prisma.syllabusItem.findFirst({
+              where: { userId, subject: { equals: itemSubj, mode: 'insensitive' } },
+            });
+
+            if (sysItem) {
+              await prisma.syllabusItem.update({
+                where: { id: sysItem.id },
+                data: {
+                  status: sysItem.status === 'Not Started' ? 'In Progress' : sysItem.status,
+                  category: itemCat,
+                },
+              });
+            }
+
+            const topicDoc = await processTopicTag(
+              userId,
+              {
+                subject: itemSubj,
+                topic: itemTopic,
+                category: itemCat,
+                isAugmentedRevision: resolvedIsAugmented,
+              },
+              taskStartDate
+            );
+
+            topicStatusesList.push({
+              topicId: topicDoc?.id || itemTopic,
+              syllabusItemId: sysItem?.id || null,
+              topic: itemTopic,
+              subject: itemSubj,
+              category: itemCat,
+              isDone: false,
+            });
+
+            if (resolvedIsAugmented) {
+              await createSrsTasksForTopic(userId, itemSubj, itemTopic, taskStartDate, category, true);
+            }
+          }
+
+          // Create linked BatchedRevisionItem record in PostgreSQL
+          await prisma.batchedRevisionItem.create({
+            data: {
+              userId,
+              habitId: newHabit.id,
+              topicStatuses: topicStatusesList as any,
+              isAllDone: false,
+              completedDate: '',
+            },
+          });
+        } catch (err) {
+          console.error('Failed to sync batch revision cluster topics:', err);
+        }
+      } else if (isStudyTask && frequency?.mode === 'once' && subject && (topic || (Array.isArray(body.selectedMicroTopics) && body.selectedMicroTopics.length > 0))) {
+        try {
           const sysItem = await prisma.syllabusItem.findFirst({
             where: { userId, subject: { equals: cleanSubject, mode: 'insensitive' } },
           });
@@ -489,19 +658,28 @@ export async function POST(req: Request) {
             });
           }
 
-          await processTopicTag(
-            userId,
-            {
-              subject: cleanSubject,
-              topic: cleanTopic,
-              category: categoryLabel,
-              isAugmentedRevision: resolvedIsAugmented,
-            },
-            taskStartDate
-          );
+          const topicList: string[] = Array.isArray(body.selectedMicroTopics) && body.selectedMicroTopics.length > 0
+            ? body.selectedMicroTopics
+            : typeof topic === 'string' && topic.includes(',')
+            ? topic.split(',').map((t: string) => t.trim()).filter(Boolean)
+            : [topic?.trim()].filter(Boolean);
 
-          if (resolvedIsAugmented) {
-            await createSrsTasksForTopic(userId, cleanSubject, cleanTopic, taskStartDate, category, true);
+          for (const singleTopic of topicList) {
+            if (!singleTopic) continue;
+            await processTopicTag(
+              userId,
+              {
+                subject: cleanSubject,
+                topic: singleTopic,
+                category: categoryLabel,
+                isAugmentedRevision: resolvedIsAugmented,
+              },
+              taskStartDate
+            );
+
+            if (resolvedIsAugmented) {
+              await createSrsTasksForTopic(userId, cleanSubject, singleTopic, taskStartDate, category, true);
+            }
           }
         } catch (err) {
           console.error('Failed to sync study task with TopicRevision & Syllabus Matrix:', err);
@@ -733,7 +911,33 @@ export async function POST(req: Request) {
         ])
       );
 
-      return NextResponse.json({ message: 'Item deleted', habits, syllabusSubjects });
+      return NextResponse.json({ message: 'Habit deleted', habits, syllabusSubjects });
+    }
+
+    if (action === 'delete_topic') {
+      const { topicId, subject, topic } = body;
+      if (topicId) {
+        await prisma.topicRevision.deleteMany({ where: { id: topicId, userId } });
+      }
+      if (subject && topic) {
+        await prisma.topicRevision.deleteMany({
+          where: {
+            userId,
+            subject: { equals: subject, mode: 'insensitive' },
+            topic: { equals: topic, mode: 'insensitive' },
+          },
+        });
+        await prisma.habitItem.deleteMany({
+          where: {
+            userId,
+            subject: { equals: subject, mode: 'insensitive' },
+            topic: { equals: topic, mode: 'insensitive' },
+          },
+        });
+      }
+      const topicRevisions = await prisma.topicRevision.findMany({ where: { userId } });
+      const habits = await prisma.habitItem.findMany({ where: { userId } });
+      return NextResponse.json({ message: 'Topic deleted', topicRevisions, habits });
     }
 
     // Action: list items

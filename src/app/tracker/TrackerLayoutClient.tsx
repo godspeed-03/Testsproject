@@ -163,6 +163,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     setFormTargetUnit,
     formCustomUnit,
     setFormCustomUnit,
+    formWakeUpTargetTime,
+    setFormWakeUpTargetTime,
     formEnableReminder,
     setFormEnableReminder,
     formReminderTime,
@@ -273,43 +275,38 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
           </div>
 
           <div className="flex items-center gap-2.5">
-            {saving && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500/10 dark:bg-indigo-950/60 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 text-xs font-extrabold animate-pulse shadow-xs shrink-0">
-                <Loader2 size={13} className="animate-spin text-indigo-500 shrink-0" />
-                <span>Syncing DB...</span>
-              </div>
-            )}
             <button
               type="button"
               onClick={() => handleOpenCreateModal('task')}
-              className="w-full sm:w-auto bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs sm:text-xs px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-md transition-all shrink-0 active:scale-95 cursor-pointer"
+              className="hidden sm:flex bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl items-center justify-center gap-1.5 shadow-md transition-all shrink-0 active:scale-95 cursor-pointer"
             >
               <Plus size={15} /> New Habit or Task
             </button>
           </div>
         </div>
 
-        {/* Mobile Horizontal Pill Navigation Bar (<768px) with Touch Snap & Sticky Header */}
-        <div className="md:hidden sticky top-14 z-40 backdrop-blur-md bg-slate-50/90 dark:bg-slate-950/90 overflow-x-auto flex items-center gap-1.5 py-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden -mx-3.5 px-3.5 border-b border-slate-200/80 dark:border-slate-800/80 snap-x snap-mandatory shadow-xs">
-          {navTabs.map((tab) => {
+        {/* Mobile Horizontal Pill Navigation Bar (<768px) - Icons Only (Excluding 1st & Last for clutter reduction) */}
+        <div className="md:hidden sticky top-14 z-40 backdrop-blur-md bg-slate-50/90 dark:bg-slate-950/90 flex items-center justify-between gap-1.5 py-2 -mx-3.5 px-3 border-b border-slate-200/80 dark:border-slate-800/80 shadow-xs">
+          {navTabs.slice(1, 4).map((tab) => {
             const Icon = tab.icon;
-            const active = pathname === tab.href || (pathname === '/tracker' && tab.href === '/tracker/agenda');
+            const active = pathname === tab.href;
             return (
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`shrink-0 snap-start flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                title={tab.label}
+                aria-label={tab.label}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-black transition-all ${
                   active
                     ? 'bg-accent-gradient text-white shadow-neon-glow'
                     : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800'
                 }`}
               >
-                <Icon size={14} />
-                <span>{tab.label}</span>
+                <Icon size={18} strokeWidth={2.2} />
                 {tab.badge !== undefined && (
                   <span
                     className={`px-1.5 py-0.2 rounded-full text-[10px] font-black font-display ${
-                      active ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      active ? 'bg-white/30 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                     }`}
                   >
                     {tab.badge}
@@ -1128,12 +1125,13 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             value={formTargetUnit}
                             onChange={(val: string) => {
                               setFormTargetUnit(val);
-                              if (val === 'yes_no' || val === 'boolean') {
+                              if (val === 'yes_no' || val === 'boolean' || val === 'time') {
                                 setFormTargetVal(1);
                               }
                             }}
                             options={[
                               { value: 'yes_no', label: 'Mark Done' },
+                              { value: 'time', label: 'Timely Target' },
                               { value: 'minutes', label: 'Minutes' },
                               { value: 'lectures', label: 'Lectures' },
                               { value: 'times', label: 'Times' },
@@ -1142,6 +1140,41 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                               { value: 'custom', label: 'Custom Unit...' }
                             ]}
                           />
+                        </div>
+                      ) : formTargetUnit === 'time' ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Timely Target</label>
+                              <ShadcnTimePicker
+                                value={formWakeUpTargetTime || '04:00'}
+                                onChange={(t) => setFormWakeUpTargetTime(t)}
+                                alignRight={false}
+                              />
+                            </div>
+                            <div>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Unit Selector</label>
+                              <ShadcnSelect
+                                value={formTargetUnit}
+                                onChange={(val: string) => {
+                                  setFormTargetUnit(val);
+                                  if (val === 'yes_no' || val === 'boolean' || val === 'time') {
+                                    setFormTargetVal(1);
+                                  }
+                                }}
+                                options={[
+                                  { value: 'yes_no', label: 'Mark Done' },
+                                  { value: 'time', label: 'Timely Target' },
+                                  { value: 'minutes', label: 'Minutes' },
+                                  { value: 'lectures', label: 'Lectures' },
+                                  { value: 'times', label: 'Times' },
+                                  { value: 'pages', label: 'Pages' },
+                                  { value: 'answers', label: 'Answers' },
+                                  { value: 'custom', label: 'Custom Unit...' }
+                                ]}
+                              />
+                            </div>
+                          </div>
                         </div>
                       ) : (
                         <div className="grid grid-cols-2 gap-3">
@@ -1152,7 +1185,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                               min="1"
                               value={formTargetVal}
                               onChange={(e) => setFormTargetVal(Number(e.target.value))}
-                              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 outline-none focus:border-accent-primary"
+                              className="w-full h-[42px] px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary"
                             />
                           </div>
 
@@ -1168,6 +1201,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                               }}
                               options={[
                                 { value: 'yes_no', label: 'Mark Done' },
+                                { value: 'time', label: 'Timely Target' },
                                 { value: 'minutes', label: 'Minutes' },
                                 { value: 'lectures', label: 'Lectures' },
                                 { value: 'times', label: 'Times' },
@@ -1176,6 +1210,13 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                 { value: 'custom', label: 'Custom Unit...' }
                               ]}
                             />
+                            {formTargetUnit === 'time' && (
+                                <ShadcnTimePicker
+                                  value={formWakeUpTargetTime || '04:00'}
+                                  onChange={(t) => setFormWakeUpTargetTime(t)}
+                                  alignRight={true}
+                                />
+                            )}
                             {formTargetUnit === 'custom' && (
                               <input
                                 type="text"
@@ -1191,38 +1232,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     </>
                   )}
 
-                  {/* Start Date & Reminders */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Scheduled Date</label>
-                      <ShadcnDatePicker
-                        selectedDate={formStartDate}
-                        onSelectDate={(d: string) => setFormStartDate(d)}
-                        disablePastDates={false}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Time Reminder</label>
-                      <div className="flex items-center gap-2.5">
-                        <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                          <input
-                            type="checkbox"
-                            checked={formEnableReminder}
-                            onChange={(e) => setFormEnableReminder(e.target.checked)}
-                            className="sr-only peer"
-                          />
-                          <div className="w-9 h-5 bg-slate-300 dark:bg-slate-700 peer-checked:bg-accent-primary dark:peer-checked:bg-indigo-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-600 after:border after:rounded-full after:h-4 after:w-4 after:transition-all shadow-xs"></div>
-                        </label>
-                        <div className="flex-1">
-                          <ShadcnTimePicker
-                            value={formReminderTime || '08:00'}
-                            onChange={(t) => setFormReminderTime(t)}
-                            disabled={!formEnableReminder}
-                          />
-                        </div>
-                      </div>
-                    </div>
+                  {/* Start Date */}
+                  <div>
+                    <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Scheduled Date</label>
+                    <ShadcnDatePicker
+                      selectedDate={formStartDate}
+                      onSelectDate={(d: string) => setFormStartDate(d)}
+                      disablePastDates={false}
+                    />
                   </div>
                 </>
               )}

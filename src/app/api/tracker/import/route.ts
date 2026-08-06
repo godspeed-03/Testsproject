@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     const batchedRevisionsInput = data.batchedrevisions || data.batchedRevisions || data.batchedRevisionItems || [];
     const weeklyDataInput = data.weeklydata || data.weeklyData || [];
 
-    // 1. Process Habits
+    // 1. Process Habits (Clean payload without legacy reminders column)
     if (Array.isArray(habitsInput) && habitsInput.length > 0) {
       await prisma.habitItem.deleteMany({ where: { userId } });
       const docs = habitsInput.map((h: any) => ({
@@ -50,7 +50,6 @@ export async function POST(req: Request) {
         description: h.description || '',
         frequency: h.frequency || { mode: 'daily', days: [] },
         target: h.target || { value: 1, unit: 'times' },
-        reminders: h.reminders || [{ time: '08:00', enabled: true }],
         startDate: h.startDate || new Date().toISOString().split('T')[0],
         endDate: h.endDate || null,
         isStudyTask: !!h.isStudyTask,

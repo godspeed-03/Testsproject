@@ -22,6 +22,7 @@ import {
   Columns
 } from 'lucide-react';
 import { normalizeRoutineTables, getCellStyle } from '@/components/MasterRoutineTable';
+import { toast } from 'sonner';
 
 interface TimetableCodeEditorModalProps {
   isOpen: boolean;
@@ -403,7 +404,7 @@ export default function TimetableCodeEditorModal({
 
   const handleSave = async () => {
     if (!validateAndParse(jsonText)) {
-      alert('Please fix JSON syntax errors before saving.');
+      toast.error('Please fix JSON syntax errors before saving.');
       return;
     }
 
@@ -435,8 +436,7 @@ export default function TimetableCodeEditorModal({
             subject: item.subject || '',
             topic: item.topic || '',
             color: item.color || '#6366F1',
-            icon: item.icon || '📌',
-            reminders: item.reminders || [{ time: '08:00', enabled: true }]
+            icon: item.icon || '📌'
           };
 
           await fetch('/api/tracker/habits', {
@@ -448,13 +448,14 @@ export default function TimetableCodeEditorModal({
       }
 
       setSaveSuccess(true);
+      toast.success('Timetable saved successfully!');
       setTimeout(() => {
         setSaveSuccess(false);
         onSaveSuccess();
         onClose();
       }, 1000);
     } catch (err: any) {
-      alert('Save failed: ' + (err.message || 'Unknown error'));
+      toast.error('Save failed: ' + (err.message || 'Unknown error'));
     } finally {
       setSaving(false);
     }

@@ -55,7 +55,7 @@ export default function ShadcnSelect({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full h-full flex items-center justify-between gap-2 px-3.5 py-1.5 rounded-xl border text-xs font-bold shadow-2xs transition-all duration-150 outline-none ${buttonStyle} focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary cursor-pointer active:scale-95`}
+        className={`w-full h-full min-h-[38px] flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold shadow-2xs transition-all duration-150 outline-none ${buttonStyle} focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary cursor-pointer active:scale-95`}
       >
         <span className="truncate flex items-center gap-2 font-bold">
           {selectedOption?.icon}

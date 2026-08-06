@@ -531,42 +531,16 @@ export default function AnalyticsPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Main View Mode Switcher */}
-          <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab("velocity")}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTab === "velocity"
-                  ? "bg-accent-gradient text-white shadow-md"
-                  : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-              }`}
-            >
-              <BarChart3 size={14} /> Weekly Velocity
-            </button>
-
-            <button
-                type="button"
-                onClick={() => setActiveTab("consistency")}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeTab === "consistency"
-                    ? "bg-accent-gradient text-white shadow-md"
-                    : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                }`}
-              >
-                <Activity size={14} /> Consistency Engine v3
-              </button>
-          </div>
+        <div className="flex items-center gap-3">
 
           <button
             type="button"
             onClick={handleRecalculate}
             disabled={recalculating}
-            className="bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all shrink-0 active:scale-95 cursor-pointer"
+            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all shrink-0 active:scale-95 cursor-pointer shadow-2xs"
+            title="Recalculate DB"
           >
-            <RotateCcw size={14} className={recalculating ? "animate-spin" : ""} />
-            <span>{recalculating ? "Calculating..." : "Recalculate DB"}</span>
+            <RotateCcw size={15} className={recalculating ? "animate-spin text-accent-primary" : ""} />
           </button>
         </div>
       </div>
@@ -645,26 +619,60 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 7-Day Velocity Chart (Theme Adaptive Light / Dark) */}
             <div className={`lg:col-span-2 p-5 sm:p-6 rounded-3xl ${cardBg} space-y-5 shadow-xs`}>
-              {/* Row 1: Header Title & Subtitle */}
-              <div>
-                <h3 className={`font-black text-lg sm:text-xl ${textTitle}`}>7-Day Study Velocity Chart</h3>
-                <p className={`text-xs ${textMuted} font-bold`}>
-                  {velocityMetric === "hours"
-                    ? "Daily Study Hours vs 8.0 hr Benchmark Target"
-                    : "Completed Tasks & Revisions per Day"}
-                </p>
+              {/* Row 1: Header Title & Top-Right Week Selector */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className={`font-black text-lg sm:text-xl ${textTitle}`}>7-Day Study Velocity Chart</h3>
+                  <p className={`text-xs ${textMuted} font-bold`}>
+                    {velocityMetric === "hours"
+                      ? "Daily Study Hours vs 8.0 hr Benchmark Target"
+                      : "Completed Tasks & Revisions per Day"}
+                  </p>
+                </div>
+
+                {/* Interactive Week Switcher Controls (Unified Navigator Pill) */}
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setWeekOffset((prev) => prev - 1)}
+                    className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-white dark:hover:bg-slate-800 transition-all cursor-pointer"
+                    title="Previous Week"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+
+                  <span className="text-xs font-black text-slate-800 dark:text-slate-200 px-2 flex items-center gap-1.5 whitespace-nowrap">
+                    <Calendar size={13} className="text-accent-secondary shrink-0" />
+                    <span>
+                      {(weeklyDoc?.availableWeeks || []).find((w: any) => w.weekKey === weeklyDoc?.weekKey)?.label || "Current Week"}
+                    </span>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setWeekOffset((prev) => Math.min(0, prev + 1))}
+                    disabled={weekOffset >= 0}
+                    className={`p-1.5 rounded-xl transition-all ${
+                      weekOffset >= 0
+                        ? 'opacity-30 cursor-not-allowed text-slate-400'
+                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-white dark:hover:bg-slate-800 cursor-pointer'
+                    }`}
+                    title="Next Week"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
               </div>
 
-              {/* Row 2: All Controls (Metric Toggle + Week Selector) */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/60">
-                {/* Left: Metric Toggle (Hours vs Tasks) */}
-                <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+              {/* Row 2: Metric Toggle (Hours vs Tasks) */}
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0">
                   <button
                     type="button"
                     onClick={() => setVelocityMetric("hours")}
-                    className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
                       velocityMetric === "hours"
-                        ? "bg-accent-secondary text-white shadow-2xs"
+                        ? "bg-accent-gradient text-white shadow-xs"
                         : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                     }`}
                   >
@@ -673,102 +681,13 @@ export default function AnalyticsPage() {
                   <button
                     type="button"
                     onClick={() => setVelocityMetric("tasks")}
-                    className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
                       velocityMetric === "tasks"
-                        ? "bg-accent-secondary text-white shadow-2xs"
+                        ? "bg-accent-gradient text-white shadow-xs"
                         : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                     }`}
                   >
                     Tasks (count)
-                  </button>
-                </div>
-
-                {/* Right: Interactive Week Switcher Controls */}
-                <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap shrink-0">
-                  {weekOffset !== 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setWeekOffset(0)}
-                      className="px-2.5 py-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-black hover:bg-rose-500/20 transition-all cursor-pointer whitespace-nowrap"
-                    >
-                      This Week
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setWeekOffset((prev) => prev - 1)}
-                    className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer border border-slate-200/80 dark:border-slate-700/80"
-                    title="Previous Week"
-                  >
-                    <ChevronLeft size={15} />
-                  </button>
-
-                  {/* Custom Glassmorphism Week Dropdown Popover */}
-                  <div className="relative" ref={weekDropdownRef}>
-                    <button
-                      type="button"
-                      onClick={() => setIsWeekDropdownOpen((prev) => !prev)}
-                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-extrabold text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
-                    >
-                      <Calendar size={13} className="text-accent-secondary shrink-0" />
-                      <span className="max-w-[170px] sm:max-w-[200px] truncate">
-                        {(weeklyDoc?.availableWeeks || []).find((w: any) => w.weekKey === weeklyDoc?.weekKey)?.label || "Select Week"}
-                      </span>
-                      <ChevronDown size={13} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isWeekDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {isWeekDropdownOpen && (
-                      <div className="absolute right-0 sm:right-auto sm:left-0 top-full mt-2 w-64 p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 animate-in fade-in-50 zoom-in-95">
-                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 py-1.5 mb-1 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                          <span>Select Week Range</span>
-                          <span className="text-[9px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 font-bold">
-                            {(weeklyDoc?.availableWeeks || []).length} Weeks
-                          </span>
-                        </div>
-                        <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
-                          {(weeklyDoc?.availableWeeks || []).map((w: any) => {
-                            const isSelected = w.weekKey === weeklyDoc?.weekKey;
-                            return (
-                              <button
-                                key={w.weekKey}
-                                type="button"
-                                onClick={() => {
-                                  const avail = weeklyDoc?.availableWeeks || [];
-                                  const idx = avail.findIndex((item: any) => item.weekKey === w.weekKey);
-                                  if (idx !== -1) {
-                                    const currentIdx = avail.findIndex((item: any) => item.isCurrent);
-                                    const baseIdx = currentIdx !== -1 ? currentIdx : 0;
-                                    setWeekOffset(baseIdx - idx);
-                                  }
-                                  setIsWeekDropdownOpen(false);
-                                }}
-                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
-                                  isSelected
-                                    ? "bg-accent-secondary/15 text-accent-secondary font-black dark:bg-accent-secondary/20"
-                                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80"
-                                }`}
-                              >
-                                <span className="truncate">{w.label}</span>
-                                {isSelected && <Check size={14} className="text-accent-secondary shrink-0 ml-1.5" />}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setWeekOffset((prev) => Math.min(0, prev + 1))}
-                    disabled={weekOffset >= 0}
-                    className={`p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 transition-all ${
-                      weekOffset >= 0 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer'
-                    }`}
-                    title="Next Week"
-                  >
-                    <ChevronRight size={15} />
                   </button>
                 </div>
               </div>
@@ -918,14 +837,14 @@ export default function AnalyticsPage() {
                   </h4>
 
                   {/* Distribution Switcher: Subjects vs Habits */}
-                  <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
                     <button
                       type="button"
                       onClick={() => setDistributionMode("subject")}
-                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
                         distributionMode === "subject"
-                          ? "bg-accent-primary text-white shadow-2xs"
-                          : "text-slate-500 dark:text-slate-400"
+                          ? "bg-accent-gradient text-white shadow-xs"
+                          : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                       }`}
                     >
                       Subjects
@@ -934,10 +853,10 @@ export default function AnalyticsPage() {
                     <button
                       type="button"
                       onClick={() => setDistributionMode("habit")}
-                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
                         distributionMode === "habit"
-                          ? "bg-accent-secondary text-white shadow-2xs"
-                          : "text-slate-500 dark:text-slate-400"
+                          ? "bg-accent-gradient text-white shadow-xs"
+                          : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
                       }`}
                     >
                       Habits

@@ -34,10 +34,6 @@ export interface IHabitItem {
     value: number;
     unit: string;
   };
-  reminders?: Array<{
-    time: string;
-    enabled: boolean;
-  }>;
   startDate: string;
   endDate?: string | null;
   isStudyTask?: boolean;

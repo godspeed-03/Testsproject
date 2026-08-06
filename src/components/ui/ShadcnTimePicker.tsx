@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Clock, ChevronDown, Check } from 'lucide-react';
+import { Clock, ChevronDown } from 'lucide-react';
 
 interface ShadcnTimePickerProps {
   value: string; // 24-hr format "HH:mm", e.g. "08:00"
@@ -9,6 +9,7 @@ interface ShadcnTimePickerProps {
   disabled?: boolean;
   className?: string;
   isLight?: boolean;
+  alignRight?: boolean;
 }
 
 export default function ShadcnTimePicker({
@@ -16,7 +17,8 @@ export default function ShadcnTimePicker({
   onChange,
   disabled = false,
   className = '',
-  isLight = true,
+  isLight,
+  alignRight = true,
 }: ShadcnTimePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [pickerMode, setPickerMode] = useState<'hours' | 'minutes'>('hours');
@@ -87,60 +89,60 @@ export default function ShadcnTimePicker({
       ? (h12 % 12) * 30
       : (min % 60) * 6;
 
+  const popoverPositionClass = alignRight
+    ? 'right-0 sm:right-0 max-sm:left-0 max-sm:right-auto'
+    : 'left-0';
+
+  const buttonStyle = isLight === true
+    ? 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-900'
+    : 'bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100';
+
   return (
-    <div className={`relative inline-block w-full ${className}`} ref={containerRef}>
+    <div className={`relative inline-block w-full ${isOpen ? 'z-[99999]' : 'z-30'} ${className}`} ref={containerRef}>
       <button
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border text-xs sm:text-sm font-extrabold shadow-2xs transition-all duration-150 outline-none disabled:opacity-50 ${
-          isLight
-            ? 'bg-slate-50 hover:bg-white border-slate-200 text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500'
-            : 'bg-slate-900 hover:bg-slate-850 border-slate-800 text-slate-100 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500'
-        }`}
+        className={`w-full h-[42px] flex items-center justify-between gap-2 px-3.5 py-2 rounded-xl border text-xs sm:text-sm font-bold shadow-2xs transition-all duration-150 outline-none disabled:opacity-50 cursor-pointer active:scale-95 ${buttonStyle} focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary`}
       >
-        <span className="flex items-center gap-2 truncate">
-          <Clock size={16} className="text-indigo-500 shrink-0" />
-          <span>{formatDisplayTime()}</span>
+        <span className="flex items-center gap-2 truncate font-bold">
+          <Clock size={16} className="text-amber-500 shrink-0" />
+          <span className="truncate">{formatDisplayTime()}</span>
         </span>
         <ChevronDown
           size={16}
           className={`text-slate-400 shrink-0 transition-transform duration-200 ${
-            isOpen ? 'rotate-180 text-indigo-500' : ''
+            isOpen ? 'rotate-180 text-amber-500' : ''
           }`}
         />
       </button>
 
       {isOpen && (
         <div
-          className={`absolute left-0 top-full mt-1.5 z-50 w-72 rounded-3xl border shadow-2xl p-4 animate-scale-up space-y-3 ${
-            isLight
-              ? 'bg-white/95 backdrop-blur-xl border-slate-200 text-slate-900 shadow-indigo-950/15'
-              : 'bg-slate-900/95 backdrop-blur-xl border-slate-800 text-slate-100 shadow-black/90'
-          }`}
+          className={`absolute ${popoverPositionClass} top-full mt-1.5 z-[9999] w-72 max-w-[calc(100vw-2rem)] rounded-3xl border shadow-2xl p-3.5 animate-scale-up space-y-3 box-border overflow-hidden bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-indigo-950/15 dark:shadow-black/90`}
         >
           {/* Header Digital Time Display */}
-          <div className="flex items-center justify-between p-2.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+          <div className="flex items-center justify-between p-2 rounded-2xl bg-amber-500/10 border border-amber-500/20">
             <div className="flex items-center gap-1">
               <button
                 type="button"
                 onClick={() => setPickerMode('hours')}
-                className={`text-2xl font-black px-2 py-0.5 rounded-xl transition-all ${
+                className={`text-xl font-black px-2 py-0.5 rounded-xl transition-all cursor-pointer ${
                   pickerMode === 'hours'
-                    ? 'bg-indigo-600 text-white shadow-md scale-105'
-                    : 'text-slate-700 dark:text-slate-200 hover:bg-indigo-500/20'
+                    ? 'bg-amber-500 text-white shadow-md scale-105'
+                    : 'text-slate-700 dark:text-slate-200 hover:bg-amber-500/20'
                 }`}
               >
                 {String(h12).padStart(2, '0')}
               </button>
-              <span className="text-xl font-black text-indigo-500 animate-pulse">:</span>
+              <span className="text-lg font-black text-amber-500 animate-pulse">:</span>
               <button
                 type="button"
                 onClick={() => setPickerMode('minutes')}
-                className={`text-2xl font-black px-2 py-0.5 rounded-xl transition-all ${
+                className={`text-xl font-black px-2 py-0.5 rounded-xl transition-all cursor-pointer ${
                   pickerMode === 'minutes'
-                    ? 'bg-indigo-600 text-white shadow-md scale-105'
-                    : 'text-slate-700 dark:text-slate-200 hover:bg-indigo-500/20'
+                    ? 'bg-amber-500 text-white shadow-md scale-105'
+                    : 'text-slate-700 dark:text-slate-200 hover:bg-amber-500/20'
                 }`}
               >
                 {String(min).padStart(2, '0')}
@@ -148,12 +150,12 @@ export default function ShadcnTimePicker({
             </div>
 
             {/* AM/PM Switcher */}
-            <div className="flex flex-col gap-1 p-0.5 rounded-xl bg-white/80 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-1 p-0.5 rounded-xl bg-white/80 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => updateTime(h12, min, false)}
-                className={`px-2.5 py-1 rounded-lg text-3xs font-black transition-all ${
-                  !isPm ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                className={`px-2 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                  !isPm ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
               >
                 AM
@@ -161,8 +163,8 @@ export default function ShadcnTimePicker({
               <button
                 type="button"
                 onClick={() => updateTime(h12, min, true)}
-                className={`px-2.5 py-1 rounded-lg text-3xs font-black transition-all ${
-                  isPm ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                className={`px-2 py-1 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                  isPm ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
               >
                 PM
@@ -171,33 +173,33 @@ export default function ShadcnTimePicker({
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="flex items-center justify-between text-2xs font-extrabold text-slate-400 px-1">
-            <span>Select {pickerMode === 'hours' ? 'Hour' : 'Minute'}</span>
+          <div className="flex items-center justify-between text-xs font-extrabold text-slate-400 px-1">
+            <span className="truncate">Select {pickerMode === 'hours' ? 'Hour' : 'Minute'}</span>
             <button
               type="button"
               onClick={() => setPickerMode(pickerMode === 'hours' ? 'minutes' : 'hours')}
-              className="text-indigo-600 dark:text-indigo-400 hover:underline font-black"
+              className="text-amber-500 hover:underline font-black shrink-0 text-xs cursor-pointer"
             >
-              Switch to {pickerMode === 'hours' ? 'Minutes' : 'Hours'}
+              {pickerMode === 'hours' ? 'Minutes ➔' : 'Hours ➔'}
             </button>
           </div>
 
           {/* Mobile-Style Circular Analog Clock Dial */}
           <div className="flex justify-center py-1">
-            <div className="relative w-52 h-52 rounded-full bg-slate-100/80 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 shadow-inner flex items-center justify-center select-none overflow-hidden">
+            <div className="relative w-48 h-48 rounded-full bg-slate-100/80 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 shadow-inner flex items-center justify-center select-none overflow-hidden shrink-0">
               {/* Center Dot */}
-              <div className="absolute z-20 w-3.5 h-3.5 rounded-full bg-indigo-600 shadow-md border-2 border-white dark:border-slate-900" />
+              <div className="absolute z-20 w-3 h-3 rounded-full bg-amber-500 shadow-md border-2 border-white dark:border-slate-900" />
 
               {/* Rotating Clock Hand */}
               <div
-                className="absolute z-10 bottom-1/2 left-1/2 -ml-0.5 w-1 bg-indigo-600 origin-bottom transition-transform duration-300 ease-out"
+                className="absolute z-10 bottom-1/2 left-1/2 -ml-0.5 w-1 bg-amber-500 origin-bottom transition-transform duration-300 ease-out pointer-events-none"
                 style={{
-                  height: '75px',
+                  height: '68px',
                   transform: `rotate(${handAngle}deg)`,
                 }}
               >
                 {/* Hand Tip Circle */}
-                <div className="absolute -top-3.5 -left-3.5 w-8 h-8 rounded-full bg-indigo-600 border-2 border-white dark:border-slate-900 shadow-lg shadow-indigo-600/50 flex items-center justify-center text-white font-black text-xs" />
+                <div className="absolute -top-3.5 -left-3.5 w-8 h-8 rounded-full bg-amber-500 border-2 border-white dark:border-slate-900 shadow-lg shadow-amber-500/50 flex items-center justify-center text-white font-black text-xs" />
               </div>
 
               {/* Dial Numbers */}
@@ -205,9 +207,9 @@ export default function ShadcnTimePicker({
                 // Angle formula: 12 is at top (-90deg), step 30deg
                 const angleDeg = idx * 30 - 90;
                 const angleRad = (angleDeg * Math.PI) / 180;
-                const radius = 75; // px from center
-                const x = 104 + radius * Math.cos(angleRad) - 16;
-                const y = 104 + radius * Math.sin(angleRad) - 16;
+                const radius = 68; // px from center
+                const x = 96 + radius * Math.cos(angleRad) - 14;
+                const y = 96 + radius * Math.sin(angleRad) - 14;
 
                 const isSelected =
                   pickerMode === 'hours'
@@ -227,10 +229,10 @@ export default function ShadcnTimePicker({
                         updateTime(h12, num, isPm);
                       }
                     }}
-                    className={`absolute z-30 w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                    className={`absolute z-30 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black transition-all cursor-pointer ${
                       isSelected
                         ? 'text-white scale-110'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-indigo-500/20 hover:scale-110'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-amber-500/20 hover:scale-110'
                     }`}
                   >
                     {pickerMode === 'minutes' ? String(num).padStart(2, '0') : num}
@@ -241,7 +243,7 @@ export default function ShadcnTimePicker({
           </div>
 
           {/* Quick Presets */}
-          <div className="grid grid-cols-3 gap-1 pt-1">
+          <div className="grid grid-cols-3 gap-1 pt-0.5">
             {quickPresets.map((p) => {
               const isSelected = value === p.val;
               return (
@@ -252,9 +254,9 @@ export default function ShadcnTimePicker({
                     onChange(p.val);
                     setIsOpen(false);
                   }}
-                  className={`py-1 rounded-xl text-3xs font-extrabold transition-all text-center ${
+                  className={`py-1.5 px-1 rounded-xl text-[10px] sm:text-xs font-extrabold transition-all text-center cursor-pointer truncate ${
                     isSelected
-                      ? 'bg-indigo-600 text-white shadow-xs font-black'
+                      ? 'bg-amber-500 text-white shadow-xs font-black'
                       : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                   }`}
                 >
@@ -267,7 +269,7 @@ export default function ShadcnTimePicker({
           <button
             type="button"
             onClick={() => setIsOpen(false)}
-            className="w-full py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-extrabold text-xs shadow-md shadow-indigo-600/30 active:scale-95 transition-all"
+            className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black text-xs shadow-md shadow-amber-500/30 active:scale-95 transition-all cursor-pointer"
           >
             Confirm Time
           </button>

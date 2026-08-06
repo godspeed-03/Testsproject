@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { X, Plus, Trash2, Edit2, Check, Loader2, Settings, ShieldCheck, GripVertical, ListChecks, FileCode } from "lucide-react";
 import ShadcnSelect from "@/components/ui/ShadcnSelect";
+import { toast } from "sonner";
+import { confirmDeleteWithSonner } from "@/app/tracker/TrackerContext";
 import {
   DndContext,
   closestCenter,
@@ -192,9 +194,13 @@ export default function ManageRuleSetsModal({
         const data = await res.json();
         setRuleSets(data.ruleSets || []);
         setEditingId(null);
+        toast.success("Ruleset template saved successfully!");
+      } else {
+        toast.error("Failed to save ruleset template");
       }
     } catch (e) {
       console.error("Failed to save rule set", e);
+      toast.error("Failed to save ruleset template");
     } finally {
       setSaving(false);
     }
@@ -211,9 +217,13 @@ export default function ManageRuleSetsModal({
       if (res.ok) {
         const data = await res.json();
         setRuleSets(data.ruleSets || []);
+        toast.success("Ruleset template deleted");
+      } else {
+        toast.error("Failed to delete ruleset template");
       }
     } catch (e) {
       console.error("Failed to delete rule set", e);
+      toast.error("Failed to delete ruleset template");
     } finally {
       setSaving(false);
     }
@@ -500,7 +510,7 @@ export default function ManageRuleSetsModal({
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDeleteRuleSet(rs.id)}
+                          onClick={() => confirmDeleteWithSonner(`Delete ruleset "${rs.name}"?`, () => handleDeleteRuleSet(rs.id))}
                           className="p-1.5 text-slate-400 hover:text-rose-500 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                           title="Delete Template"
                         >

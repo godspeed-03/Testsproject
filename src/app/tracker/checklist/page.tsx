@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { ListTodo, Plus, Trash2, PlusCircle, CheckSquare, Square, Loader2 } from 'lucide-react';
-import { useTracker } from '../TrackerContext';
+import { useTracker, confirmDeleteWithSonner } from '../TrackerContext';
 
 export default function ChecklistPage() {
   const {
@@ -74,8 +74,8 @@ export default function ChecklistPage() {
                   <button
                     type="button"
                     disabled={saving || deletingId === list._id}
-                    onClick={() => handleDeleteList(list._id)}
-                    className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
+                    onClick={() => confirmDeleteWithSonner(`Delete checklist "${list.title}"?`, () => handleDeleteList(list._id))}
+                    className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
                     title="Delete Checklist"
                   >
                     {deletingId === list._id ? <Loader2 size={16} className="animate-spin text-rose-500" /> : <Trash2 size={16} />}

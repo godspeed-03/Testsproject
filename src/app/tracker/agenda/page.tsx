@@ -19,7 +19,7 @@ import {
   Coffee,
   Eye,
 } from "lucide-react";
-import { useTracker, getTargetGoalLabel, calculateHabitStreak, getTodayIso, getHabitProgressColor } from "../TrackerContext";
+import { useTracker, getTargetGoalLabel, calculateHabitStreak, getTodayIso, getHabitProgressColor, confirmDeleteWithSonner, confirmRestDayWithSonner } from "../TrackerContext";
 import ShadcnDatePicker from "@/components/ui/ShadcnDatePicker";
 import ShadcnSelect from "@/components/ui/ShadcnSelect";
 import ActionTooltip from "@/components/ActionTooltip";
@@ -94,12 +94,12 @@ export default function AgendaPage() {
       {/* Header + Date Picker Strip */}
       <div className={`p-3.5 sm:p-4 rounded-2xl border ${cardBg} space-y-3 shadow-xs`}>
         {/* Top Row: Date Picker on Left | View Switcher & Rest Day Action on Right */}
-        <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center justify-between gap-2 w-full">
           <div className="flex items-center gap-2 shrink-0">
             <ShadcnDatePicker selectedDate={selectedDate} onSelectDate={setSelectedDate} disablePastDates={false} />
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Cards vs Row-wise View Switcher Toggle */}
             <div className="flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
               <button
@@ -136,8 +136,8 @@ export default function AgendaPage() {
                 <button
                   type="button"
                   disabled={saving}
-                  onClick={() => handleMarkRestDay(selectedDate)}
-                  className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-black hover:bg-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 shrink-0"
+                  onClick={() => confirmRestDayWithSonner(() => handleMarkRestDay(selectedDate))}
+                  className="px-2 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-black hover:bg-amber-500/20 transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 shrink-0"
                 >
                   <Coffee size={14} />
                   <span>Rest Day</span>
@@ -147,7 +147,7 @@ export default function AgendaPage() {
               <button
                 type="button"
                 onClick={handleGoToToday}
-                className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-black hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0 active:scale-95"
+                className="px-2 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-black hover:bg-emerald-500/20 transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer shadow-xs shrink-0 active:scale-95"
               >
                 <CheckSquare size={14} />
                 <span>Today</span>
@@ -156,9 +156,9 @@ export default function AgendaPage() {
           </div>
         </div>
 
-        {/* Second Row: Search tasks & Type Filter Dropdown */}
-        <div className="flex flex-col sm:flex-row items-center gap-2 w-full pt-1">
-          <div className="relative w-full sm:flex-1 h-[36px]">
+        {/* Second Row: Search tasks & Type Filter Dropdown aligned side-by-side (h-[38px]) */}
+        <div className="flex items-center gap-2 w-full pt-1">
+          <div className="relative flex-1 min-w-0 h-[38px]">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
@@ -169,14 +169,14 @@ export default function AgendaPage() {
             />
           </div>
 
-          <div className="w-full sm:w-44 shrink-0 h-[36px]">
+          <div className="w-[115px] sm:w-44 shrink-0 h-[38px]">
             <ShadcnSelect
               value={typeFilter}
               onChange={(val: string) => setTypeFilter(val as any)}
               options={[
                 { value: "ALL", label: "All Items" },
                 { value: "habit", label: "Habits Only" },
-                { value: "task", label: "Tasks & Events" },
+                { value: "task", label: "Tasks Only" },
               ]}
             />
           </div>
@@ -550,7 +550,7 @@ export default function AgendaPage() {
                       <button
                         type="button"
                         disabled={saving || deletingId === (h.id || h._id)}
-                        onClick={() => handleDeleteHabit(h.id || h._id)}
+                        onClick={() => confirmDeleteWithSonner(`Delete "${h.title}"?`, () => handleDeleteHabit(h.id || h._id))}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                         title="Delete Task"
                       >
@@ -730,12 +730,6 @@ export default function AgendaPage() {
                           Goal: {getTargetGoalLabel(h)}
                         </span>
                       )}
-
-                      {h.reminders && h.reminders[0] && h.reminders[0].enabled !== false && h.reminders[0].time && (
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
-                          <Clock size={11} /> {h.reminders[0].time}
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -766,7 +760,7 @@ export default function AgendaPage() {
                         disabled={saving || deletingId === (h.id || h._id)}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteHabit(h.id || h._id);
+                          confirmDeleteWithSonner(`Delete "${h.title}"?`, () => handleDeleteHabit(h.id || h._id));
                         }}
                         className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                         title="Delete Task"

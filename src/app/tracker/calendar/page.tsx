@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Calendar as CalendarIcon,
   Flame,
@@ -13,7 +13,8 @@ import {
   MinusCircle,
   TrendingUp,
   Percent,
-  Activity
+  Activity,
+  Loader2
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -72,110 +73,115 @@ export default function CalendarPage() {
     return { year: targetYear, month: targetMonth, monthName, daysInMonth, monthDays };
   };
 
-  const { year, monthName, monthDays } = getMonthData(monthOffset);
+  const { year, monthName, monthDays } = useMemo(() => getMonthData(monthOffset), [monthOffset]);
 
-  // Compute daily overall stats for graph view
-  const dailyStats = monthDays.map((d) => {
-    const isPast = d.iso < todayIso;
-    const isToday = d.iso === todayIso;
+  // Compute daily overall stats for graph view with useMemo optimization
+  const dailyStats = useMemo(() => {
+    return monthDays.map((d) => {
+      const isPast = d.iso < todayIso;
+      const isToday = d.iso === todayIso;
 
-    const scheduledItems = (isAllView ? habitList : activeHabit ? [activeHabit] : habitList).filter((h: any) =>
-      isHabitScheduledForDate(h, d.iso)
-    );
-    const totalSched = scheduledItems.length;
-
-    const doneCount = scheduledItems.filter((h: any) =>
-      (h.history || []).some((entry: any) => entry.date === d.iso && entry.status === 'done')
-    ).length;
-
-    const notDoneCount = totalSched - doneCount;
-    const pct = totalSched > 0 ? Math.round((doneCount / totalSched) * 100) : 0;
-
-    return {
-      ...d,
-      isPast,
-      isToday,
-      totalSched,
-      doneCount,
-      notDoneCount,
-      pct,
-    };
-  });
-
-  // Calculate overall monthly average percentage
-  const totalScheduledMonth = dailyStats.reduce((acc, curr) => acc + curr.totalSched, 0);
-  const totalDoneMonth = dailyStats.reduce((acc, curr) => acc + curr.doneCount, 0);
-  const monthOverallPct = totalScheduledMonth > 0 ? Math.round((totalDoneMonth / totalScheduledMonth) * 100) : 0;
-
-  // Chart Data for 2-Line Recharts (Green: Completed / Achieved, Red: Total Scheduled Target)
-  // Omit unscheduled dates (total === 0) so non-scheduled days are not plotted on the trend line
-  const rawChartData = monthDays.map((d) => {
-    if (isAllView) {
-      const scheduledItems = habitList.filter((h: any) => isHabitScheduledForDate(h, d.iso));
+      const scheduledItems = (isAllView ? habitList : activeHabit ? [activeHabit] : habitList).filter((h: any) =>
+        isHabitScheduledForDate(h, d.iso)
+      );
       const totalSched = scheduledItems.length;
 
       const doneCount = scheduledItems.filter((h: any) =>
         (h.history || []).some((entry: any) => entry.date === d.iso && entry.status === 'done')
       ).length;
 
+      const notDoneCount = totalSched - doneCount;
+      const pct = totalSched > 0 ? Math.round((doneCount / totalSched) * 100) : 0;
+
       return {
-        dayLabel: String(d.dayNum),
-        iso: d.iso,
-        done: doneCount,
-        total: totalSched,
-        unitStr: 'items',
+        ...d,
+        isPast,
+        isToday,
+        totalSched,
+        doneCount,
+        notDoneCount,
+        pct,
       };
-    } else {
-      const scheduled = isHabitScheduledForDate(activeHabit, d.iso);
-      const rawUnit = (activeHabit?.target?.unit || 'yes_no').toLowerCase().trim();
-      const rawTarget = activeHabit?.target?.value || 1;
-      const isYesNo = rawUnit === 'yes_no' || rawUnit === 'boolean' || rawUnit === 'mark_done';
-      const isTime = ['hours', 'hrs', 'hour'].includes(rawUnit);
+    });
+  }, [monthDays, todayIso, isAllView, habitList, activeHabit]);
 
-      let targetVal = rawTarget;
-      let unitStr = rawUnit;
+  // Calculate overall monthly average percentage
+  const monthOverallPct = useMemo(() => {
+    const totalScheduledMonth = dailyStats.reduce((acc, curr) => acc + curr.totalSched, 0);
+    const totalDoneMonth = dailyStats.reduce((acc, curr) => acc + curr.doneCount, 0);
+    return totalScheduledMonth > 0 ? Math.round((totalDoneMonth / totalScheduledMonth) * 100) : 0;
+  }, [dailyStats]);
 
-      if (isYesNo) {
-        targetVal = 1;
-        unitStr = '';
-      } else if (isTime) {
-        unitStr = 'hrs';
-      }
+  // Chart Data for 2-Line Recharts (Green: Completed / Achieved, Red: Total Scheduled Target)
+  const chartData = useMemo(() => {
+    const raw = monthDays.map((d) => {
+      if (isAllView) {
+        const scheduledItems = habitList.filter((h: any) => isHabitScheduledForDate(h, d.iso));
+        const totalSched = scheduledItems.length;
 
-      if (!scheduled) {
+        const doneCount = scheduledItems.filter((h: any) =>
+          (h.history || []).some((entry: any) => entry.date === d.iso && entry.status === 'done')
+        ).length;
+
         return {
           dayLabel: String(d.dayNum),
           iso: d.iso,
-          done: 0,
-          total: 0,
+          done: doneCount,
+          total: totalSched,
+          unitStr: 'items',
+        };
+      } else {
+        const scheduled = isHabitScheduledForDate(activeHabit, d.iso);
+        const rawUnit = (activeHabit?.target?.unit || 'yes_no').toLowerCase().trim();
+        const rawTarget = activeHabit?.target?.value || 1;
+        const isYesNo = rawUnit === 'yes_no' || rawUnit === 'boolean' || rawUnit === 'mark_done';
+        const isTime = ['hours', 'hrs', 'hour'].includes(rawUnit);
+
+        let targetVal = rawTarget;
+        let unitStr = rawUnit;
+
+        if (isYesNo) {
+          targetVal = 1;
+          unitStr = '';
+        } else if (isTime) {
+          unitStr = 'hrs';
+        }
+
+        if (!scheduled) {
+          return {
+            dayLabel: String(d.dayNum),
+            iso: d.iso,
+            done: 0,
+            total: 0,
+            unitStr,
+          };
+        }
+
+        const hist = (activeHabit?.history || []).find((entry: any) => entry.date === d.iso);
+        let doneVal = 0;
+
+        if (hist && hist.value > 0) {
+          if (isTime && hist.value > 24 && rawTarget <= 24) {
+            doneVal = Math.round((hist.value / 60) * 100) / 100;
+          } else {
+            doneVal = hist.value;
+          }
+        } else if (hist?.status === 'done') {
+          doneVal = targetVal;
+        }
+
+        return {
+          dayLabel: String(d.dayNum),
+          iso: d.iso,
+          done: doneVal,
+          total: targetVal,
           unitStr,
         };
       }
+    });
 
-      const hist = (activeHabit?.history || []).find((entry: any) => entry.date === d.iso);
-      let doneVal = 0;
-
-      if (hist && hist.value > 0) {
-        if (isTime && hist.value > 24 && rawTarget <= 24) {
-          doneVal = Math.round((hist.value / 60) * 100) / 100;
-        } else {
-          doneVal = hist.value;
-        }
-      } else if (hist?.status === 'done') {
-        doneVal = targetVal;
-      }
-
-      return {
-        dayLabel: String(d.dayNum),
-        iso: d.iso,
-        done: doneVal,
-        total: targetVal,
-        unitStr,
-      };
-    }
-  });
-
-  const chartData = rawChartData.filter((item) => item.total > 0);
+    return raw.filter((item) => item.total > 0);
+  }, [monthDays, isAllView, habitList, activeHabit]);
 
   const CustomGraphTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -312,44 +318,44 @@ export default function CalendarPage() {
               </div>
 
               {/* Month Navigation & Overall Metric */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
                 {/* Overall Month Completion % Badge */}
-                <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-accent-quaternary text-white shadow-md font-extrabold text-xs">
-                  <Percent size={14} />
-                  <span>Month Avg: {monthOverallPct}%</span>
+                <div className="px-2.5 py-1 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-black flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                  <Percent size={13} />
+                  <span>Avg: {monthOverallPct}%</span>
                 </div>
 
                 {monthOffset !== 0 && (
                   <button
                     type="button"
                     onClick={() => setMonthOffset(0)}
-                    className="px-3.5 py-1.5 rounded-full bg-accent-light text-accent-primary border border-accent-primary/30 text-xs font-black hover:brightness-110 transition-all"
+                    className="px-2.5 py-1 rounded-xl bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30 text-xs font-black hover:bg-indigo-500/25 transition-all whitespace-nowrap shrink-0 cursor-pointer"
                   >
-                    Current Month
+                    Reset Month
                   </button>
                 )}
 
-                <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-slate-950/80 px-2 py-0.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0">
                   <button
                     type="button"
                     onClick={() => setMonthOffset((prev) => prev - 1)}
-                    className="p-1 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
+                    className="p-0.5 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all cursor-pointer"
                     title="Previous Month"
                   >
-                    <ChevronLeft size={16} />
+                    <ChevronLeft size={14} />
                   </button>
 
-                  <span className="text-xs font-black px-2 min-w-[90px] text-center text-slate-800 dark:text-slate-200">
-                    {monthName} {year}
+                  <span className="text-xs font-bold px-1.5 min-w-[70px] text-center text-slate-800 dark:text-slate-200 whitespace-nowrap">
+                    {monthName.slice(0, 3)} {year}
                   </span>
 
                   <button
                     type="button"
                     onClick={() => setMonthOffset((prev) => prev + 1)}
-                    className="p-1 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all"
+                    className="p-0.5 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all cursor-pointer"
                     title="Next Month"
                   >
-                    <ChevronRight size={16} />
+                    <ChevronRight size={14} />
                   </button>
                 </div>
               </div>
@@ -585,6 +591,8 @@ export default function CalendarPage() {
                               strokeDasharray="4 4"
                               fillOpacity={1}
                               fill="url(#redGradient)"
+                              isAnimationActive={true}
+                              animationDuration={250}
                               dot={{ r: 3.5, fill: '#F43F5E', strokeWidth: 1, stroke: '#ffffff' }}
                             />
 
@@ -597,6 +605,8 @@ export default function CalendarPage() {
                               strokeWidth={3}
                               fillOpacity={1}
                               fill="url(#greenGradient)"
+                              isAnimationActive={true}
+                              animationDuration={250}
                               dot={{ r: 4, fill: '#10B981', strokeWidth: 2, stroke: '#ffffff' }}
                               activeDot={{ r: 7, fill: '#10B981', strokeWidth: 3, stroke: '#ffffff' }}
                             />

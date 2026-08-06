@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import AddTestModal from '@/components/dashboard/AddTestModal';
 import { Loader2, Plus, Trash2, Award, CheckCircle2, XCircle, MinusCircle, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
+import { confirmDeleteWithSonner } from '@/app/tracker/TrackerContext';
 
 export default function TestsPage() {
   const [testLogs, setTestLogs] = useState<any[]>([]);
@@ -44,9 +46,13 @@ export default function TestsPage() {
         const data = await res.json();
         setTestLogs(data.testLogs || []);
         setShowAddModal(false);
+        toast.success('Test score logged successfully!');
+      } else {
+        toast.error('Failed to log test score');
       }
     } catch (e) {
       console.error('Failed to log test score', e);
+      toast.error('Failed to log test score');
     }
   };
 
@@ -61,9 +67,13 @@ export default function TestsPage() {
       if (res.ok) {
         const data = await res.json();
         setTestLogs(data.testLogs || []);
+        toast.success('Test log deleted');
+      } else {
+        toast.error('Failed to delete test log');
       }
     } catch (e) {
       console.error('Failed to delete test log', e);
+      toast.error('Failed to delete test log');
     } finally {
       setDeletingId(null);
     }
@@ -188,7 +198,7 @@ export default function TestsPage() {
                         <button
                           type="button"
                           disabled={deletingId === id}
-                          onClick={() => handleDeleteTestLog(id)}
+                          onClick={() => confirmDeleteWithSonner(`Delete test log for "${name}"?`, () => handleDeleteTestLog(id))}
                           className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
                           title="Delete Test Log"
                         >

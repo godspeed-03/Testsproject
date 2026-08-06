@@ -17,7 +17,7 @@ import {
   Calendar as CalendarIcon,
   Coffee,
 } from 'lucide-react';
-import { useTracker, getTargetGoalLabel, calculateHabitStreak, isHabitScheduledForDate, getTodayIso, getHabitProgressColor } from '../TrackerContext';
+import { useTracker, getTargetGoalLabel, calculateHabitStreak, isHabitScheduledForDate, getTodayIso, getHabitProgressColor, confirmDeleteWithSonner } from '../TrackerContext';
 import HabitCellTooltip from '@/components/HabitCellTooltip';
 
 export default function HabitsPage() {
@@ -39,6 +39,16 @@ export default function HabitsPage() {
   const [globalViewMode, setGlobalViewMode] = useState<'month' | 'week'>('month');
   // State to track month offset per habit (0 = current month, -1 = prev, +1 = next)
   const [habitMonthOffsets, setHabitMonthOffsets] = useState<Record<string, number>>({});
+  // Month transition loading state per habit card
+  const [transitioningHabits, setTransitioningHabits] = useState<Record<string, boolean>>({});
+
+  const handleMonthChange = (habitId: string, delta: number) => {
+    setTransitioningHabits((prev) => ({ ...prev, [habitId]: true }));
+    setHabitMonthOffsets((prev) => ({ ...prev, [habitId]: (prev[habitId] || 0) + delta }));
+    setTimeout(() => {
+      setTransitioningHabits((prev) => ({ ...prev, [habitId]: false }));
+    }, 180);
+  };
 
   const cardBg = 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80';
   const textTitle = 'text-slate-900 dark:text-slate-100';
@@ -46,18 +56,6 @@ export default function HabitsPage() {
 
   const todayIso = getTodayIso();
   const habitList = [...habits.filter((h: any) => h.type === 'habit')].sort((a: any, b: any) => {
-    const getReminderTime = (item: any): string | null => {
-      if (item.reminders && item.reminders[0] && item.reminders[0].enabled !== false && item.reminders[0].time) {
-        return item.reminders[0].time;
-      }
-      return null;
-    };
-    const timeA = getReminderTime(a);
-    const timeB = getReminderTime(b);
-
-    if (timeA && !timeB) return -1;
-    if (!timeA && timeB) return 1;
-    if (timeA && timeB && timeA !== timeB) return timeA.localeCompare(timeB);
     return (a.title || '').localeCompare(b.title || '');
   });
 
@@ -67,6 +65,11 @@ export default function HabitsPage() {
     const targetYear = targetDate.getFullYear();
     const targetMonth = targetDate.getMonth();
     const monthName = targetDate.toLocaleString('default', { month: 'long' });
+
+    // Day of week for 1st of month: 0=Sun, 1=Mon, ..., 6=Sat
+    const firstDayIndex = targetDate.getDay();
+    // Monday-first offset: Mon=0, Tue=1, Wed=2, Thu=3, Fri=4, Sat=5, Sun=6
+    const paddingDays = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
 
     const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
     const monthDays: { dayNum: number; iso: string }[] = [];
@@ -78,7 +81,7 @@ export default function HabitsPage() {
       monthDays.push({ dayNum: i, iso });
     }
 
-    return { year: targetYear, monthName, monthDays };
+    return { year: targetYear, monthName, monthDays, paddingDays };
   };
 
   const getWeekDaysForOffset = (offsetWeeks: number = 0) => {
@@ -195,7 +198,7 @@ export default function HabitsPage() {
             const offset = habitWeekOffsets[habitId] || 0;
             const weekDays = getWeekDaysForOffset(offset);
             const mOffset = habitMonthOffsets[habitId] || 0;
-            const { year: mYear, monthName: mName, monthDays } = getMonthDaysForOffset(mOffset);
+            const { year: mYear, monthName: mName, monthDays, paddingDays } = getMonthDaysForOffset(mOffset);
 
             const todayHist = (h.history || []).find((entry: any) => entry.date === todayIso);
             const todayVal = todayHist ? (todayHist.value || 0) : 0;
@@ -208,99 +211,49 @@ export default function HabitsPage() {
             const habitCardBg = cardBg;
 
             return (
-              <div key={habitId} className={`p-4 sm:p-4.5 rounded-2xl border ${habitCardBg} space-y-3 shadow-xs transition-all`}>
-                {/* Habit Card Header */}
-                <div className="space-y-2.5">
-                  {/* Top Row: Icon + Title & Right Action Controls (Month Navigator + Edit + Delete) */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
+              <div key={habitId} className={`p-3.5 sm:p-4 rounded-2xl border ${habitCardBg} space-y-2.5 shadow-xs transition-all`}>
+                {/* Space-Optimized Dual-Row Executive Header */}
+                <div className="space-y-2 pb-2 border-b border-slate-100 dark:border-slate-800/60">
+                  {/* Row 1: Left Corner = Icon + Title | Right Corner = Badges */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 shadow-inner"
+                        className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center text-sm sm:text-base shrink-0 shadow-inner"
                         style={{ backgroundColor: `${h.color}20`, color: h.color, border: `1px solid ${h.color}40` }}
                       >
                         {h.icon || '🏃'}
                       </div>
 
-                      <div>
-                        <h3 className={`font-black text-base ${textTitle}`}>{h.title}</h3>
-                        {h.description && <p className={`text-xs ${textMuted}`}>{h.description}</p>}
+                      <div className="min-w-0">
+                        <h3 className={`font-black text-sm sm:text-base ${textTitle} truncate`}>{h.title}</h3>
+                        {h.description && <p className={`text-2xs ${textMuted} truncate`}>{h.description}</p>}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
-                      {/* Month Navigator at Top Right */}
-                      {globalViewMode === 'month' && (
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-                            <button
-                              type="button"
-                              onClick={() => setHabitMonthOffsets((prev) => ({ ...prev, [habitId]: (prev[habitId] || 0) - 1 }))}
-                              className="p-0.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all cursor-pointer"
-                              title="Previous Month"
-                            >
-                              <ChevronLeft size={15} />
-                            </button>
-                            <span className="text-xs font-black px-1.5 min-w-[85px] text-center text-slate-800 dark:text-slate-200 normal-case">
-                              {mName} {mYear}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setHabitMonthOffsets((prev) => ({ ...prev, [habitId]: (prev[habitId] || 0) + 1 }))}
-                              className="p-0.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all cursor-pointer"
-                              title="Next Month"
-                            >
-                              <ChevronRight size={15} />
-                            </button>
-                          </div>
-
-                          {mOffset !== 0 && (
-                            <button
-                              type="button"
-                              onClick={() => setHabitMonthOffsets((prev) => ({ ...prev, [habitId]: 0 }))}
-                              className="px-2.5 py-1 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-black hover:bg-purple-500/20 transition-all normal-case cursor-pointer"
-                            >
-                              Reset Month
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEditModal(h)}
-                        className="p-1.5 rounded-xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
-                        title="Edit Habit"
-                      >
-                        <Edit2 size={16} />
-                      </button>
-
-                      <button
-                        type="button"
-                        disabled={saving || deletingId === habitId}
-                        onClick={() => {
-                          if (confirm(`Delete habit "${h.title}"?`)) {
-                            handleDeleteHabit(habitId);
-                          }
-                        }}
-                        className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
-                        title="Delete Habit"
-                      >
-                        {deletingId === habitId ? <Loader2 size={16} className="animate-spin text-rose-500" /> : <Trash2 size={16} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Second Row: Left Badges Strip + Right Score Pill */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-0.5">
-                    {/* Left Badges Strip */}
-                    <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                      {isNumeric ? (
-                        <span className={`px-2.5 py-1 rounded-lg border text-xs font-black ${
-                          todayVal > 0
-                            ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                            : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                    {/* Right Corner Badges */}
+                    <div className="flex items-center gap-1.5 text-xs font-bold shrink-0">
+                      {h.target?.unit === 'time' || h.target?.targetTime ? (
+                        <span className={`px-2 py-0.5 rounded-lg border text-2xs font-black flex items-center gap-1 ${
+                          todayHist?.wakeTime
+                            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30'
+                            : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-200 border-indigo-500/30'
                         }`}>
-                          🎯 Today: {(() => {
+                          ⏰ {todayHist?.wakeTime ? `${todayHist.wakeTime} (${todayHist.pts ?? 100} pts)` : (() => {
+                            const t = h.target?.targetTime || '04:00';
+                            let [hStr, mStr] = t.split(':');
+                            let hour = parseInt(hStr || '4', 10);
+                            const isPm = hour >= 12;
+                            const h12 = hour % 12 === 0 ? 12 : hour % 12;
+                            return `${String(h12).padStart(2, '0')}:${mStr || '00'} ${isPm ? 'PM' : 'AM'}`;
+                          })()}
+                        </span>
+                      ) : isNumeric ? (
+                        <span className={`px-2 py-0.5 rounded-lg border text-2xs font-black ${
+                          todayVal > 0
+                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                            : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-200 border-indigo-500/30'
+                        }`}>
+                          🎯 {(() => {
                             const u = (h.target?.unit || 'times').toLowerCase().trim();
                             if (['mins', 'minutes', 'min', 'minute', 'hours', 'hrs', 'hour'].includes(u)) {
                               const loggedMins = ['hours', 'hrs', 'hour'].includes(u) ? Math.round(todayVal * 60) : todayVal;
@@ -319,92 +272,109 @@ export default function HabitsPage() {
                           })()}
                         </span>
                       ) : (
-                        <span className="px-2.5 py-1 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 text-xs font-black">
-                          🎯 Goal: {getTargetGoalLabel(h)}
+                        <span className="px-2 py-0.5 rounded-lg bg-indigo-500/15 text-indigo-700 dark:text-indigo-200 border border-indigo-500/30 text-2xs font-black">
+                          🎯 {getTargetGoalLabel(h)}
                         </span>
                       )}
 
-                      <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-black flex items-center gap-1">
-                        📅 Schedule: {getRecurrenceLabel(h)}
-                      </span>
-
-                      {h.reminders && h.reminders[0] && h.reminders[0].enabled !== false && h.reminders[0].time && (
-                        <span className="px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-xs font-black flex items-center gap-1">
-                          <Clock size={14} /> {h.reminders[0].time}
-                        </span>
-                      )}
-
-                      <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-500 border border-amber-500/30 text-xs font-black flex items-center gap-1">
-                        <Flame size={14} /> {streak.current}d Streak (Best: {streak.best})
+                      <span className="px-2 py-0.5 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-2xs font-black flex items-center gap-1">
+                        <Flame size={12} /> {streak.current}d (🏆 {streak.best})
                       </span>
                     </div>
+                  </div>
 
-                    {/* Right Side: Dynamic Colored Score Pill */}
-                    {(() => {
-                      const scheduledDays = monthDays.filter((d) => isHabitScheduledForDate(h, d.iso));
-                      if (scheduledDays.length === 0) return null;
+                  {/* Row 2: Left Corner = Month Navigator | Right Corner = Edit & Delete Actions */}
+                  <div className="flex items-center justify-between gap-2 pt-0.5">
+                    {globalViewMode === 'month' ? (
+                      <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-slate-950/80 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-2xs">
+                        <button
+                          type="button"
+                          onClick={() => handleMonthChange(habitId, -1)}
+                          className="p-0.5 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                          title="Previous Month"
+                        >
+                          <ChevronLeft size={13} />
+                        </button>
+                        <span className="text-xs font-bold px-1 text-center text-slate-700 dark:text-slate-200 normal-case">
+                          {mName.slice(0, 3)} {mYear}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleMonthChange(habitId, 1)}
+                          className="p-0.5 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                          title="Next Month"
+                        >
+                          <ChevronRight size={13} />
+                        </button>
+                      </div>
+                    ) : <div />}
 
-                      // Exclude rest/skipped days and future unelapsed days from score calculation
-                      const scorableScheduledDays = scheduledDays.filter((d) => {
-                        if (d.iso > todayIso) return false;
-                        const hist = (h.history || []).find((entry: any) => entry.date === d.iso);
-                        return !(hist?.status === 'skipped' || hist?.status === 'rest');
-                      });
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(h)}
+                        className="p-1 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+                        title="Edit Habit"
+                      >
+                        <Edit2 size={15} />
+                      </button>
 
-                      if (scorableScheduledDays.length === 0) {
-                        return (
-                          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-black bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20 shadow-2xs shrink-0 self-start sm:self-auto">
-                            <Clock size={14} className="text-slate-400 shrink-0" />
-                            <span>Starts {h.startDate || 'Next Week'}</span>
-                          </div>
-                        );
-                      }
-
-                      const ptsPerDay = 100 / scorableScheduledDays.length;
-                      let earned = 0;
-
-                      scorableScheduledDays.forEach((d) => {
-                        const hist = (h.history || []).find((entry: any) => entry.date === d.iso);
-                        if (!hist) return;
-                        if (hist.status === 'done') {
-                          earned += ptsPerDay;
-                        } else if (hist.value && hist.value > 0) {
-                          const targetVal = h.target?.value || 1;
-                          const unitStr = (h.target?.unit || '').toLowerCase().trim();
-                          let normVal = hist.value;
-                          let normTarget = targetVal;
-                          if (['hours', 'hrs', 'hour'].includes(unitStr) && normVal <= 24 && normTarget <= 24) {
-                            normVal = Math.round(hist.value * 60);
-                            normTarget = Math.round(targetVal * 60);
-                          }
-                          const ratio = Math.min(1, normVal / (normTarget || 1));
-                          earned += ptsPerDay * ratio;
-                        }
-                      });
-                      const roundedPts = Math.min(100, Math.round(earned));
-
-                      const pillStyle = roundedPts >= 75
-                        ? { bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30", icon: "text-emerald-500", bold: "text-emerald-700 dark:text-emerald-300" }
-                        : roundedPts >= 50
-                        ? { bg: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30", icon: "text-cyan-500", bold: "text-cyan-700 dark:text-cyan-300" }
-                        : roundedPts >= 25
-                        ? { bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30", icon: "text-amber-500", bold: "text-amber-700 dark:text-amber-300" }
-                        : { bg: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30", icon: "text-rose-500", bold: "text-rose-700 dark:text-rose-300" };
-
-                      return (
-                        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-black shadow-2xs shrink-0 self-start sm:self-auto ${pillStyle.bg}`}>
-                          <Award size={14} className={`${pillStyle.icon} shrink-0`} />
-                          <span>Score: <strong className={pillStyle.bold}>{roundedPts}</strong> / 100 pts</span>
-                        </div>
-                      );
-                    })()}
+                      <button
+                        type="button"
+                        disabled={saving || deletingId === habitId}
+                        onClick={() => {
+                          confirmDeleteWithSonner(`Delete habit "${h.title}"?`, () => handleDeleteHabit(habitId));
+                        }}
+                        className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
+                        title="Delete Habit"
+                      >
+                        {deletingId === habitId ? <Loader2 size={15} className="animate-spin text-rose-500" /> : <Trash2 size={15} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
                 {/* TRACKER GRID BASED ON GLOBAL VIEW MODE */}
                 {globalViewMode === 'month' ? (
-                  <div className="pt-1">
-                    <div className="grid grid-cols-7 sm:grid-cols-10 md:grid-cols-16 gap-1">
+                  transitioningHabits[habitId] ? (
+                    <div className="pt-2 space-y-1.5 animate-pulse">
+                      {/* Day of Week Headers Skeleton */}
+                      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase pb-0.5 opacity-40">
+                        <span>Mon</span>
+                        <span>Tue</span>
+                        <span>Wed</span>
+                        <span>Thu</span>
+                        <span>Fri</span>
+                        <span>Sat</span>
+                        <span>Sun</span>
+                      </div>
+                      {/* Skeleton Grid */}
+                      <div className="grid grid-cols-7 gap-1">
+                        {Array.from({ length: 28 }).map((_, idx) => (
+                          <div key={`skel-${idx}`} className="h-[28px] w-full rounded-lg bg-slate-200/60 dark:bg-slate-800/60 animate-pulse" />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pt-2 space-y-1.5">
+                      {/* Day of Week Headers */}
+                      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase pb-0.5">
+                        <span>Mon</span>
+                        <span>Tue</span>
+                        <span>Wed</span>
+                        <span>Thu</span>
+                        <span>Fri</span>
+                        <span>Sat</span>
+                        <span>Sun</span>
+                      </div>
+
+                      {/* Calendar Cells Grid */}
+                      <div className="grid grid-cols-7 gap-1">
+                        {/* Leading Empty Padding Days */}
+                        {Array.from({ length: paddingDays }).map((_, idx) => (
+                          <div key={`pad-${idx}`} className="min-h-[28px] w-full" />
+                        ))}
+
                       {monthDays.map((d) => {
                         const scheduled = isHabitScheduledForDate(h, d.iso);
                         const hist = (h.history || []).find((entry: any) => entry.date === d.iso);
@@ -419,7 +389,7 @@ export default function HabitsPage() {
                         let cellStyle = '';
 
                         if (!scheduled) {
-                          cellStyle = 'bg-slate-100/50 dark:bg-slate-950/30 text-slate-300 dark:text-slate-700 border border-dashed border-slate-200 dark:border-slate-800 opacity-50';
+                          cellStyle = 'bg-slate-100/30 dark:bg-slate-950/20 text-slate-400/50 dark:text-slate-600/50 border border-transparent';
                         } else if (isSkipped) {
                           cellStyle = 'bg-purple-600 text-white font-black shadow-md shadow-purple-500/40 border border-purple-400 ring-2 ring-purple-500/50';
                         } else if (isDone || pTier === 'done') {
@@ -433,48 +403,12 @@ export default function HabitsPage() {
                         } else if (isFailed) {
                           cellStyle = 'bg-rose-500 text-white font-black shadow-xs shadow-rose-500/20 border border-rose-400';
                         } else if (isToday) {
-                          cellStyle = 'bg-accent-gradient text-white font-black shadow-xs shadow-accent/20 border border-accent-primary';
+                          cellStyle = 'bg-accent-gradient text-white font-black shadow-xs shadow-accent/20 border border-accent-primary ring-2 ring-accent-primary/40';
                         } else if (isPast) {
-                          cellStyle = 'bg-rose-500 text-white font-black shadow-xs shadow-rose-500/20 border border-rose-400';
+                          cellStyle = 'bg-rose-500/80 text-white font-bold shadow-xs shadow-rose-500/10 border border-rose-400/80';
                         } else {
                           cellStyle = 'bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:border-accent-primary';
                         }
-
-                        const getTooltipText = () => {
-                          if (!scheduled) return `${d.iso}: Scheduled Off`;
-                          if (isDone) return `${d.iso}: Completed (100%)`;
-                          if (isFailed) return `${d.iso}: Failed / Missed`;
-
-                          const targetVal = h.target?.value || 1;
-                          const unitStr = (h.target?.unit || '').toLowerCase().trim();
-
-                          if (val > 0) {
-                            let normVal = val;
-                            let normTarget = targetVal;
-
-                            if (['hours', 'hrs', 'hour'].includes(unitStr) && normVal <= 24 && normTarget <= 24) {
-                              normVal = Math.round(val * 60);
-                              normTarget = Math.round(targetVal * 60);
-                            }
-
-                            const formatMin = (m: number) => {
-                              if (m < 60) return `${m} mins`;
-                              const hrs = Math.floor(m / 60);
-                              const rem = m % 60;
-                              return rem > 0 ? `${hrs}h ${rem}m` : `${hrs}h`;
-                            };
-
-                            const isTime = ['hours', 'hrs', 'hour', 'mins', 'minutes', 'min'].includes(unitStr);
-                            const loggedStr = isTime ? formatMin(normVal) : `${val} ${unitStr}`;
-                            const targetStr = isTime ? formatMin(normTarget) : `${targetVal} ${unitStr}`;
-
-                            const pct = Math.min(100, Math.round((normVal / (normTarget || 1)) * 100));
-                            return `${d.iso}: Logged ${loggedStr} / ${targetStr} target (${pct}% completed)`;
-                          }
-
-                          if (isPast) return `${d.iso}: Missed (0%)`;
-                          return `${d.iso}: Scheduled`;
-                        };
 
                         return (
                           <HabitCellTooltip
@@ -496,7 +430,7 @@ export default function HabitsPage() {
                               {togglingId === `${habitId}_${d.iso}` ? (
                                 <Loader2 size={10} className="animate-spin text-white" />
                               ) : !scheduled ? (
-                                <span className="text-[8px] opacity-60 font-bold">Off</span>
+                                <span className="text-[10px] font-semibold text-slate-400/40 dark:text-slate-600/40">{d.dayNum}</span>
                               ) : (
                                 <span className="text-[11px] font-black font-display">{d.dayNum}</span>
                               )}
@@ -506,7 +440,8 @@ export default function HabitsPage() {
                       })}
                     </div>
                   </div>
-                ) : (
+                )
+              ) : (
                   /* 7-DAY GRID */
                   <div className="pt-1 space-y-2">
                     {offset !== 0 && (

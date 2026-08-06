@@ -318,7 +318,24 @@ export async function calculateAndSaveWeeklyData(
       let habitPct = 0;
       const effectiveScheduledDays = Math.max(1, stats.scheduledDaysCount);
 
-      if (['yes_no', 'boolean'].includes(unitLower) || !stats.targetValue) {
+      if (unitLower === 'time' || h.target?.targetTime || /wake\s*up/i.test(h.title || '')) {
+        const history = Array.isArray(h.history) ? h.history : [];
+        let habitWakeUpPtsSum = 0;
+        dayKeys.forEach((dk) => {
+          if (isHabitScheduledOnDate(h, dk)) {
+            const entry = history.find((e: any) => e.date === dk);
+            if (entry) {
+              if (typeof entry.pts === 'number') {
+                habitWakeUpPtsSum += entry.pts;
+              } else if (entry.status === 'done') {
+                habitWakeUpPtsSum += 100;
+              }
+            }
+          }
+        });
+        const maxPossibleWakePts = effectiveScheduledDays * 100;
+        habitPct = maxPossibleWakePts > 0 ? (habitWakeUpPtsSum / maxPossibleWakePts) * 100 : 0;
+      } else if (['yes_no', 'boolean'].includes(unitLower) || !stats.targetValue) {
         habitPct = (stats.completedDays / effectiveScheduledDays) * 100;
       } else {
         const weeklyTarget = stats.targetValue * effectiveScheduledDays;

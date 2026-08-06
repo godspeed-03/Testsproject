@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { ISyllabusRuleState } from "@/types";
 import ActionTooltip from "@/components/ActionTooltip";
+import { toast } from "sonner";
+import { confirmDeleteWithSonner } from "@/app/tracker/TrackerContext";
 
 interface StatusStage {
   value: string;
@@ -215,9 +217,13 @@ export default function SyllabusPage() {
       if (res.ok) {
         const data = await res.json();
         setSyllabusList(data.syllabusList || []);
+        toast.success(`Status updated to "${newStatus}"`);
+      } else {
+        toast.error("Failed to update status");
       }
     } catch (e) {
       console.error("Failed to update status", e);
+      toast.error("Failed to update status");
     } finally {
       setUpdatingStatusId(null);
     }
@@ -244,9 +250,13 @@ export default function SyllabusPage() {
       if (res.ok) {
         const data = await res.json();
         setSyllabusList(data.syllabusList || []);
+        toast.success("Subject rules updated successfully");
+      } else {
+        toast.error("Failed to update subject rules");
       }
     } catch (e) {
       console.error("Failed to save subject rules", e);
+      toast.error("Failed to save subject rules");
     }
   };
 
@@ -261,9 +271,13 @@ export default function SyllabusPage() {
       if (res.ok) {
         const data = await res.json();
         setSyllabusList(data.syllabusList || []);
+        toast.success("Subject deleted successfully");
+      } else {
+        toast.error("Failed to delete subject");
       }
     } catch (e) {
       console.error("Failed to delete subject", e);
+      toast.error("Failed to delete subject");
     } finally {
       setDeletingId(null);
     }
@@ -280,9 +294,13 @@ export default function SyllabusPage() {
         const data = await res.json();
         setSyllabusList(data.syllabusList || []);
         setShowAddModal(false);
+        toast.success("Subject created successfully!");
+      } else {
+        toast.error("Failed to add subject");
       }
     } catch (e) {
       console.error("Failed to add custom subject", e);
+      toast.error("Failed to add subject");
     }
   };
 
@@ -413,8 +431,10 @@ export default function SyllabusPage() {
       setBulkMilestoneShort("");
       setSelectedSubjectIds([]);
       setShowBulkAddPanel(false);
+      toast.success("Bulk milestone added to selected subjects!");
     } catch (e) {
       console.error("Failed to bulk add milestone", e);
+      toast.error("Failed to bulk add milestone");
     } finally {
       setBulkSaving(false);
     }
@@ -836,7 +856,7 @@ export default function SyllabusPage() {
                       <button
                         type="button"
                         disabled={deletingId === s.id}
-                        onClick={() => handleDeleteSubject(s.id)}
+                        onClick={() => confirmDeleteWithSonner(`Delete subject "${s.subject}"?`, () => handleDeleteSubject(s.id))}
                         className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
                       >
                         {deletingId === s.id ? (
@@ -1046,7 +1066,7 @@ export default function SyllabusPage() {
                             <button
                               type="button"
                               disabled={deletingId === s.id}
-                              onClick={() => handleDeleteSubject(s.id)}
+                              onClick={() => confirmDeleteWithSonner(`Delete subject "${s.subject}"?`, () => handleDeleteSubject(s.id))}
                               className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
                               title="Delete Subject"
                             >

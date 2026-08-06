@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, PlusCircle, Upload, Download, FileText, BookOpen } from 'lucide-react';
 import LogoutButton from './LogoutButton';
 import ImportDataModal from './dashboard/ImportDataModal';
+import ThemeToggle from './ThemeToggle';
 import { useRouter, usePathname } from 'next/navigation';
 
 interface UserProfileMenuProps {
@@ -17,6 +18,7 @@ interface UserProfileMenuProps {
 
 import { Palette, Check } from 'lucide-react';
 import { useAccentTheme } from '@/context/AccentThemeContext';
+import { toast } from 'sonner';
 
 export default function UserProfileMenu({ user }: UserProfileMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,6 +31,23 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
   const { accentTheme, setAccentTheme, themes } = useAccentTheme();
   const router = useRouter();
   const pathname = usePathname();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains('dark'));
@@ -64,9 +83,13 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+        toast.success('Backup JSON downloaded successfully!');
+      } else {
+        toast.error('Failed to export backup data.');
       }
     } catch (e) {
       console.error('Export failed', e);
+      toast.error('Export failed.');
     } finally {
       setExporting(false);
       setIsOpen(false);
@@ -84,9 +107,11 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
       const data = await res.json();
       const { generateTrackerReportPdf } = await import('@/lib/generateTrackerReportPdf');
       generateTrackerReportPdf(data);
+      toast.success('PDF report generated successfully!');
     } catch (e) {
       console.error('Report generation failed', e);
       setReportError('Could not generate report. Please try again.');
+      toast.error('Could not generate report.');
     } finally {
       setGeneratingReport(false);
       setIsOpen(false);
@@ -94,25 +119,39 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
   };
 
   const handleImportJson = async (jsonData: any) => {
-    const res = await fetch('/api/tracker/import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(jsonData)
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Failed to import data');
+    try {
+      const res = await fetch('/api/tracker/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jsonData)
+      });
+      if (!res.ok) {
+        let errorMsg = 'Failed to import data';
+        try {
+          const err = await res.json();
+          errorMsg = err.error || errorMsg;
+        } catch {
+          errorMsg = `Server error (${res.status})`;
+        }
+        toast.error(errorMsg);
+        return;
+      }
+      toast.success('Backup restored successfully!');
+      window.location.reload();
+    } catch (e: any) {
+      console.error('Import error:', e);
+      toast.error(e.message || 'Failed to import data');
     }
-    window.location.reload();
   };
 
   const displayName = user.name || user.email;
   const initial = (user.name || user.email || 'U').charAt(0).toUpperCase();
 
   return (
-    <div className="relative">
+    <div className="relative z-50" ref={menuRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
         className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer"
       >
         {/* Google Profile Avatar with Initial Fallback */}
@@ -130,17 +169,15 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
           </div>
         )}
 
-        <div className="flex flex-col items-start hidden sm:flex text-left">
+        <div className="flex flex-col items-start hidden md:flex text-left">
           <span className="text-xs font-bold text-slate-900 dark:text-slate-100 max-w-[140px] truncate">{displayName}</span>
           <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">UPSC Aspirant</span>
         </div>
-        <ChevronDown size={14} className="text-slate-400" />
+        <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-scale-up">
+        <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-1.5 z-50 animate-scale-up">
             <div className="px-3.5 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2.5">
               {user.picture && !imgError ? (
                 <img
@@ -162,23 +199,6 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
             </div>
 
             <div className="py-1 px-1 border-b border-slate-100 dark:border-slate-800 space-y-0.5">
-              <button
-                type="button"
-                onClick={handleOpenCreate}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/50 transition-colors cursor-pointer"
-              >
-                <PlusCircle size={15} />
-                <span>Log Task / Habit</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => { setIsOpen(false); router.push('/syllabus'); }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-              >
-                <BookOpen size={15} className="text-purple-500" />
-                <span>Syllabus Matrix</span>
-              </button>
 
               <button
                 type="button"
@@ -213,11 +233,19 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
               )}
             </div>
 
-            {/* Theme Accent Picker */}
-            <div className="py-2 px-3 border-b border-slate-100 dark:border-slate-800 space-y-1.5">
-              <div className="flex items-center justify-between text-[11px] font-black text-slate-600 dark:text-slate-400">
+            {/* Dark / Light Mode & Theme Accent Picker */}
+            <div className="py-2.5 px-3 border-b border-slate-100 dark:border-slate-800 space-y-2.5">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                <span className="flex items-center gap-1.5 text-xs font-extrabold">
+                  <Palette size={14} className="text-amber-500" />
+                  <span>Theme Mode</span>
+                </span>
+                <ThemeToggle />
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] font-black text-slate-600 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-slate-800/60">
                 <span className="flex items-center gap-1.5">
-                  <Palette size={13} className="text-emerald-500" /> Theme Accent
+                  <Palette size={13} className="text-emerald-500" /> Color Accent
                 </span>
                 <span className="uppercase text-[9px] tracking-wider text-slate-400 font-extrabold">{accentTheme}</span>
               </div>
@@ -259,8 +287,7 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
               <LogoutButton />
             </div>
           </div>
-        </>
-      )}
+        )}
 
       {showImportModal && (
         <ImportDataModal

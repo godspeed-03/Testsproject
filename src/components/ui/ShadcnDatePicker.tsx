@@ -106,7 +106,7 @@ export default function ShadcnDatePicker({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-900 text-slate-900 dark:text-slate-100 font-black text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs transition-all outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary cursor-pointer truncate active:scale-95"
+          className="w-full h-[42px] flex items-center justify-between gap-2 px-3.5 py-2 bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-900 text-slate-900 dark:text-slate-100 font-bold text-xs sm:text-sm rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs transition-all outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary cursor-pointer truncate active:scale-95"
         >
           <div className="flex items-center gap-2 truncate">
             <CalendarDays size={16} className="text-accent-primary shrink-0" />

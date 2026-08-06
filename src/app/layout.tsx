@@ -119,6 +119,7 @@ export const metadata: Metadata = {
 };
 
 import { AccentThemeProvider } from "@/context/AccentThemeContext";
+import { Toaster } from "sonner";
 
 export default function RootLayout({
   children
@@ -143,6 +144,7 @@ export default function RootLayout({
           <Navbar />
           <main className="flex-1 flex flex-col">{children}</main>
           <Footer />
+          <Toaster position="bottom-center" theme="system" closeButton richColors />
         </AccentThemeProvider>
       </body>
     </html>

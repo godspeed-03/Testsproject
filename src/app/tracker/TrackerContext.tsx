@@ -3,6 +3,97 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getSubjectTheme } from '@/lib/subjectThemeMap';
 import BatchRevisionCompletionModal from '@/components/dashboard/BatchRevisionCompletionModal';
+import WakeUpTimeModal from '@/components/dashboard/WakeUpTimeModal';
+import { toast } from 'sonner';
+import { Coffee } from 'lucide-react';
+
+export const confirmDeleteWithSonner = (
+  title: string,
+  onConfirm: () => void,
+  description?: string
+) => {
+  toast.custom((t) => (
+    <div className="w-full max-w-sm p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-2xl space-y-3 font-sans text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150 glass-panel">
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100 leading-snug">{title}</h4>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+            {description || 'This action cannot be undone. Are you sure?'}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+        <button
+          type="button"
+          onClick={() => toast.dismiss(t)}
+          className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            toast.dismiss(t);
+            onConfirm();
+          }}
+          className="px-4 py-1.5 rounded-xl text-xs font-black bg-rose-600 hover:bg-rose-700 text-white shadow-md shadow-rose-600/20 transition-all cursor-pointer active:scale-95"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+  ), {
+    duration: 6000,
+    position: 'top-center'
+  });
+};
+
+export const confirmRestDayWithSonner = (
+  onConfirm: () => void
+) => {
+  toast.custom((t) => (
+    <div className="w-full max-w-sm p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-2xl space-y-3 font-sans text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150 glass-panel">
+      <div className="flex items-start gap-3">
+        <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+          <Coffee size={20} strokeWidth={2.2} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="font-extrabold text-sm text-slate-900 dark:text-slate-100 leading-snug">Mark Today as Rest Day?</h4>
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+            Uncompleted tasks for today will shift to tomorrow, and active habits will be logged as Rest Day.
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
+        <button
+          type="button"
+          onClick={() => toast.dismiss(t)}
+          className="px-3.5 py-1.5 rounded-xl text-xs font-extrabold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            toast.dismiss(t);
+            onConfirm();
+          }}
+          className="px-4 py-1.5 rounded-xl text-xs font-black bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 transition-all cursor-pointer active:scale-95"
+        >
+          Mark Rest Day
+        </button>
+      </div>
+    </div>
+  ), {
+    duration: 7000,
+    position: 'top-center'
+  });
+};
 
 export const getTodayIso = (): string => {
   const d = new Date();
@@ -10,6 +101,15 @@ export const getTodayIso = (): string => {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
+};
+
+export const getTomorrowIso = (): string => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const year = tomorrow.getFullYear();
+  const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+  const day = String(tomorrow.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export const getHabitProgressColor = (loggedVal: number, targetVal: number, unitStr: string, status?: string) => {
@@ -296,9 +396,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [formTargetVal, setFormTargetVal] = useState(1);
   const [formTargetUnit, setFormTargetUnit] = useState('times');
   const [formCustomUnit, setFormCustomUnit] = useState('');
-  const [formEnableReminder, setFormEnableReminder] = useState(false);
-  const [formReminderTime, setFormReminderTime] = useState('08:00');
-  const [formStartDate, setFormStartDate] = useState(getTodayIso());
+  const [formStartDate, setFormStartDate] = useState(getTomorrowIso());
   const [formEndDate, setFormEndDate] = useState('');
   const [formIcon, setFormIcon] = useState('🏃');
   const [formColor, setFormColor] = useState('#6366F1');
@@ -374,6 +472,12 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [showBatchRevModal, setShowBatchRevModal] = useState(false);
   const [batchRevModalHabit, setBatchRevModalHabit] = useState<any | null>(null);
   const [batchRevModalDate, setBatchRevModalDate] = useState<string>('');
+
+  // Early Wake-Up Habit Modal State
+  const [formWakeUpTargetTime, setFormWakeUpTargetTime] = useState<string>('04:00');
+  const [showWakeUpModal, setShowWakeUpModal] = useState(false);
+  const [wakeUpModalHabit, setWakeUpModalHabit] = useState<any | null>(null);
+  const [wakeUpModalDate, setWakeUpModalDate] = useState<string>('');
 
   // Timer & Background Persistent Stopwatch State
   const [timerHabitId, setTimerHabitId] = useState<string>('');
@@ -568,9 +672,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       setFormTargetUnit('custom');
       setFormCustomUnit(u);
     }
-    const r = item.reminders?.[0];
-    setFormEnableReminder(r ? r.enabled !== false : false);
-    setFormReminderTime(r?.time || '08:00');
     setFormStartDate(item.startDate || new Date().toISOString().split('T')[0]);
     setFormEndDate(item.endDate || '');
 
@@ -657,9 +758,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormTargetVal(1);
     setFormTargetUnit('yes_no');
     setFormCustomUnit('');
-    setFormEnableReminder(false);
-    setFormReminderTime('09:00');
-    setFormStartDate(new Date().toISOString().split('T')[0]);
+    setFormStartDate(getTomorrowIso());
     setFormEndDate('');
     setFormIsStudyTask(type === 'task');
     setFormStudyTaskMode(type === 'task' ? 'single' : 'none');
@@ -708,7 +807,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   ) => {
     const todayStr = getTodayIso();
     if (date < todayStr) {
-      alert('Backdating is disabled: You cannot edit or log completion for past dates.');
+      toast.error('Backdating disabled: Cannot edit past dates.');
       return;
     }
     setSaving(true);
@@ -722,9 +821,13 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       if (res.ok) {
         const data = await res.json();
         setHabits(data.habits);
+        toast.success('Status updated');
+      } else {
+        toast.error('Failed to update status');
       }
     } catch (e) {
       console.error('Failed to toggle completion', e);
+      toast.error('Error updating status');
     } finally {
       setSaving(false);
       setTogglingId(null);
@@ -762,6 +865,19 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       return;
     }
 
+    const isWakeUpHabit = Boolean(
+      h.target?.unit === 'time' ||
+      h.target?.targetTime ||
+      (typeof h.title === 'string' && /wake\s*up/i.test(h.title))
+    );
+
+    if (isWakeUpHabit) {
+      setWakeUpModalHabit(h);
+      setWakeUpModalDate(date);
+      setShowWakeUpModal(true);
+      return;
+    }
+
     const isRevision = typeof h.title === 'string' && /^\[R[123]\s+Revision\]/i.test(h.title);
     const unitStr = (h.target?.unit || '').toLowerCase().trim();
     const isBooleanGoal = unitStr === 'yes_no' || unitStr === 'boolean' || h.type === 'event';
@@ -778,6 +894,36 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       const isTimeGoal = ['mins', 'minutes', 'min', 'minute', 'hours', 'hrs', 'hour'].includes(unitStr);
       setProgressModalValue(isTimeGoal ? 0 : 1);
       setShowProgressModal(true);
+    }
+  };
+
+  const handleSaveWakeUpLog = async (wakeTime: string, tier: number, pts: number, status: string) => {
+    if (!wakeUpModalHabit) return;
+    const habitId = wakeUpModalHabit.id || wakeUpModalHabit._id;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/tracker/habits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'toggle_log',
+          habitId,
+          date: wakeUpModalDate,
+          wakeTime,
+          tier,
+          pts,
+          status,
+          value: 1,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setHabits(data.habits);
+      }
+    } catch (e) {
+      console.error('Failed to log wake up time', e);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -841,6 +987,9 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
         if (data.topicRevisions) {
           setTopicRevisions(data.topicRevisions);
         }
+        toast.success('Deleted successfully');
+      } else {
+        toast.error('Failed to delete item');
       }
     } catch (e) {
       console.error('Failed to delete item', e);
@@ -873,18 +1022,18 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
         if (createType === 'task') {
           if (formStudyTaskMode === 'batch_revision') {
             if (!formRevisionClusterBadges || formRevisionClusterBadges.length === 0) {
-              alert('Please select at least one micro-topic for your Batch Revision cluster.');
+              toast.error('Please select at least one micro-topic for your Batch Revision cluster.');
               setSaving(false);
               return;
             }
           } else if (formStudyTaskMode === 'single') {
             if (!formSubject.trim()) {
-              alert('Please select a subject for your study task.');
+              toast.error('Please select a subject for your study task.');
               setSaving(false);
               return;
             }
             if (!formTopic.trim() && formSelectedMicroTopics.length === 0) {
-              alert('Please enter or select at least one micro-topic.');
+              toast.error('Please enter or select at least one micro-topic.');
               setSaving(false);
               return;
             }
@@ -932,14 +1081,16 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           },
           target: {
             value: (finalTargetUnit === 'yes_no' || finalTargetUnit === 'boolean') ? null : (Number(formTargetVal) || 1),
-            unit: finalTargetUnit
+            unit: finalTargetUnit,
+            targetTime: finalTargetUnit === 'time' ? (formWakeUpTargetTime || '04:00') : undefined
           },
-          reminders: [
-            {
-              time: formReminderTime,
-              enabled: formEnableReminder
-            }
-          ],
+          penaltyTiers: finalTargetUnit === 'time' ? [
+            { tier: 0, maxTime: "04:15", pts: 100, status: "done", label: "Perfect Wake-Up", streakAction: "increment" },
+            { tier: 1, maxTime: "05:00", pts: 75, status: "done", label: "Grace Period", streakAction: "increment" },
+            { tier: 2, maxTime: "06:00", pts: 40, status: "done", label: "Minor Delay", streakAction: "freeze" },
+            { tier: 3, maxTime: "07:00", pts: 10, status: "failed", label: "Major Delay", streakAction: "reset" },
+            { tier: 4, maxTime: "23:59", pts: -20, status: "failed", label: "Severe Miss", streakAction: "reset" }
+          ] : undefined,
           startDate: formStartDate,
           endDate: formEndDate || undefined,
           isStudyTask,
@@ -967,6 +1118,9 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           if (data.topicRevisions) setTopicRevisions(data.topicRevisions);
           setShowCreateModal(false);
           resetFormState();
+          toast.success(editingHabitId ? 'Updated successfully!' : 'Created successfully!');
+        } else {
+          toast.error('Failed to save habit');
         }
       }
     } catch (e) {
@@ -992,9 +1146,13 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
         if (data.batchedRevisions) setBatchedRevisions(data.batchedRevisions);
         if (data.syllabusItems) setSyllabusItems(data.syllabusItems);
         await fetchTrackerData();
+        toast.success("Rest Day marked! Uncompleted tasks shifted to tomorrow.");
+      } else {
+        toast.error("Failed to mark Rest Day. Please try again.");
       }
     } catch (e) {
       console.error('Failed to mark rest day', e);
+      toast.error("An error occurred while marking Rest Day.");
     } finally {
       setSaving(false);
     }
@@ -1045,6 +1203,9 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       if (res.ok) {
         const data = await res.json();
         setLists(data.lists);
+        toast.success('Checklist deleted');
+      } else {
+        toast.error('Failed to delete checklist');
       }
     } catch (e) {
       console.error('Failed to delete list', e);
@@ -1126,35 +1287,14 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
 
   // Sort agenda:
   // 1. Primary: Tasks (type !== 'habit') first, Habits (type === 'habit') second
-  // 2. Secondary: Items with scheduled reminder time first (morning -> night, e.g. 06:00 -> 22:00)
-  // 3. Items without scheduled time at the end of their respective group
-  // 4. Alphabetical tie-breaker
-  const getItemTime = (h: any): string | null => {
-    if (h.reminders && h.reminders[0] && h.reminders[0].enabled !== false && h.reminders[0].time) {
-      return h.reminders[0].time; // "HH:MM" format
-    }
-    return null;
-  };
-
+  // 2. Secondary: Alphabetical order
   const todayItems = [...todayItemsUnsorted].sort((a, b) => {
     // 1. Group: Tasks first (0), Habits second (1)
     const isHabitA = a.type === 'habit' ? 1 : 0;
     const isHabitB = b.type === 'habit' ? 1 : 0;
     if (isHabitA !== isHabitB) return isHabitA - isHabitB;
 
-    // 2. Time: Items WITH time come first, sorted chronologically (morning -> night)
-    const timeA = getItemTime(a);
-    const timeB = getItemTime(b);
-    const hasTimeA = timeA !== null;
-    const hasTimeB = timeB !== null;
-
-    if (hasTimeA && !hasTimeB) return -1;
-    if (!hasTimeA && hasTimeB) return 1;
-    if (hasTimeA && hasTimeB && timeA !== timeB) {
-      return timeA!.localeCompare(timeB!);
-    }
-
-    // 3. Alphabetical tie-breaker
+    // 2. Alphabetical tie-breaker
     return (a.title || '').localeCompare(b.title || '');
   });
 
@@ -1195,10 +1335,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormTargetUnit,
     formCustomUnit,
     setFormCustomUnit,
-    formEnableReminder,
-    setFormEnableReminder,
-    formReminderTime,
-    setFormReminderTime,
     formStartDate,
     setFormStartDate,
     formEndDate,
@@ -1298,13 +1434,34 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     weekDays,
     handlePrevWeek,
     handleNextWeek,
-    handleGoToToday,
+    showWakeUpModal,
+    setShowWakeUpModal,
+    wakeUpModalHabit,
+    setWakeUpModalHabit,
+    wakeUpModalDate,
+    setWakeUpModalDate,
+    formWakeUpTargetTime,
+    setFormWakeUpTargetTime,
+    handleSaveWakeUpLog,
     getTargetGoalLabel,
     calculateHabitStreak,
     isHabitScheduledForDate
   };
 
-  return <TrackerContext.Provider value={value}>{children}</TrackerContext.Provider>;
+  return (
+    <TrackerContext.Provider value={value}>
+      {children}
+      {showWakeUpModal && wakeUpModalHabit && (
+        <WakeUpTimeModal
+          isOpen={showWakeUpModal}
+          onClose={() => setShowWakeUpModal(false)}
+          habit={wakeUpModalHabit}
+          dateIso={wakeUpModalDate}
+          onSave={handleSaveWakeUpLog}
+        />
+      )}
+    </TrackerContext.Provider>
+  );
 };
 
 export const useTracker = () => {

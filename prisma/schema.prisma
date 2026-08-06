@@ -42,7 +42,6 @@ model HabitItem {
   description         String?  @default("")
   frequency           Json
   target              Json
-  reminders           Json?    @default("[]")
   startDate           String
   endDate             String?
   isStudyTask         Boolean  @default(false)

@@ -55,9 +55,27 @@ export async function GET() {
       prisma.batchedRevisionItem.findMany({ where: { userId } }),
     ]);
 
-    const formattedHabits = habits.map((h) => ({
-      ...h,
+    const formattedHabits = habits.map((h: any) => ({
       id: h.id,
+      userId: h.userId,
+      type: h.type || 'habit',
+      title: h.title || 'Untitled',
+      category: h.category || { id: 'general', label: 'General', icon: '📌', color: '#6366F1' },
+      description: h.description || '',
+      frequency: h.frequency || { mode: 'daily', days: [] },
+      target: h.target || { value: 1, unit: 'times' },
+      startDate: h.startDate || '',
+      endDate: h.endDate || null,
+      isStudyTask: !!h.isStudyTask,
+      isAugmentedRevision: !!h.isAugmentedRevision,
+      isBatchRevision: !!h.isBatchRevision,
+      subject: h.subject || '',
+      topic: h.topic || '',
+      color: h.color || '#6366F1',
+      icon: h.icon || '🏃',
+      streakCurrent: h.streakCurrent || 0,
+      streakBest: h.streakBest || 0,
+      history: h.history || [],
     }));
 
     const formattedLists = lists.map((l) => ({

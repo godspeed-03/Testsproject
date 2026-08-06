@@ -50,7 +50,6 @@ async function createSrsTasksForTopic(
           description: `Automated Spaced Repetition (${r.stage}) for topic read on ${startDateStr}`,
           frequency: { mode: "once", days: [] },
           target: { value: 1, unit: "times" },
-          reminders: [{ time: "09:00", enabled: true }],
           startDate: revDate,
           endDate: null,
           isStudyTask: true,
@@ -97,6 +96,11 @@ function recalculateHabitStreak(habit: any) {
   const doneDatesSet = new Set(doneDatesArr);
   const skippedDatesSet = new Set<string>(
     history.filter((h: any) => h.status === "skipped" || h.status === "rest").map((h: any) => String(h.date)),
+  );
+  const frozenDatesSet = new Set<string>(
+    history
+      .filter((h: any) => h.tier === 2 || h.streakAction === "freeze")
+      .map((h: any) => String(h.date)),
   );
 
   const formatDateStr = (d: Date) => {
@@ -160,7 +164,9 @@ function recalculateHabitStreak(habit: any) {
 
       if (scheduled) {
         if (doneDatesSet.has(currentIso)) {
-          chain++;
+          if (!frozenDatesSet.has(currentIso)) {
+            chain++;
+          }
           evaluatedDates.add(currentIso);
         } else if (skippedDatesSet.has(currentIso)) {
           // Rest Day: streak is preserved
@@ -198,7 +204,9 @@ function recalculateHabitStreak(habit: any) {
 
     if (scheduled) {
       if (doneDatesSet.has(currentIso)) {
-        currentStreak++;
+        if (!frozenDatesSet.has(currentIso)) {
+          currentStreak++;
+        }
       } else if (skippedDatesSet.has(currentIso)) {
         // Rest Day: streak is preserved
       } else {
@@ -615,10 +623,16 @@ export async function POST(req: Request) {
             }
           }
           if (note !== undefined) history[existingIdx].note = note;
+          if (body.wakeTime !== undefined) history[existingIdx].wakeTime = body.wakeTime;
+          if (body.tier !== undefined) {
+            history[existingIdx].tier = body.tier;
+            if (body.tier === 2) history[existingIdx].streakAction = "freeze";
+          }
+          if (body.pts !== undefined) history[existingIdx].pts = body.pts;
 
           const unit = targetObj.unit;
           const isNumericGoal =
-            typeof targetVal === "number" && targetVal > 0 && unit !== "yes_no" && unit !== "boolean";
+            typeof targetVal === "number" && targetVal > 0 && unit !== "yes_no" && unit !== "boolean" && unit !== "time";
           if (isNumericGoal) {
             const currentVal = history[existingIdx].value || 0;
             history[existingIdx].status = currentVal >= targetVal ? "done" : "pending";
@@ -629,7 +643,7 @@ export async function POST(req: Request) {
         const newValue = value !== undefined ? value : newStatus === "done" ? targetVal || 1 : 0;
         let finalStatus = newStatus;
         const unit = targetObj.unit;
-        const isNumericGoal = typeof targetVal === "number" && targetVal > 0 && unit !== "yes_no" && unit !== "boolean";
+        const isNumericGoal = typeof targetVal === "number" && targetVal > 0 && unit !== "yes_no" && unit !== "boolean" && unit !== "time";
         if (isNumericGoal && status !== "toggle") {
           finalStatus = newValue >= targetVal ? "done" : "pending";
         }
@@ -637,7 +651,11 @@ export async function POST(req: Request) {
           date,
           status: finalStatus,
           value: newValue,
-          note: note || "",
+          note: note || (body.wakeTime ? `Wake-Up at ${body.wakeTime}` : ""),
+          wakeTime: body.wakeTime,
+          tier: body.tier,
+          pts: body.pts,
+          streakAction: body.tier === 2 ? "freeze" : undefined,
           ...(body.completedTopics !== undefined ? { completedTopics: body.completedTopics } : {}),
         });
       }
@@ -989,7 +1007,6 @@ export async function POST(req: Request) {
         description,
         frequency,
         target,
-        reminders,
         startDate,
         endDate,
         isStudyTask,
@@ -1035,7 +1052,6 @@ export async function POST(req: Request) {
           description: description || "",
           frequency: frequency || { mode: "daily", days: [] },
           target: cleanTarget,
-          reminders: reminders || [{ time: "08:00", enabled: true }],
           startDate: startDate || new Date().toISOString().split("T")[0],
           endDate: endDate || null,
           isStudyTask: !!isStudyTask,
@@ -1290,7 +1306,6 @@ export async function POST(req: Request) {
         description,
         frequency,
         target,
-        reminders,
         startDate,
         endDate,
         isStudyTask,
@@ -1330,7 +1345,6 @@ export async function POST(req: Request) {
             description: description !== undefined ? description : habit.description,
             frequency: frequency !== undefined ? frequency : habit.frequency,
             target: targetToSave,
-            reminders: reminders !== undefined ? reminders : habit.reminders,
             startDate: newStartDate,
             endDate: endDate !== undefined ? endDate : habit.endDate,
             isStudyTask: isStudyTask !== undefined ? !!isStudyTask : habit.isStudyTask,

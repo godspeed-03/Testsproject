@@ -240,6 +240,9 @@ export default function AnalyticsPage() {
   // Distribution Mode in Velocity Tab: 'subject' vs 'habit'
   const [distributionMode, setDistributionMode] = useState<"subject" | "habit">("subject");
 
+  // Quick view selector for the velocity area
+  const [velocityPanel, setVelocityPanel] = useState<"hours" | "tasks" | "subjects" | "habits">("hours");
+
   // Toggle A: TIME RANGE ('month' | 'alltime')
   const [timeRange, setTimeRange] = useState<"month" | "alltime">("month");
 
@@ -267,7 +270,7 @@ export default function AnalyticsPage() {
   const textTitle = "text-slate-900 dark:text-slate-100";
   const textMuted = "text-slate-500 dark:text-slate-400";
 
-  // Week Navigation Offset State (0 = Current Week, -1 = Last Week, etc.)
+  // Week Navigation Offset State (0 = Current Week, -1 = Last Week, +1 = Next Week, etc.)
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState<boolean>(false);
   const weekDropdownRef = useRef<HTMLDivElement>(null);
@@ -275,11 +278,7 @@ export default function AnalyticsPage() {
   // Click outside listener for custom week dropdown
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        event.target instanceof Node &&
-        weekDropdownRef.current &&
-        !weekDropdownRef.current.contains(event.target)
-      ) {
+      if (event.target instanceof Node && weekDropdownRef.current && !weekDropdownRef.current.contains(event.target)) {
         setIsWeekDropdownOpen(false);
       }
     };
@@ -293,7 +292,10 @@ export default function AnalyticsPage() {
   const subjectDistribution = bd.subjectDistribution || weeklyDoc?.subjectDistribution || [];
   const habitDistribution = bd.habitDistribution || weeklyDoc?.habitDistribution || [];
   const displayWeeklyTotalHours = bd.weeklyTotalHours ?? weeklyDoc?.weeklyTotalHours ?? weeklyDoc?.totalHours ?? 0;
-  const displayDailyAverageHours = bd.dailyAverageHours ?? weeklyDoc?.dailyAverageHours ?? (displayWeeklyTotalHours > 0 ? Number((displayWeeklyTotalHours / 7).toFixed(1)) : 0);
+  const displayDailyAverageHours =
+    bd.dailyAverageHours ??
+    weeklyDoc?.dailyAverageHours ??
+    (displayWeeklyTotalHours > 0 ? Number((displayWeeklyTotalHours / 7).toFixed(1)) : 0);
   const displayConsistencyPct = bd.consistencyPct ?? weeklyDoc?.consistencyPct ?? weeklyDoc?.weeklyScore ?? 0;
   const displayTotalTasksDone = bd.totalTasksDone ?? weeklyDoc?.totalTasksDone ?? weeklyDoc?.completedTopicsCount ?? 0;
   const displayTotalPointsEarned = bd.totalPointsEarned ?? weeklyDoc?.totalPointsEarned;
@@ -523,21 +525,20 @@ export default function AnalyticsPage() {
       )}
 
       {/* HEADER BAR & PRIMARY TAB SWITCHER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
           <h2 className={`text-lg sm:text-xl font-black ${textTitle}`}>Performance & Analytics</h2>
-          <p className={`text-xs ${textMuted}`}>
+          <p className={`hidden sm:block text-xs ${textMuted}`}>
             Track real study hours, daily velocity, subject distribution, and habit execution metrics.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-
+        <div className="flex items-center gap-3 shrink-0">
           <button
             type="button"
             onClick={handleRecalculate}
             disabled={recalculating}
-            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all shrink-0 active:scale-95 cursor-pointer shadow-2xs"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 transition-all shrink-0 active:scale-95 cursor-pointer shadow-2xs"
             title="Recalculate DB"
           >
             <RotateCcw size={15} className={recalculating ? "animate-spin text-accent-primary" : ""} />
@@ -556,355 +557,380 @@ export default function AnalyticsPage() {
             </div>
           ) : (
             <>
-              {/* Top 4 KPI Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-primary/50 transition-all">
-              <div className="flex items-center justify-between text-accent-primary">
-                <span className="text-xs font-extrabold uppercase tracking-wider">Weekly Total</span>
-                <div className="w-7 h-7 rounded-lg bg-accent-light flex items-center justify-center">
-                  <Clock size={15} />
-                </div>
-              </div>
-              <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>
-                {displayWeeklyTotalHours} <span className="text-xs font-bold text-slate-500 font-sans">hrs</span>
-              </p>
-              <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                <TrendingUp size={12} /> Live DB Logged
-              </p>
-            </div>
-
-            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-amber-500/50 transition-all">
-              <div className="flex items-center justify-between text-amber-600 dark:text-amber-400">
-                <span className="text-xs font-extrabold uppercase tracking-wider">Daily Avg</span>
-                <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                  <Zap size={15} />
-                </div>
-              </div>
-              <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>
-                {displayDailyAverageHours} <span className="text-xs font-bold text-slate-500 font-sans">hrs/day</span>
-              </p>
-              <p className="text-[11px] font-bold text-amber-700 dark:text-amber-400">Target: 8.0 hrs/day</p>
-            </div>
-
-            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-emerald-500/50 transition-all">
-              <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400">
-                <span className="text-xs font-extrabold uppercase tracking-wider">Weekly Score</span>
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                  <Award size={15} />
-                </div>
-              </div>
-              <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>{displayConsistencyPct}%</p>
-              <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
-                {displayTotalPointsEarned !== undefined && displayTotalPossiblePoints !== undefined
-                  ? `${displayTotalPointsEarned} / ${displayTotalPossiblePoints} pts earned 🎯`
-                  : 'Weighted Target Completion 🎯'}
-              </p>
-            </div>
-
-            <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-secondary/50 transition-all">
-              <div className="flex items-center justify-between text-accent-secondary">
-                <span className="text-xs font-extrabold uppercase tracking-wider">Tasks & Habits</span>
-                <div className="w-7 h-7 rounded-lg bg-accent-secondary-light flex items-center justify-center">
-                  <CheckCircle size={15} />
-                </div>
-              </div>
-              <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>
-                {displayTotalTasksDone} <span className="text-xs font-bold text-slate-500 font-sans">completed</span>
-              </p>
-              <p className="text-[11px] font-bold text-accent-secondary">7-Day Completion Logs</p>
-            </div>
-          </div>
-
-          {/* Main Visual Velocity Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* 7-Day Velocity Chart (Theme Adaptive Light / Dark) */}
-            <div className={`lg:col-span-2 p-5 sm:p-6 rounded-3xl ${cardBg} space-y-5 shadow-xs`}>
-              {/* Row 1: Header Title & Top-Right Week Selector */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className={`font-black text-lg sm:text-xl ${textTitle}`}>7-Day Study Velocity Chart</h3>
-                  <p className={`text-xs ${textMuted} font-bold`}>
-                    {velocityMetric === "hours"
-                      ? "Daily Study Hours vs 8.0 hr Benchmark Target"
-                      : "Completed Tasks & Revisions per Day"}
+              {/* Top 4 KPI Cards (Dynamic Theme Accent Variables: Primary, Secondary, Tertiary, Quaternary) */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+                {/* KPI 1: Weekly Total (Primary Accent) */}
+                <div className="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-primary/50 transition-all cursor-pointer"
+                     onClick={() => { setVelocityPanel("hours"); setVelocityMetric("hours"); setDistributionMode("subject"); }}>
+                  <div className="flex items-center justify-between text-accent-primary">
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">Weekly Total</span>
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-accent-light flex items-center justify-center">
+                      <Clock size={14} className="sm:hidden" />
+                      <Clock size={15} className="hidden sm:block" />
+                    </div>
+                  </div>
+                  <p className={`text-xl sm:text-3xl font-black font-display ${textTitle}`}>
+                    {displayWeeklyTotalHours}{" "}
+                    <span className="text-[11px] sm:text-xs font-bold text-slate-500 font-sans">hrs</span>
+                  </p>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-accent-primary flex items-center gap-1">
+                    <TrendingUp size={11} /> Live DB Logged
                   </p>
                 </div>
 
-                {/* Interactive Week Switcher Controls (Unified Navigator Pill) */}
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setWeekOffset((prev) => prev - 1)}
-                    className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-white dark:hover:bg-slate-800 transition-all cursor-pointer"
-                    title="Previous Week"
-                  >
-                    <ChevronLeft size={14} />
-                  </button>
-
-                  <span className="text-xs font-black text-slate-800 dark:text-slate-200 px-2 flex items-center gap-1.5 whitespace-nowrap">
-                    <Calendar size={13} className="text-accent-secondary shrink-0" />
-                    <span>
-                      {(weeklyDoc?.availableWeeks || []).find((w: any) => w.weekKey === weeklyDoc?.weekKey)?.label || "Current Week"}
-                    </span>
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={() => setWeekOffset((prev) => Math.min(0, prev + 1))}
-                    disabled={weekOffset >= 0}
-                    className={`p-1.5 rounded-xl transition-all ${
-                      weekOffset >= 0
-                        ? 'opacity-30 cursor-not-allowed text-slate-400'
-                        : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-white dark:hover:bg-slate-800 cursor-pointer'
-                    }`}
-                    title="Next Week"
-                  >
-                    <ChevronRight size={14} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Row 2: Metric Toggle (Hours vs Tasks) */}
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/60">
-                <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setVelocityMetric("hours")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                      velocityMetric === "hours"
-                        ? "bg-accent-gradient text-white shadow-xs"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                    }`}
-                  >
-                    Hours (hrs)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setVelocityMetric("tasks")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                      velocityMetric === "tasks"
-                        ? "bg-accent-gradient text-white shadow-xs"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                    }`}
-                  >
-                    Tasks (count)
-                  </button>
-                </div>
-              </div>
-
-              {/* Dynamic Apex Chart (Area Line or Bar) */}
-              {weeklyData.length > 0 ? (
-                (() => {
-                  const chartSeriesData = weeklyData.map((d: any) =>
-                    velocityMetric === "hours" ? Number(d.hours || 0) : Number(d.tasksCount || 0),
-                  );
-                  const maxVal = Math.max(...chartSeriesData, 0);
-                  const computedYMax =
-                    velocityMetric === "hours"
-                      ? maxVal > 0
-                        ? maxVal <= 2
-                          ? maxVal + 0.8
-                          : Math.ceil(maxVal * 1.25)
-                        : 8
-                      : maxVal > 0
-                        ? maxVal + 1
-                        : 5;
-
-                  const chartColor = velocityMetric === "hours" ? "var(--primary-accent, var(--accent))" : "var(--accent-secondary)";
-
-                  return (
-                    <div className="pt-2">
-                      <ReactApexChart
-                        type={velocityChartStyle}
-                        height={230}
-                        series={[
-                          {
-                            name: velocityMetric === "hours" ? "Study Hours" : "Tasks Completed",
-                            data: chartSeriesData,
-                          },
-                        ]}
-                        options={{
-                          chart: {
-                            type: velocityChartStyle,
-                            toolbar: { show: false },
-                            fontFamily: "inherit",
-                            background: "transparent",
-                            animations: { enabled: true, speed: 300 },
-                          },
-                          stroke: {
-                            show: true,
-                            curve: "smooth",
-                            width: velocityChartStyle === "area" ? 3.5 : 2,
-                          },
-                          fill: {
-                            type: velocityChartStyle === "area" ? "gradient" : "solid",
-                            opacity: velocityChartStyle === "area" ? 1 : 1,
-                            gradient: {
-                              shadeIntensity: 1,
-                              opacityFrom: 0.45,
-                              opacityTo: 0.05,
-                              stops: [0, 90, 100],
-                            },
-                          },
-                          markers: {
-                            size: velocityChartStyle === "area" ? 5 : 0,
-                            colors: [chartColor],
-                            strokeColors: "#fff",
-                            strokeWidth: 2,
-                            hover: { size: 7 },
-                          },
-                          plotOptions: {
-                            bar: {
-                              borderRadius: 8,
-                              borderRadiusApplication: "end",
-                              columnWidth: "36%",
-                              distributed: false,
-                              dataLabels: {
-                                position: "top",
-                              },
-                            },
-                          },
-                          colors: [chartColor],
-                          dataLabels: {
-                            enabled: true,
-                            formatter: (val: number) =>
-                              velocityMetric === "hours" ? (val > 0 ? `${val}h` : "") : val > 0 ? `${val}` : "",
-                            style: {
-                              fontSize: "11px",
-                              fontWeight: "800",
-                              colors: [chartColor],
-                            },
-                            offsetY: velocityChartStyle === "bar" ? -22 : -10,
-                          },
-                          xaxis: {
-                            categories: weeklyData.map((d: any) => d.day),
-                            axisBorder: { show: false },
-                            axisTicks: { show: false },
-                            labels: {
-                              style: {
-                                colors: "#64748b",
-                                fontSize: "12px",
-                                fontWeight: "700",
-                              },
-                            },
-                          },
-                          yaxis: {
-                            min: 0,
-                            max: computedYMax,
-                            forceNiceScale: false,
-                            decimalsInFloat: velocityMetric === "hours" ? 1 : 0,
-                            labels: {
-                              style: {
-                                colors: "#64748b",
-                                fontSize: "11px",
-                                fontWeight: "600",
-                              },
-                              formatter: (val: number) =>
-                                velocityMetric === "hours"
-                                  ? `${val >= 0 ? Number(val.toFixed(1)) : 0}h`
-                                  : `${Math.max(0, Math.floor(val))}`,
-                            },
-                          },
-                          grid: {
-                            borderColor: "#f1f5f9",
-                            strokeDashArray: 4,
-                          },
-                          tooltip: {
-                            theme: "dark",
-                            y: {
-                              formatter: (val: number) =>
-                                velocityMetric === "hours" ? `${val} hours logged` : `${val} tasks completed`,
-                            },
-                          },
-                        }}
-                      />
+                {/* KPI 2: Daily Avg (Secondary Accent) */}
+                <div className="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-secondary/50 transition-all cursor-pointer"
+                     onClick={() => { setVelocityPanel("tasks"); setVelocityMetric("tasks"); setDistributionMode("habit"); }}>
+                  <div className="flex items-center justify-between text-accent-secondary">
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">Daily Avg</span>
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-accent-secondary-light flex items-center justify-center">
+                      <Zap size={14} className="sm:hidden" />
+                      <Zap size={15} className="hidden sm:block" />
                     </div>
-                  );
-                })()
-              ) : (
-                <div className="p-12 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
-                  <p className="text-xs font-bold text-slate-500">No weekly study velocity logged in DB yet.</p>
+                  </div>
+                  <p className={`text-xl sm:text-3xl font-black font-display ${textTitle}`}>
+                    {displayDailyAverageHours}{" "}
+                    <span className="text-[11px] sm:text-xs font-bold text-slate-500 font-sans">hrs/day</span>
+                  </p>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-accent-secondary">Target: 8.0 hrs/day</p>
                 </div>
-              )}
-            </div>
 
-            {/* Subject vs Habit Distribution Card */}
-            <div className={`p-5 sm:p-6 rounded-3xl border ${cardBg} shadow-sm flex flex-col justify-between`}>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className={`font-black text-base ${textTitle} flex items-center gap-2`}>
-                    <PieChart size={18} className="text-accent-primary" /> Distribution
-                  </h4>
+                {/* KPI 3: Weekly Score (Tertiary Accent) */}
+                <div className="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-tertiary/50 transition-all cursor-pointer"
+                     onClick={() => { setVelocityPanel("subjects"); setDistributionMode("subject"); }}>
+                  <div className="flex items-center justify-between text-accent-tertiary">
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">Weekly Score</span>
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-accent-tertiary/15 flex items-center justify-center">
+                      <Award size={14} className="sm:hidden" />
+                      <Award size={15} className="hidden sm:block" />
+                    </div>
+                  </div>
+                  <p className={`text-xl sm:text-3xl font-black font-display ${textTitle}`}>
+                    {displayConsistencyPct}%
+                  </p>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-accent-tertiary truncate">
+                    {displayTotalPointsEarned !== undefined && displayTotalPossiblePoints !== undefined
+                      ? `${displayTotalPointsEarned} / ${displayTotalPossiblePoints} pts`
+                      : "Weighted Target"}
+                  </p>
+                </div>
 
-                  {/* Distribution Switcher: Subjects vs Habits */}
-                  <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+                {/* KPI 4: Tasks & Habits (Quaternary Accent) */}
+                <div className="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-quaternary/50 transition-all cursor-pointer"
+                     onClick={() => { setVelocityPanel("habits"); setDistributionMode("habit"); }}>
+                  <div className="flex items-center justify-between text-accent-quaternary">
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider">Tasks & Habits</span>
+                    <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-accent-quaternary/15 flex items-center justify-center">
+                      <CheckCircle size={14} className="sm:hidden" />
+                      <CheckCircle size={15} className="hidden sm:block" />
+                    </div>
+                  </div>
+                  <p className={`text-xl sm:text-3xl font-black font-display ${textTitle}`}>
+                    {displayTotalTasksDone}{" "}
+                    <span className="text-[11px] sm:text-xs font-bold text-slate-500 font-sans">done</span>
+                  </p>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-accent-quaternary">7-Day Completion Logs</p>
+                </div>
+              </div>
+
+              {/* Quick view segment switcher pill bar (Dynamically styled per active theme variables) */}
+              <div className="grid grid-cols-4 gap-1 p-1 sm:p-1.5 bg-slate-100 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs w-full max-w-full sm:max-w-md">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVelocityPanel("hours");
+                    setVelocityMetric("hours");
+                    setDistributionMode("subject");
+                  }}
+                  className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-black transition-all whitespace-nowrap text-center flex items-center justify-center ${
+                    velocityPanel === "hours"
+                      ? "bg-accent-gradient text-white shadow-neon-glow"
+                      : "text-slate-500 dark:text-slate-400 hover:text-accent-primary"
+                  }`}
+                >
+                  Hours
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVelocityPanel("tasks");
+                    setVelocityMetric("tasks");
+                    setDistributionMode("habit");
+                  }}
+                  className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-black transition-all whitespace-nowrap text-center flex items-center justify-center ${
+                    velocityPanel === "tasks"
+                      ? "bg-accent-secondary text-white shadow-xs"
+                      : "text-slate-500 dark:text-slate-400 hover:text-accent-secondary"
+                  }`}
+                >
+                  Tasks
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVelocityPanel("subjects");
+                    setDistributionMode("subject");
+                  }}
+                  className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-black transition-all whitespace-nowrap text-center flex items-center justify-center ${
+                    velocityPanel === "subjects"
+                      ? "bg-accent-tertiary text-white shadow-xs"
+                      : "text-slate-500 dark:text-slate-400 hover:text-accent-tertiary"
+                  }`}
+                >
+                  Subjects
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVelocityPanel("habits");
+                    setDistributionMode("habit");
+                  }}
+                  className={`py-1.5 px-1 sm:px-3 rounded-xl text-[11px] sm:text-xs font-black transition-all whitespace-nowrap text-center flex items-center justify-center ${
+                    velocityPanel === "habits"
+                      ? "bg-accent-quaternary text-white shadow-xs"
+                      : "text-slate-500 dark:text-slate-400 hover:text-accent-quaternary"
+                  }`}
+                >
+                  Habits
+                </button>
+              </div>
+
+              {/* Main Visual Velocity Panel */}
+              <div className={`p-4 sm:p-6 rounded-3xl ${cardBg} space-y-4 sm:space-y-5 shadow-xs`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className={`font-black text-base sm:text-xl ${textTitle}`}>
+                      {velocityPanel === "subjects" || velocityPanel === "habits"
+                        ? "Distribution"
+                        : "7-Day Study Velocity Chart"}
+                    </h3>
+                    <p className={`text-[11px] sm:text-xs ${textMuted} font-bold`}>
+                      {velocityPanel === "hours"
+                        ? "Daily Study Hours vs 8.0 hr Benchmark Target"
+                        : velocityPanel === "tasks"
+                          ? "Completed Tasks & Revisions per Day"
+                          : velocityPanel === "subjects"
+                            ? "Subject-wise study time distribution"
+                            : "Habit-wise completion distribution"}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between sm:justify-start gap-1 bg-slate-100 dark:bg-slate-950 p-1 sm:p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs shrink-0 self-stretch sm:self-auto">
                     <button
                       type="button"
-                      onClick={() => setDistributionMode("subject")}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                        distributionMode === "subject"
-                          ? "bg-accent-gradient text-white shadow-xs"
-                          : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                      }`}
+                      onClick={() => setWeekOffset((prev) => prev - 1)}
+                      className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-white dark:hover:bg-slate-800 transition-all cursor-pointer"
+                      title="Previous Week"
                     >
-                      Subjects
+                      <ChevronLeft size={14} />
                     </button>
 
+                    <span className="text-[11px] sm:text-xs font-black text-slate-800 dark:text-slate-200 px-2 flex items-center justify-center gap-1.5 whitespace-nowrap">
+                      <Calendar size={13} className={`shrink-0 ${
+                        velocityPanel === "hours"
+                          ? "text-accent-primary"
+                          : velocityPanel === "tasks"
+                            ? "text-accent-secondary"
+                            : velocityPanel === "subjects"
+                              ? "text-accent-tertiary"
+                              : "text-accent-quaternary"
+                      }`} />
+                      <span>
+                        {weeklyDoc?.weekLabel ||
+                          (weeklyDoc?.availableWeeks || []).find((w: any) => w.weekKey === weeklyDoc?.weekKey)?.label ||
+                          "Current Week"}
+                      </span>
+                    </span>
+
                     <button
                       type="button"
-                      onClick={() => setDistributionMode("habit")}
-                      className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                        distributionMode === "habit"
-                          ? "bg-accent-gradient text-white shadow-xs"
-                          : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                      }`}
+                      onClick={() => setWeekOffset((prev) => prev + 1)}
+                      className="p-1.5 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-white dark:hover:bg-slate-800 transition-all cursor-pointer"
+                      title="Next Week"
                     >
-                      Habits
+                      <ChevronRight size={14} />
                     </button>
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-1 max-h-72 overflow-y-auto pr-1">
-                  {(distributionMode === "subject"
-                    ? weeklyDoc?.subjectDistribution || []
-                    : weeklyDoc?.habitDistribution || []
-                  ).length > 0 ? (
-                    (distributionMode === "subject"
-                      ? weeklyDoc?.subjectDistribution || []
-                      : weeklyDoc?.habitDistribution || []
-                    ).map((item: any) => {
-                      const barColorClass = distributionMode === "subject" ? "bg-accent-primary" : "bg-accent-secondary";
+                {velocityPanel === "hours" || velocityPanel === "tasks" ? (
+                  weeklyData.length > 0 ? (
+                    (() => {
+                      const chartSeriesData = weeklyData.map((d: any) =>
+                        velocityMetric === "hours" ? Number(d.hours || 0) : Number(d.tasksCount || 0),
+                      );
+                      const maxVal = Math.max(...chartSeriesData, 0);
+                      const computedYMax =
+                        velocityMetric === "hours"
+                          ? maxVal > 0
+                            ? maxVal <= 2
+                              ? maxVal + 0.8
+                              : Math.ceil(maxVal * 1.25)
+                            : 8
+                          : maxVal > 0
+                            ? maxVal + 1
+                            : 5;
+
+                      const chartColor =
+                        velocityMetric === "hours" ? "var(--primary-accent, var(--accent))" : "var(--accent-secondary)";
+
                       return (
-                        <div key={item.subject} className="space-y-1">
-                          <div className="flex justify-between text-xs">
-                            <span className={`font-bold ${textTitle} truncate pr-2`}>{item.subject}</span>
-                            <span className="font-black shrink-0">
-                              {distributionMode === "subject" ? item.hours : `${item.hours} (${item.pct}%)`}
-                            </span>
-                          </div>
-                          <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                            <div className={`h-full rounded-full ${barColorClass}`} style={{ width: `${Math.min(100, item.pct)}%` }} />
-                          </div>
+                        <div className="pt-2">
+                          <ReactApexChart
+                            type={velocityChartStyle}
+                            height={300}
+                            series={[
+                              {
+                                name: velocityMetric === "hours" ? "Study Hours" : "Tasks Completed",
+                                data: chartSeriesData,
+                              },
+                            ]}
+                            options={{
+                              chart: {
+                                type: velocityChartStyle,
+                                toolbar: { show: false },
+                                fontFamily: "inherit",
+                                background: "transparent",
+                                animations: { enabled: true, speed: 300 },
+                              },
+                              stroke: {
+                                show: true,
+                                curve: "smooth",
+                                width: velocityChartStyle === "area" ? 3.5 : 2,
+                              },
+                              fill: {
+                                type: velocityChartStyle === "area" ? "gradient" : "solid",
+                                opacity: velocityChartStyle === "area" ? 1 : 1,
+                                gradient: {
+                                  shadeIntensity: 1,
+                                  opacityFrom: 0.45,
+                                  opacityTo: 0.05,
+                                  stops: [0, 90, 100],
+                                },
+                              },
+                              markers: {
+                                size: velocityChartStyle === "area" ? 5 : 0,
+                                colors: [chartColor],
+                                strokeColors: "#fff",
+                                strokeWidth: 2,
+                                hover: { size: 7 },
+                              },
+                              plotOptions: {
+                                bar: {
+                                  borderRadius: 8,
+                                  borderRadiusApplication: "end",
+                                  columnWidth: "36%",
+                                  distributed: false,
+                                  dataLabels: {
+                                    position: "top",
+                                  },
+                                },
+                              },
+                              colors: [chartColor],
+                              dataLabels: {
+                                enabled: true,
+                                formatter: (val: number) =>
+                                  velocityMetric === "hours" ? (val > 0 ? `${val}h` : "") : val > 0 ? `${val}` : "",
+                                style: {
+                                  fontSize: "11px",
+                                  fontWeight: "800",
+                                  colors: [chartColor],
+                                },
+                                offsetY: velocityChartStyle === "bar" ? -22 : -10,
+                              },
+                              xaxis: {
+                                categories: weeklyData.map((d: any) => d.day),
+                                axisBorder: { show: false },
+                                axisTicks: { show: false },
+                                labels: {
+                                  style: {
+                                    colors: "#64748b",
+                                    fontSize: "12px",
+                                    fontWeight: "700",
+                                  },
+                                },
+                              },
+                              yaxis: {
+                                min: 0,
+                                max: computedYMax,
+                                forceNiceScale: false,
+                                decimalsInFloat: velocityMetric === "hours" ? 1 : 0,
+                                labels: {
+                                  style: {
+                                    colors: "#64748b",
+                                    fontSize: "11px",
+                                    fontWeight: "600",
+                                  },
+                                  formatter: (val: number) =>
+                                    velocityMetric === "hours"
+                                      ? `${val >= 0 ? Number(val.toFixed(1)) : 0}h`
+                                      : `${Math.max(0, Math.floor(val))}`,
+                                },
+                              },
+                              grid: {
+                                borderColor: "#f1f5f9",
+                                strokeDashArray: 4,
+                              },
+                              tooltip: {
+                                theme: "dark",
+                                y: {
+                                  formatter: (val: number) =>
+                                    velocityMetric === "hours" ? `${val} hours logged` : `${val} tasks completed`,
+                                },
+                              },
+                            }}
+                          />
                         </div>
                       );
-                    })
+                    })()
                   ) : (
-                    <div className="p-8 text-center text-xs text-slate-400 font-bold italic">
-                      No distribution data recorded for this week.
+                    <div className="p-12 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                      <p className="text-xs font-bold text-slate-500">No weekly study velocity logged in DB yet.</p>
                     </div>
-                  )}
-                </div>
+                  )
+                ) : (
+                  <div className="space-y-3 pt-1 max-h-90 overflow-y-auto pr-1">
+                    {(velocityPanel === "subjects" ? subjectDistribution : habitDistribution).length > 0 ? (
+                      (velocityPanel === "subjects" ? subjectDistribution : habitDistribution).map((item: any) => {
+                        const barColorClass =
+                          velocityPanel === "subjects" ? "bg-accent-tertiary" : "bg-accent-quaternary";
+                        return (
+                          <div key={item.subject} className="space-y-1.5">
+                            <div className="flex justify-between text-xs gap-3">
+                              <span className={`font-bold ${textTitle} truncate pr-2`}>{item.subject}</span>
+                              <span className="font-black shrink-0 whitespace-nowrap">
+                                {velocityPanel === "subjects" ? item.hours : `${item.hours} (${item.pct}%)`}
+                              </span>
+                            </div>
+                            <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${barColorClass}`}
+                                style={{ width: `${Math.min(100, item.pct)}%` }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="p-12 text-center border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl">
+                        <p className="text-xs font-bold text-slate-500">No distribution data recorded for this week.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
 
-          {/* Full Width Live Sync Banner matching design reference */}
-          <div className="p-4 rounded-2xl bg-accent-primary/10 border border-accent-primary/20 flex items-center gap-3 text-accent-primary text-xs font-bold shadow-2xs">
-            <Sparkles size={18} className="text-accent-primary shrink-0 animate-pulse" />
-            <span>
-              Automatic analytics calculations update live after every study block logged in the Focus Timer or Agenda!
-            </span>
-          </div>
+              {/* Full Width Live Sync Banner matching design reference */}
+              <div className="p-4 rounded-2xl bg-accent-primary/10 border border-accent-primary/20 flex items-center gap-3 text-accent-primary text-xs font-bold shadow-2xs">
+                <Sparkles size={18} className="text-accent-primary shrink-0 animate-pulse" />
+                <span>
+                  Automatic analytics calculations update live after every study block logged in the Focus Timer or
+                  Agenda!
+                </span>
+              </div>
             </>
           )}
         </div>

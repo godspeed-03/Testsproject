@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   CheckSquare,
   Flame,
@@ -25,25 +25,21 @@ import {
   Clock,
   Check,
   Edit3,
-  FileCode
-} from 'lucide-react';
-import { useTracker, getTargetGoalLabel, calculateHabitStreak } from './TrackerContext';
-import ShadcnDatePicker from '@/components/ui/ShadcnDatePicker';
-import ShadcnSelect from '@/components/ui/ShadcnSelect';
-import ShadcnMultiSelect from '@/components/ui/ShadcnMultiSelect';
-import ShadcnTimePicker from '@/components/ui/ShadcnTimePicker';
-import TimetableCodeEditorModal from '@/components/TimetableCodeEditorModal';
-import BatchRevisionCompletionModal from '@/components/dashboard/BatchRevisionCompletionModal';
-import {
-  SUBJECT_COLOR_OPTIONS,
-  NON_SUBJECT_COLOR_OPTIONS,
-  getSubjectTheme
-} from '@/lib/subjectThemeMap';
+  FileCode,
+} from "lucide-react";
+import { useTracker, getTargetGoalLabel, calculateHabitStreak } from "./TrackerContext";
+import ShadcnDatePicker from "@/components/ui/ShadcnDatePicker";
+import ShadcnSelect from "@/components/ui/ShadcnSelect";
+import ShadcnMultiSelect from "@/components/ui/ShadcnMultiSelect";
+import ShadcnTimePicker from "@/components/ui/ShadcnTimePicker";
+import TimetableCodeEditorModal from "@/components/TimetableCodeEditorModal";
+import BatchRevisionCompletionModal from "@/components/dashboard/BatchRevisionCompletionModal";
+import { SUBJECT_COLOR_OPTIONS, NON_SUBJECT_COLOR_OPTIONS, getSubjectTheme } from "@/lib/subjectThemeMap";
 function DailyTargetCard({
   todayItems,
   selectedDate,
   cardBg,
-  textMuted
+  textMuted,
 }: {
   todayItems: any[];
   selectedDate: string;
@@ -51,8 +47,8 @@ function DailyTargetCard({
   textMuted: string;
 }) {
   const isTimeBasedUnit = (h: any) => {
-    const unit = (h.target?.unit || '').toLowerCase().trim();
-    return ['hours', 'hrs', 'hour', 'mins', 'minutes', 'min', 'minute'].includes(unit);
+    const unit = (h.target?.unit || "").toLowerCase().trim();
+    return ["hours", "hrs", "hour", "mins", "minutes", "min", "minute"].includes(unit);
   };
 
   const totalTodayLoggedHours = todayItems.reduce((acc: number, h: any) => {
@@ -62,41 +58,41 @@ function DailyTargetCard({
     if (!entry) return acc;
 
     const val = Number(entry.value || 0);
-    if (val <= 0 && entry.status !== 'done') return acc;
+    if (val <= 0 && entry.status !== "done") return acc;
 
-    const unit = (h.target?.unit || '').toLowerCase().trim();
-    const effectiveVal = val > 0 ? val : (entry.status === 'done' ? Number(h.target?.value || 0) : 0);
+    const unit = (h.target?.unit || "").toLowerCase().trim();
+    const effectiveVal = val > 0 ? val : entry.status === "done" ? Number(h.target?.value || 0) : 0;
 
-    if (['mins', 'minutes', 'min', 'minute'].includes(unit)) {
+    if (["mins", "minutes", "min", "minute"].includes(unit)) {
       return acc + effectiveVal / 60;
     }
     return acc + effectiveVal;
   }, 0);
 
   const formatHoursAndMins = (hrsDecimal: number) => {
-    if (hrsDecimal <= 0) return '0 mins';
+    if (hrsDecimal <= 0) return "0 mins";
     const totalMins = Math.round(hrsDecimal * 60);
     const h = Math.floor(totalMins / 60);
     const m = totalMins % 60;
     if (h > 0 && m > 0) return `${h} hr ${m} mins`;
-    if (h > 0) return `${h} hr${h > 1 ? 's' : ''}`;
+    if (h > 0) return `${h} hr${h > 1 ? "s" : ""}`;
     return `${m} mins`;
   };
 
   const totalTodayTargetHours = todayItems.reduce((acc: number, h: any) => {
     if (!isTimeBasedUnit(h)) return acc;
 
-    const unit = (h.target?.unit || '').toLowerCase().trim();
+    const unit = (h.target?.unit || "").toLowerCase().trim();
     const tgt = Number(h.target?.value || 0);
 
-    if (['mins', 'minutes', 'min', 'minute'].includes(unit)) {
+    if (["mins", "minutes", "min", "minute"].includes(unit)) {
       return acc + tgt / 60;
     }
     return acc + tgt;
   }, 0);
 
   const doneCount = todayItems.filter((h: any) =>
-    (h.history || []).some((hist: any) => hist.date === selectedDate && hist.status === 'done')
+    (h.history || []).some((hist: any) => hist.date === selectedDate && hist.status === "done"),
   ).length;
 
   return (
@@ -115,14 +111,15 @@ function DailyTargetCard({
           <div
             className="h-full bg-accent-quaternary transition-all duration-500"
             style={{
-              width: `${todayItems.length > 0 ? (doneCount / todayItems.length) * 100 : 0}%`
+              width: `${todayItems.length > 0 ? (doneCount / todayItems.length) * 100 : 0}%`,
             }}
           />
         </div>
         <div className="flex justify-between text-xs font-bold pt-1.5 border-t border-slate-100 dark:border-slate-800/80">
           <span className={textMuted}>Hours Read Today</span>
           <span className="text-accent-quaternary font-black font-display">
-            {formatHoursAndMins(totalTodayLoggedHours)} {totalTodayTargetHours > 0 ? `/ ${formatHoursAndMins(totalTodayTargetHours)}` : ''}
+            {formatHoursAndMins(totalTodayLoggedHours)}{" "}
+            {totalTodayTargetHours > 0 ? `/ ${formatHoursAndMins(totalTodayTargetHours)}` : ""}
           </span>
         </div>
       </div>
@@ -132,11 +129,13 @@ function DailyTargetCard({
 
 export default function TrackerLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const isAgendaRoute = pathname === "/tracker/agenda";
   const {
     habits,
     lists,
     loading,
     saving,
+
     todayItems,
     selectedDate,
     showCreateModal,
@@ -222,42 +221,45 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     handleDeleteHabit,
     handleOpenCreateModal,
     getFilteredCategorySubjects,
-    fetchTrackerData
+    fetchTrackerData,
   } = useTracker();
 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [activeEmojiTab, setActiveEmojiTab] = useState('all');
+  const [activeEmojiTab, setActiveEmojiTab] = useState("all");
   const [showCodeModal, setShowCodeModal] = useState(false);
 
   useEffect(() => {
     const handleOpen = () => {
       handleOpenCreateModal();
     };
-    window.addEventListener('open-create-modal', handleOpen);
+    window.addEventListener("open-create-modal", handleOpen);
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('create') === 'true') {
+      if (params.get("create") === "true") {
         handleOpenCreateModal();
-        window.history.replaceState({}, '', window.location.pathname);
+        window.history.replaceState({}, "", window.location.pathname);
       }
     }
 
-    return () => window.removeEventListener('open-create-modal', handleOpen);
+    return () => window.removeEventListener("open-create-modal", handleOpen);
   }, [handleOpenCreateModal]);
 
-
-
-  const cardBg = 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80';
-  const textTitle = 'text-slate-900 dark:text-slate-100';
-  const textMuted = 'text-slate-500 dark:text-slate-400';
+  const cardBg = "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80";
+  const textTitle = "text-slate-900 dark:text-slate-100";
+  const textMuted = "text-slate-500 dark:text-slate-400";
 
   const navTabs = [
-    { href: '/tracker/agenda', label: 'Today Agenda', icon: CheckSquare, badge: todayItems.length },
-    { href: '/tracker/habits', label: 'Habits & Streaks', icon: Flame, badge: habits.filter((h: any) => h.type === 'habit').length },
-    { href: '/tracker/calendar', label: 'Month Calendar', icon: CalendarIcon },
-    { href: '/tracker/analytics', label: 'Analytics & Scores', icon: BarChart3 },
-    { href: '/tracker/focus', label: 'Focus Timer', icon: TimerIcon }
+    { href: "/tracker/agenda", label: "Today Agenda", icon: CheckSquare, badge: todayItems.length },
+    {
+      href: "/tracker/habits",
+      label: "Habits & Streaks",
+      icon: Flame,
+      badge: habits.filter((h: any) => h.type === "habit").length,
+    },
+    { href: "/tracker/calendar", label: "Month Calendar", icon: CalendarIcon },
+    { href: "/tracker/analytics", label: "Analytics & Scores", icon: BarChart3 },
+    { href: "/tracker/focus", label: "Focus Timer", icon: TimerIcon },
   ];
 
   return (
@@ -277,7 +279,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
           <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={() => handleOpenCreateModal('task')}
+              onClick={() => handleOpenCreateModal("task")}
               className="hidden sm:flex bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl items-center justify-center gap-1.5 shadow-md transition-all shrink-0 active:scale-95 cursor-pointer"
             >
               <Plus size={15} /> New Habit or Task
@@ -298,15 +300,17 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 aria-label={tab.label}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-black transition-all ${
                   active
-                    ? 'bg-accent-gradient text-white shadow-neon-glow'
-                    : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800'
+                    ? "bg-accent-gradient text-white shadow-neon-glow"
+                    : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800"
                 }`}
               >
                 <Icon size={18} strokeWidth={2.2} />
                 {tab.badge !== undefined && (
                   <span
                     className={`px-1.5 py-0.2 rounded-full text-[10px] font-black font-display ${
-                      active ? 'bg-white/30 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                      active
+                        ? "bg-white/30 text-white"
+                        : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                     }`}
                   >
                     {tab.badge}
@@ -318,9 +322,16 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
         </div>
 
         {/* Mobile Daily Target Stats Card (<768px) */}
-        <div className="md:hidden mt-2">
-          <DailyTargetCard todayItems={todayItems} selectedDate={selectedDate} cardBg={cardBg} textMuted={textMuted} />
-        </div>
+        {isAgendaRoute && (
+          <div className="md:hidden mt-2">
+            <DailyTargetCard
+              todayItems={todayItems}
+              selectedDate={selectedDate}
+              cardBg={cardBg}
+              textMuted={textMuted}
+            />
+          </div>
+        )}
 
         {/* Sidebar + Content Grid Layout */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-5 mt-3 md:mt-0">
@@ -329,15 +340,15 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             <div className={`p-2.5 rounded-2xl border ${cardBg} space-y-1 shadow-xs`}>
               {navTabs.map((tab) => {
                 const Icon = tab.icon;
-                const active = pathname === tab.href || (pathname === '/tracker' && tab.href === '/tracker/agenda');
+                const active = pathname === tab.href || (pathname === "/tracker" && tab.href === "/tracker/agenda");
                 return (
                   <Link
                     key={tab.href}
                     href={tab.href}
                     className={`w-full flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-xs font-extrabold transition-all ${
                       active
-                        ? 'bg-accent-gradient text-white shadow-neon-glow'
-                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                        ? "bg-accent-gradient text-white shadow-neon-glow"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                     }`}
                   >
                     <div className="flex items-center gap-2.5">
@@ -347,7 +358,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     {tab.badge !== undefined && (
                       <span
                         className={`px-1.5 py-0.5 rounded-full text-[10px] font-black font-display ${
-                          active ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                          active
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                         }`}
                       >
                         {tab.badge}
@@ -359,7 +372,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             </div>
 
             {/* Desktop Quick Mini Stats Card */}
-            <DailyTargetCard todayItems={todayItems} selectedDate={selectedDate} cardBg={cardBg} textMuted={textMuted} />
+            
+              <DailyTargetCard
+                todayItems={todayItems}
+                selectedDate={selectedDate}
+                cardBg={cardBg}
+                textMuted={textMuted}
+              />
+            
           </aside>
 
           {/* Main Content Area */}
@@ -390,7 +410,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             <div className="flex items-center justify-between shrink-0 pb-1 border-b border-slate-100 dark:border-slate-800/80">
               <div>
                 <h3 className={`text-lg sm:text-xl font-black tracking-tight ${textTitle}`}>
-                  {editingHabitId ? 'Edit Habit / Task' : 'Create New Tracker Item'}
+                  {editingHabitId ? "Edit Habit / Task" : "Create New Tracker Item"}
                 </h3>
                 <p className={`text-xs ${textMuted} mt-0.5`}>Define schedule, target goals, and syllabus categories.</p>
               </div>
@@ -406,29 +426,29 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             {/* Type Selector Segmented Tabs (One Word Each) */}
             <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800 shrink-0 shadow-inner">
               {[
-                { id: 'habit', label: 'Habit', icon: '🔥' },
-                { id: 'task', label: 'Task', icon: '📝' }
+                { id: "habit", label: "Habit", icon: "🔥" },
+                { id: "task", label: "Task", icon: "📝" },
               ].map((t) => (
                 <button
                   key={t.id}
                   type="button"
                   onClick={() => {
                     setCreateType(t.id as any);
-                    if (t.id === 'task') {
-                      setFormFrequencyMode('once');
+                    if (t.id === "task") {
+                      setFormFrequencyMode("once");
                       setFormIsStudyTask(true);
-                    } else if (t.id === 'habit') {
-                      setFormFrequencyMode('daily');
+                    } else if (t.id === "habit") {
+                      setFormFrequencyMode("daily");
                       setFormIsStudyTask(false);
                       if (formTitle === formSubject || (formSubject && formTitle.startsWith(formSubject))) {
-                        setFormTitle('');
+                        setFormTitle("");
                       }
                     }
                   }}
                   className={`py-2 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
                     createType === t.id
-                      ? 'bg-accent-secondary text-white shadow-md shadow-accent-secondary/20'
-                      : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100'
+                      ? "bg-accent-secondary text-white shadow-md shadow-accent-secondary/20"
+                      : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                   }`}
                 >
                   <span className="text-sm">{t.icon}</span>
@@ -438,11 +458,16 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             </div>
 
             {/* Scrollable Form Body */}
-            <form onSubmit={handleCreateSubmit} className="flex-1 overflow-y-auto overflow-x-hidden pr-1 space-y-4 text-xs scrollbar-thin">
-              {createType === 'list' ? (
+            <form
+              onSubmit={handleCreateSubmit}
+              className="flex-1 overflow-y-auto overflow-x-hidden pr-1 space-y-4 text-xs scrollbar-thin"
+            >
+              {createType === "list" ? (
                 <div className="space-y-3 pt-1">
                   <div>
-                    <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Checklist Name</label>
+                    <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">
+                      Checklist Name
+                    </label>
                     <input
                       type="text"
                       required
@@ -456,7 +481,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               ) : (
                 <>
                   {/* 3-Option Task / Event Linkage Selector (Only for One-Time Tasks) */}
-                  {createType === 'task' && formFrequencyMode === 'once' && (
+                  {createType === "task" && formFrequencyMode === "once" && (
                     <div className="p-3.5 sm:p-4 rounded-2xl bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 space-y-3.5 shadow-xs">
                       <div className="flex items-center justify-between">
                         <span className="font-extrabold text-slate-700 dark:text-slate-300 text-xs">
@@ -469,17 +494,17 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         <button
                           type="button"
                           onClick={() => {
-                            setFormStudyTaskMode('none');
+                            setFormStudyTaskMode("none");
                             setFormIsStudyTask(false);
                             setFormIsBatchRevision(false);
                             if (formTitle === formSubject || (formSubject && formTitle.startsWith(formSubject))) {
-                              setFormTitle('');
+                              setFormTitle("");
                             }
                           }}
                           className={`py-2 px-1 text-[10px] sm:text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                            formStudyTaskMode === 'none'
-                              ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-white shadow-xs'
-                              : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                            formStudyTaskMode === "none"
+                              ? "bg-slate-900 text-white dark:bg-slate-800 dark:text-white shadow-xs"
+                              : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                           }`}
                         >
                           <span>📝</span>
@@ -489,14 +514,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         <button
                           type="button"
                           onClick={() => {
-                            setFormStudyTaskMode('single');
+                            setFormStudyTaskMode("single");
                             setFormIsStudyTask(true);
                             setFormIsBatchRevision(false);
                           }}
                           className={`py-2 px-1 text-[10px] sm:text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                            formStudyTaskMode === 'single'
-                              ? 'bg-indigo-600 text-white shadow-xs'
-                              : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                            formStudyTaskMode === "single"
+                              ? "bg-indigo-600 text-white shadow-xs"
+                              : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                           }`}
                         >
                           <span>🎓</span>
@@ -506,18 +531,18 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         <button
                           type="button"
                           onClick={() => {
-                            setFormStudyTaskMode('batch_revision');
+                            setFormStudyTaskMode("batch_revision");
                             setFormIsStudyTask(true);
                             setFormIsBatchRevision(true);
                             setFormIsAugmentedRevision(false);
-                            setFormIcon('⚡');
-                            setFormColor('#8B5CF6');
+                            setFormIcon("⚡");
+                            setFormColor("#8B5CF6");
                             setShowEmojiPicker(false);
                           }}
                           className={`py-2 px-1 text-[10px] sm:text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                            formStudyTaskMode === 'batch_revision'
-                              ? 'bg-purple-600 text-white shadow-xs'
-                              : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
+                            formStudyTaskMode === "batch_revision"
+                              ? "bg-purple-600 text-white shadow-xs"
+                              : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
                           }`}
                         >
                           <span>⚡</span>
@@ -526,25 +551,53 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       </div>
 
                       {/* OPTION 2: Single Syllabus Topic (Restored Simple Layout) */}
-                      {formStudyTaskMode === 'single' && (
+                      {formStudyTaskMode === "single" && (
                         <div className="space-y-3.5 pt-1">
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div>
-                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Category</label>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">
+                                Category
+                              </label>
                               <ShadcnSelect
-                                value={typeof formCategory === 'string' ? formCategory : (formCategory?.label || '')}
+                                value={typeof formCategory === "string" ? formCategory : formCategory?.label || ""}
                                 onChange={(val: string) => {
-                                  const newCatObj = { id: val.toLowerCase(), label: val, icon: '📚', color: '#6366F1' };
+                                  const newCatObj = { id: val.toLowerCase(), label: val, icon: "📚", color: "#6366F1" };
                                   setFormCategory(newCatObj);
                                   const catLower = val.trim().toLowerCase();
-                                  const fromSyl = (syllabusItems || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
-                                  const fromHab = (habits || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
-                                  const fromRev = (topicRevisions || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
-                                  const matchedSubjects = Array.from(new Set([...fromSyl, ...fromHab, ...fromRev].filter(Boolean)));
-                                  const nextSubject = matchedSubjects.length > 0 ? matchedSubjects[0] : '';
+                                  const fromSyl = (syllabusItems || [])
+                                    .filter(
+                                      (item: any) =>
+                                        String(item.category || "")
+                                          .trim()
+                                          .toLowerCase() === catLower,
+                                    )
+                                    .map((i: any) => i.subject);
+                                  const fromHab = (habits || [])
+                                    .filter(
+                                      (item: any) =>
+                                        String(item.category || "")
+                                          .trim()
+                                          .toLowerCase() === catLower,
+                                    )
+                                    .map((i: any) => i.subject);
+                                  const fromRev = (topicRevisions || [])
+                                    .filter(
+                                      (item: any) =>
+                                        String(item.category || "")
+                                          .trim()
+                                          .toLowerCase() === catLower,
+                                    )
+                                    .map((i: any) => i.subject);
+                                  const matchedSubjects = Array.from(
+                                    new Set([...fromSyl, ...fromHab, ...fromRev].filter(Boolean)),
+                                  );
+                                  const nextSubject = matchedSubjects.length > 0 ? matchedSubjects[0] : "";
                                   setFormSubject(nextSubject);
 
-                                  const autoTitle = nextSubject && formTopic ? `${nextSubject}: ${formTopic}` : (nextSubject || formTopic);
+                                  const autoTitle =
+                                    nextSubject && formTopic
+                                      ? `${nextSubject}: ${formTopic}`
+                                      : nextSubject || formTopic;
                                   if (autoTitle) setFormTitle(autoTitle);
                                 }}
                                 options={categories.map((c: string) => ({ value: c, label: c }))}
@@ -552,21 +605,30 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             </div>
 
                             <div>
-                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Subject</label>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">
+                                Subject
+                              </label>
                               <ShadcnSelect
                                 value={formSubject}
                                 onChange={(val: string) => {
                                   setFormSubject(val);
-                                  const autoTitle = val && formTopic ? `${val}: ${formTopic}` : (val || formTopic);
+                                  const autoTitle = val && formTopic ? `${val}: ${formTopic}` : val || formTopic;
                                   if (autoTitle) setFormTitle(autoTitle);
                                   const theme = getSubjectTheme(val);
                                   if (theme) {
                                     setFormColor(theme.color);
                                     setFormIcon(theme.icon);
                                   }
-                                  const matchedItem = (syllabusItems || []).find((item: any) => item.subject?.toLowerCase() === val.toLowerCase());
+                                  const matchedItem = (syllabusItems || []).find(
+                                    (item: any) => item.subject?.toLowerCase() === val.toLowerCase(),
+                                  );
                                   if (matchedItem?.category) {
-                                    setFormCategory({ id: matchedItem.category.toLowerCase(), label: matchedItem.category, icon: '📚', color: '#6366F1' });
+                                    setFormCategory({
+                                      id: matchedItem.category.toLowerCase(),
+                                      label: matchedItem.category,
+                                      icon: "📚",
+                                      color: "#6366F1",
+                                    });
                                   }
                                 }}
                                 options={
@@ -578,7 +640,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             </div>
 
                             <div>
-                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Topic Name</label>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">
+                                Topic Name
+                              </label>
                               <input
                                 type="text"
                                 placeholder="e.g., Ocean Currents, Plate Tectonics"
@@ -618,22 +682,47 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       )}
 
                       {/* OPTION 3: Batch Revision Topics across Multiple Subjects */}
-                      {formStudyTaskMode === 'batch_revision' && (
+                      {formStudyTaskMode === "batch_revision" && (
                         <div className="space-y-3.5 pt-1">
                           <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
                             <div className="sm:col-span-3">
-                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1 text-xs sm:text-sm">Select Category</label>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1 text-xs sm:text-sm">
+                                Select Category
+                              </label>
                               <ShadcnSelect
-                                value={typeof formCategory === 'string' ? formCategory : (formCategory?.label || '')}
+                                value={typeof formCategory === "string" ? formCategory : formCategory?.label || ""}
                                 onChange={(val: string) => {
-                                  const newCatObj = { id: val.toLowerCase(), label: val, icon: '📚', color: '#6366F1' };
+                                  const newCatObj = { id: val.toLowerCase(), label: val, icon: "📚", color: "#6366F1" };
                                   setFormCategory(newCatObj);
                                   const catLower = val.trim().toLowerCase();
-                                  const fromSyl = (syllabusItems || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
-                                  const fromHab = (habits || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
-                                  const fromRev = (topicRevisions || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
-                                  const matchedSubjects = Array.from(new Set([...fromSyl, ...fromHab, ...fromRev].filter(Boolean)));
-                                  const nextSubject = matchedSubjects.length > 0 ? matchedSubjects[0] : '';
+                                  const fromSyl = (syllabusItems || [])
+                                    .filter(
+                                      (item: any) =>
+                                        String(item.category || "")
+                                          .trim()
+                                          .toLowerCase() === catLower,
+                                    )
+                                    .map((i: any) => i.subject);
+                                  const fromHab = (habits || [])
+                                    .filter(
+                                      (item: any) =>
+                                        String(item.category || "")
+                                          .trim()
+                                          .toLowerCase() === catLower,
+                                    )
+                                    .map((i: any) => i.subject);
+                                  const fromRev = (topicRevisions || [])
+                                    .filter(
+                                      (item: any) =>
+                                        String(item.category || "")
+                                          .trim()
+                                          .toLowerCase() === catLower,
+                                    )
+                                    .map((i: any) => i.subject);
+                                  const matchedSubjects = Array.from(
+                                    new Set([...fromSyl, ...fromHab, ...fromRev].filter(Boolean)),
+                                  );
+                                  const nextSubject = matchedSubjects.length > 0 ? matchedSubjects[0] : "";
                                   setFormSubject(nextSubject);
                                 }}
                                 options={categories.map((c: string) => ({ value: c, label: c }))}
@@ -641,7 +730,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             </div>
 
                             <div className="sm:col-span-4">
-                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1 text-xs sm:text-sm">Select Subject</label>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1 text-xs sm:text-sm">
+                                Select Subject
+                              </label>
                               <ShadcnSelect
                                 value={formSubject}
                                 onChange={(val: string) => {
@@ -657,23 +748,40 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
                             {/* Topic Multi-Select Dropdown for active subject */}
                             {(() => {
-                              const normalizedSubj = String(formSubject || '').trim().toLowerCase();
+                              const normalizedSubj = String(formSubject || "")
+                                .trim()
+                                .toLowerCase();
 
                               const standardCatRegex = /^(GS[1-4]|CSAT|REV|General|N\/A)$/i;
 
                               const fromRevisions = (topicRevisions || [])
-                                .filter((r: any) => String(r.subject || '').trim().toLowerCase() === normalizedSubj && r.topic)
-                                .flatMap((r: any) => String(r.topic).split(',').map((t: string) => t.trim()))
-                                .filter((t: string) =>
-                                  t &&
-                                  !standardCatRegex.test(t) &&
-                                  !t.toLowerCase().includes("week ") &&
-                                  !t.toLowerCase().startsWith("[r") &&
-                                  !t.toLowerCase().includes("batch revision")
+                                .filter(
+                                  (r: any) =>
+                                    String(r.subject || "")
+                                      .trim()
+                                      .toLowerCase() === normalizedSubj && r.topic,
+                                )
+                                .flatMap((r: any) =>
+                                  String(r.topic)
+                                    .split(",")
+                                    .map((t: string) => t.trim()),
+                                )
+                                .filter(
+                                  (t: string) =>
+                                    t &&
+                                    !standardCatRegex.test(t) &&
+                                    !t.toLowerCase().includes("week ") &&
+                                    !t.toLowerCase().startsWith("[r") &&
+                                    !t.toLowerCase().includes("batch revision"),
                                 );
 
                               const fromSyllabus = (syllabusItems || [])
-                                .filter((s: any) => String(s.subject || '').trim().toLowerCase() === normalizedSubj)
+                                .filter(
+                                  (s: any) =>
+                                    String(s.subject || "")
+                                      .trim()
+                                      .toLowerCase() === normalizedSubj,
+                                )
                                 .flatMap((s: any) => {
                                   const list: string[] = [];
                                   if (s.category && !standardCatRegex.test(s.category.trim())) {
@@ -683,7 +791,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                     list.push(String(s.topic).trim());
                                   }
                                   if (s.topics) {
-                                    const arr = Array.isArray(s.topics) ? s.topics : String(s.topics).split(',');
+                                    const arr = Array.isArray(s.topics) ? s.topics : String(s.topics).split(",");
                                     arr.forEach((t: any) => {
                                       const str = String(t).trim();
                                       if (str && !standardCatRegex.test(str)) list.push(str);
@@ -693,13 +801,19 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                 });
 
                               const existingTopics: string[] = Array.from(
-                                new Set([...fromRevisions, ...fromSyllabus].filter(Boolean))
+                                new Set([...fromRevisions, ...fromSyllabus].filter(Boolean)),
                               );
 
-                              const catLabel = typeof formCategory === 'string' ? formCategory : (formCategory?.label || 'GS1');
+                              const catLabel =
+                                typeof formCategory === "string" ? formCategory : formCategory?.label || "GS1";
 
                               const selectedForThisSubj = formRevisionClusterBadges
-                                .filter((b: any) => String(b.subject || '').trim().toLowerCase() === normalizedSubj)
+                                .filter(
+                                  (b: any) =>
+                                    String(b.subject || "")
+                                      .trim()
+                                      .toLowerCase() === normalizedSubj,
+                                )
                                 .map((b: any) => b.topic);
 
                               const options = existingTopics.map((top: string) => ({
@@ -709,7 +823,10 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
                               const handleSelectionChange = (newSelectedTopics: string[]) => {
                                 const otherSubjBadges = formRevisionClusterBadges.filter(
-                                  (b: any) => String(b.subject || '').trim().toLowerCase() !== normalizedSubj
+                                  (b: any) =>
+                                    String(b.subject || "")
+                                      .trim()
+                                      .toLowerCase() !== normalizedSubj,
                                 );
 
                                 const newSubjBadges = newSelectedTopics.map((top: string) => ({
@@ -726,7 +843,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                 <div className="sm:col-span-5">
                                   <ShadcnMultiSelect
                                     label="Select Topics"
-                                    placeholder={loading ? "Loading topics..." : `Select ${formSubject || 'subject'} topics...`}
+                                    placeholder={
+                                      loading ? "Loading topics..." : `Select ${formSubject || "subject"} topics...`
+                                    }
                                     options={options}
                                     selectedValues={selectedForThisSubj}
                                     onChange={handleSelectionChange}
@@ -762,13 +881,17 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
                             {formRevisionClusterBadges.length === 0 ? (
                               <p className="text-[11px] text-purple-300/60 font-medium italic">
-                                No topics added yet. Select a category & subject above, then pick topics to build your multi-subject revision cluster!
+                                No topics added yet. Select a category & subject above, then pick topics to build your
+                                multi-subject revision cluster!
                               </p>
                             ) : (
                               <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
                                 {(() => {
                                   // Group badges by subject
-                                  const groupMap: Record<string, { category: string; subject: string; items: { topic: string; globalIdx: number }[] }> = {};
+                                  const groupMap: Record<
+                                    string,
+                                    { category: string; subject: string; items: { topic: string; globalIdx: number }[] }
+                                  > = {};
                                   formRevisionClusterBadges.forEach((b: any, globalIdx: number) => {
                                     const subjKey = b.subject || "General";
                                     if (!groupMap[subjKey]) {
@@ -782,13 +905,19 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                   });
 
                                   return Object.values(groupMap).map((grp, gIdx) => (
-                                    <div key={gIdx} className="grid grid-cols-1 sm:grid-cols-[180px_1fr] items-start gap-2 sm:gap-3 py-1.5 border-b border-purple-500/10 last:border-b-0">
+                                    <div
+                                      key={gIdx}
+                                      className="grid grid-cols-1 sm:grid-cols-[180px_1fr] items-start gap-2 sm:gap-3 py-1.5 border-b border-purple-500/10 last:border-b-0"
+                                    >
                                       {/* Column 1: Subject Badge (Fixed Width 180px for PERFECT vertical alignment across all rows) */}
                                       <div className="flex items-center gap-1.5 pt-0.5">
                                         <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-500/25 text-purple-300 border border-purple-500/40 shrink-0">
                                           {grp.category}
                                         </span>
-                                        <span className="font-black text-xs text-purple-100 uppercase tracking-wide truncate" title={grp.subject}>
+                                        <span
+                                          className="font-black text-xs text-purple-100 uppercase tracking-wide truncate"
+                                          title={grp.subject}
+                                        >
                                           {grp.subject}
                                         </span>
                                       </div>
@@ -805,7 +934,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                               type="button"
                                               onClick={() => {
                                                 setFormRevisionClusterBadges(
-                                                  formRevisionClusterBadges.filter((_: any, i: number) => i !== item.globalIdx)
+                                                  formRevisionClusterBadges.filter(
+                                                    (_: any, i: number) => i !== item.globalIdx,
+                                                  ),
                                                 );
                                               }}
                                               className="text-purple-400 hover:text-rose-400 hover:bg-rose-500/20 p-0.5 rounded transition-colors font-black text-xs leading-none"
@@ -828,29 +959,38 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   )}
 
                   {/* Title & Icon Input */}
-                  <div className={createType === 'habit' || !formIsStudyTask ? 'grid grid-cols-1 sm:grid-cols-2 gap-4 items-start' : 'grid grid-cols-1 gap-3'}>
+                  <div
+                    className={
+                      createType === "habit" || !formIsStudyTask
+                        ? "grid grid-cols-1 sm:grid-cols-2 gap-4 items-start"
+                        : "grid grid-cols-1 gap-3"
+                    }
+                  >
                     <div className="min-w-0">
                       <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Title</label>
 
                       <div className="relative min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
                           {/* Icon button on left of title (Omitted for batch_revision as icon & color are hardcoded) */}
-                          {formStudyTaskMode !== 'batch_revision' && (
+                          {formStudyTaskMode !== "batch_revision" && (
                             <button
                               type="button"
                               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                               title="Click to select icon & color"
                               className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 hover:border-indigo-500 transition-all shrink-0 active:scale-95 shadow-2xs cursor-pointer"
-                              style={{ borderColor: formColor || undefined, backgroundColor: formColor ? `${formColor}15` : undefined }}
+                              style={{
+                                borderColor: formColor || undefined,
+                                backgroundColor: formColor ? `${formColor}15` : undefined,
+                              }}
                             >
-                              <span>{formIcon || '📚'}</span>
+                              <span>{formIcon || "📚"}</span>
                             </button>
                           )}
 
                           {/* Title Input */}
                           <input
                             type="text"
-                            placeholder={createType === 'habit' ? 'e.g., Daily Answer Writing' : 'Task Title'}
+                            placeholder={createType === "habit" ? "e.g., Daily Answer Writing" : "Task Title"}
                             value={formTitle}
                             onChange={(e) => setFormTitle(e.target.value)}
                             className="flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-accent-primary/20 focus:border-accent-primary transition-all"
@@ -858,166 +998,273 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         </div>
 
                         {/* Floating Popover: Icon & Theme Color Selector (Omitted for Batch Revision) */}
-                        {showEmojiPicker && formStudyTaskMode !== 'batch_revision' && (createType === 'habit' || !formIsStudyTask) && (
-                          <div className="absolute top-full left-0 mt-1.5 w-80 sm:w-[420px] max-w-[calc(100vw-2.5rem)] p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-indigo-500/30 shadow-2xl space-y-3 animate-fade-in z-[99999]">
-                            {/* Popover Header */}
-                            <div className="flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2">
-                              <div className="flex items-center gap-1.5">
-                                <span>Customize Icon & Color</span>
-                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
-                                  {formIsStudyTask ? 'Subject Palette (35)' : 'Custom Palette (10)'}
-                                </span>
+                        {showEmojiPicker &&
+                          formStudyTaskMode !== "batch_revision" &&
+                          (createType === "habit" || !formIsStudyTask) && (
+                            <div className="absolute top-full left-0 mt-1.5 w-80 sm:w-[420px] max-w-[calc(100vw-2.5rem)] p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-indigo-500/30 shadow-2xl space-y-3 animate-fade-in z-[99999]">
+                              {/* Popover Header */}
+                              <div className="flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2">
+                                <div className="flex items-center gap-1.5">
+                                  <span>Customize Icon & Color</span>
+                                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                                    {formIsStudyTask ? "Subject Palette (35)" : "Custom Palette (10)"}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowEmojiPicker(false)}
+                                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+                                >
+                                  ✕
+                                </button>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => setShowEmojiPicker(false)}
-                                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold p-0.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
-                              >
-                                ✕
-                              </button>
-                            </div>
 
-                            {/* Theme Color Picker Section */}
-                            {(() => {
-                              const takenColors = (habits || [])
-                                .filter((h: any) => (editingHabitId ? (h._id || h.id) !== editingHabitId : true) && h.color)
-                                .map((h: any) => String(h.color).toLowerCase().trim());
+                              {/* Theme Color Picker Section */}
+                              {(() => {
+                                const takenColors = (habits || [])
+                                  .filter(
+                                    (h: any) => (editingHabitId ? (h._id || h.id) !== editingHabitId : true) && h.color,
+                                  )
+                                  .map((h: any) => String(h.color).toLowerCase().trim());
 
-                              const colorsToDisplay = formIsStudyTask ? SUBJECT_COLOR_OPTIONS : NON_SUBJECT_COLOR_OPTIONS;
+                                const colorsToDisplay = formIsStudyTask
+                                  ? SUBJECT_COLOR_OPTIONS
+                                  : NON_SUBJECT_COLOR_OPTIONS;
 
-                              return (
-                                <div className="space-y-1.5">
-                                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400">
-                                    <span>Theme Color Palette</span>
-                                    <span>{formIsStudyTask ? 'UPSC Colors' : 'Non-UPSC Colors'}</span>
+                                return (
+                                  <div className="space-y-1.5">
+                                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                      <span>Theme Color Palette</span>
+                                      <span>{formIsStudyTask ? "UPSC Colors" : "Non-UPSC Colors"}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 flex-wrap max-h-32 overflow-y-auto custom-scrollbar">
+                                      {colorsToDisplay.map((c) => {
+                                        const isTaken =
+                                          takenColors.includes(c.toLowerCase().trim()) &&
+                                          formColor?.toLowerCase().trim() !== c.toLowerCase().trim();
+                                        const isSelected = formColor?.toLowerCase().trim() === c.toLowerCase().trim();
+
+                                        return (
+                                          <button
+                                            key={c}
+                                            type="button"
+                                            disabled={isTaken}
+                                            onClick={() => {
+                                              if (!isTaken) setFormColor(c);
+                                            }}
+                                            title={isTaken ? "Color assigned to another subject/item (Taken)" : c}
+                                            className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center ${
+                                              isTaken
+                                                ? "opacity-30 cursor-not-allowed border border-rose-500/50"
+                                                : isSelected
+                                                  ? "scale-125 ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-md cursor-pointer"
+                                                  : "hover:scale-110 opacity-75 hover:opacity-100 cursor-pointer"
+                                            }`}
+                                            style={{ backgroundColor: c }}
+                                          >
+                                            {isTaken && (
+                                              <span className="text-[8px] leading-none text-white font-black">🚫</span>
+                                            )}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 flex-wrap max-h-32 overflow-y-auto custom-scrollbar">
-                                    {colorsToDisplay.map((c) => {
-                                      const isTaken = takenColors.includes(c.toLowerCase().trim()) && formColor?.toLowerCase().trim() !== c.toLowerCase().trim();
-                                      const isSelected = formColor?.toLowerCase().trim() === c.toLowerCase().trim();
+                                );
+                              })()}
+
+                              {/* Category Filter Tabs */}
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                    Select Icon
+                                  </span>
+                                  <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+                                    {[
+                                      { id: "all", label: "All", icon: "✨" },
+                                      { id: "study", label: "Study", icon: "📚" },
+                                      { id: "sports", label: "Sports", icon: "🏃" },
+                                      { id: "health", label: "Health", icon: "🥗" },
+                                      { id: "tools", label: "Tools", icon: "🎯" },
+                                    ].map((tab) => (
+                                      <button
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() => setActiveEmojiTab(tab.id)}
+                                        className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1 ${
+                                          activeEmojiTab === tab.id
+                                            ? "bg-accent-gradient shadow-neon-glow"
+                                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+                                        }`}
+                                      >
+                                        <span>{tab.icon}</span>
+                                        <span>{tab.label}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+
+                                {/* Categorized Emoji Grid with Taken Masks */}
+                                <div className="grid grid-cols-10 sm:grid-cols-12 gap-1.5 max-h-44 overflow-y-auto p-2 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 scrollbar-thin">
+                                  {(() => {
+                                    const takenIcons = (habits || [])
+                                      .filter(
+                                        (h: any) =>
+                                          (editingHabitId ? (h._id || h.id) !== editingHabitId : true) && h.icon,
+                                      )
+                                      .map((h: any) => String(h.icon).trim());
+
+                                    const sets: Record<string, string[]> = {
+                                      study: [
+                                        "📚",
+                                        "✍️",
+                                        "📖",
+                                        "📝",
+                                        "💡",
+                                        "🎓",
+                                        "🧠",
+                                        "🔬",
+                                        "🧪",
+                                        "📐",
+                                        "💻",
+                                        "📊",
+                                        "📑",
+                                        "🗞️",
+                                        "🖋️",
+                                        "🏛️",
+                                        "🌍",
+                                        "⚖️",
+                                        "🎒",
+                                        "📜",
+                                        "🧾",
+                                        "📂",
+                                        "📋",
+                                        "📌",
+                                      ],
+                                      sports: [
+                                        "🏃",
+                                        "🏃‍♀️",
+                                        "🏋️",
+                                        "🧘",
+                                        "🚴",
+                                        "⚽",
+                                        "🏊",
+                                        "🚶",
+                                        "🎾",
+                                        "🏀",
+                                        "🏐",
+                                        "🥊",
+                                        "🥋",
+                                        "🧗",
+                                        "🏸",
+                                        "⛳",
+                                        "🛹",
+                                        "🚵",
+                                        "🥇",
+                                        "🏆",
+                                        "🎯",
+                                        "💪",
+                                        "👟",
+                                        "🎽",
+                                      ],
+                                      health: [
+                                        "💧",
+                                        "🍏",
+                                        "🥗",
+                                        "😴",
+                                        "💊",
+                                        "🍎",
+                                        "☀️",
+                                        "🌙",
+                                        "☕",
+                                        "🍵",
+                                        "🥑",
+                                        "🥦",
+                                        "🍳",
+                                        "🧘‍♀️",
+                                        "🧼",
+                                        "🛀",
+                                        "🩺",
+                                        "❤️",
+                                        "🌿",
+                                        "🌱",
+                                        "🍇",
+                                        "🍌",
+                                        "🥛",
+                                        "🧘‍♂️",
+                                      ],
+                                      tools: [
+                                        "🔥",
+                                        "🎯",
+                                        "⏰",
+                                        "📅",
+                                        "✨",
+                                        "🚀",
+                                        "⏱️",
+                                        "⚡",
+                                        "🔔",
+                                        "⭐",
+                                        "💡",
+                                        "📈",
+                                        "⚙️",
+                                        "🔑",
+                                        "🎨",
+                                        "🎵",
+                                        "🎧",
+                                        "💰",
+                                        "🛒",
+                                        "🚗",
+                                        "✈️",
+                                        "🌴",
+                                        "🏠",
+                                        "📱",
+                                      ],
+                                    };
+
+                                    const iconsToDisplay =
+                                      activeEmojiTab === "all"
+                                        ? Object.values(sets).flat()
+                                        : sets[activeEmojiTab] || [];
+
+                                    return iconsToDisplay.map((emoji, i) => {
+                                      const isTaken =
+                                        takenIcons.includes(emoji.trim()) && formIcon?.trim() !== emoji.trim();
+                                      const isSelected = formIcon?.trim() === emoji.trim();
 
                                       return (
                                         <button
-                                          key={c}
+                                          key={i}
                                           type="button"
                                           disabled={isTaken}
                                           onClick={() => {
-                                            if (!isTaken) setFormColor(c);
+                                            if (!isTaken) {
+                                              setFormIcon(emoji);
+                                              setShowEmojiPicker(false);
+                                            }
                                           }}
-                                          title={isTaken ? 'Color assigned to another subject/item (Taken)' : c}
-                                          className={`relative w-6 h-6 rounded-full transition-all flex items-center justify-center ${
+                                          title={isTaken ? "Icon assigned to another subject/item (Taken)" : emoji}
+                                          className={`relative w-7 h-7 rounded-lg text-base flex items-center justify-center transition-all ${
                                             isTaken
-                                              ? 'opacity-30 cursor-not-allowed border border-rose-500/50'
+                                              ? "opacity-30 cursor-not-allowed bg-rose-500/10 border border-rose-500/30"
                                               : isSelected
-                                              ? 'scale-125 ring-2 ring-indigo-500 ring-offset-2 ring-offset-white dark:ring-offset-slate-900 shadow-md cursor-pointer'
-                                              : 'hover:scale-110 opacity-75 hover:opacity-100 cursor-pointer'
+                                                ? "bg-accent-gradient text-white font-black scale-110 shadow-md cursor-pointer"
+                                                : "hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer"
                                           }`}
-                                          style={{ backgroundColor: c }}
                                         >
-                                          {isTaken && <span className="text-[8px] leading-none text-white font-black">🚫</span>}
+                                          <span>{emoji}</span>
+                                          {isTaken && (
+                                            <span className="absolute inset-0 flex items-center justify-center text-[8px] bg-slate-950/70 rounded-lg">
+                                              🚫
+                                            </span>
+                                          )}
                                         </button>
                                       );
-                                    })}
-                                  </div>
+                                    });
+                                  })()}
                                 </div>
-                              );
-                            })()}
-
-                            {/* Category Filter Tabs */}
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">Select Icon</span>
-                                <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
-                                  {[
-                                    { id: 'all', label: 'All', icon: '✨' },
-                                    { id: 'study', label: 'Study', icon: '📚' },
-                                    { id: 'sports', label: 'Sports', icon: '🏃' },
-                                    { id: 'health', label: 'Health', icon: '🥗' },
-                                    { id: 'tools', label: 'Tools', icon: '🎯' }
-                                  ].map((tab) => (
-                                    <button
-                                      key={tab.id}
-                                      type="button"
-                                      onClick={() => setActiveEmojiTab(tab.id)}
-                                      className={`px-2 py-0.5 rounded-lg text-[10px] font-extrabold transition-all flex items-center gap-1 ${
-                                        activeEmojiTab === tab.id
-                                          ? 'bg-accent-gradient shadow-neon-glow'
-                                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                                      }`}
-                                    >
-                                      <span>{tab.icon}</span>
-                                      <span>{tab.label}</span>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Categorized Emoji Grid with Taken Masks */}
-                              <div className="grid grid-cols-10 sm:grid-cols-12 gap-1.5 max-h-44 overflow-y-auto p-2 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-950/50 scrollbar-thin">
-                                {(() => {
-                                  const takenIcons = (habits || [])
-                                    .filter((h: any) => (editingHabitId ? (h._id || h.id) !== editingHabitId : true) && h.icon)
-                                    .map((h: any) => String(h.icon).trim());
-
-                                  const sets: Record<string, string[]> = {
-                                    study: [
-                                      '📚', '✍️', '📖', '📝', '💡', '🎓', '🧠', '🔬', '🧪', '📐', '💻', '📊',
-                                      '📑', '🗞️', '🖋️', '🏛️', '🌍', '⚖️', '🎒', '📜', '🧾', '📂', '📋', '📌'
-                                    ],
-                                    sports: [
-                                      '🏃', '🏃‍♀️', '🏋️', '🧘', '🚴', '⚽', '🏊', '🚶', '🎾', '🏀', '🏐', '🥊',
-                                      '🥋', '🧗', '🏸', '⛳', '🛹', '🚵', '🥇', '🏆', '🎯', '💪', '👟', '🎽'
-                                    ],
-                                    health: [
-                                      '💧', '🍏', '🥗', '😴', '💊', '🍎', '☀️', '🌙', '☕', '🍵', '🥑', '🥦',
-                                      '🍳', '🧘‍♀️', '🧼', '🛀', '🩺', '❤️', '🌿', '🌱', '🍇', '🍌', '🥛', '🧘‍♂️'
-                                    ],
-                                    tools: [
-                                      '🔥', '🎯', '⏰', '📅', '✨', '🚀', '⏱️', '⚡', '🔔', '⭐', '💡', '📈',
-                                      '⚙️', '🔑', '🎨', '🎵', '🎧', '💰', '🛒', '🚗', '✈️', '🌴', '🏠', '📱'
-                                    ]
-                                  };
-
-                                  const iconsToDisplay = activeEmojiTab === 'all'
-                                    ? Object.values(sets).flat()
-                                    : (sets[activeEmojiTab] || []);
-
-                                  return iconsToDisplay.map((emoji, i) => {
-                                    const isTaken = takenIcons.includes(emoji.trim()) && formIcon?.trim() !== emoji.trim();
-                                    const isSelected = formIcon?.trim() === emoji.trim();
-
-                                    return (
-                                      <button
-                                        key={i}
-                                        type="button"
-                                        disabled={isTaken}
-                                        onClick={() => {
-                                          if (!isTaken) {
-                                            setFormIcon(emoji);
-                                            setShowEmojiPicker(false);
-                                          }
-                                        }}
-                                        title={isTaken ? 'Icon assigned to another subject/item (Taken)' : emoji}
-                                        className={`relative w-7 h-7 rounded-lg text-base flex items-center justify-center transition-all ${
-                                          isTaken
-                                            ? 'opacity-30 cursor-not-allowed bg-rose-500/10 border border-rose-500/30'
-                                            : isSelected
-                                            ? 'bg-accent-gradient text-white font-black scale-110 shadow-md cursor-pointer'
-                                            : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 cursor-pointer'
-                                        }`}
-                                      >
-                                        <span>{emoji}</span>
-                                        {isTaken && (
-                                          <span className="absolute inset-0 flex items-center justify-center text-[8px] bg-slate-950/70 rounded-lg">🚫</span>
-                                        )}
-                                      </button>
-                                    );
-                                  });
-                                })()}
                               </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </div>
                     </div>
 
@@ -1025,11 +1272,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       <div className="space-y-2">
                         <label className="font-extrabold block text-slate-700 dark:text-slate-300">Category</label>
                         <ShadcnSelect
-                          value={typeof formCategory === 'string' ? formCategory : (formCategory?.label || 'General')}
+                          value={typeof formCategory === "string" ? formCategory : formCategory?.label || "General"}
                           onChange={(val: string) => {
-                            setFormCategory({ id: val.toLowerCase(), label: val, icon: '📌', color: '#6366F1' });
+                            setFormCategory({ id: val.toLowerCase(), label: val, icon: "📌", color: "#6366F1" });
                           }}
-                          options={['General', 'Study', 'Health', 'Personal', 'Work'].map((c: string) => ({ value: c, label: c }))}
+                          options={["General", "Study", "Health", "Personal", "Work"].map((c: string) => ({
+                            value: c,
+                            label: c,
+                          }))}
                         />
                       </div>
                     )}
@@ -1038,33 +1288,35 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   {/* Recurrence Frequency */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="font-extrabold block text-slate-700 dark:text-slate-300">Recurrence Pattern</label>
+                      <label className="font-extrabold block text-slate-700 dark:text-slate-300">
+                        Recurrence Pattern
+                      </label>
                       {formIsStudyTask && (
                         <span className="text-2xs font-extrabold text-accent-primary">
                           ⚡ One-Time required for Syllabus Link
                         </span>
                       )}
                     </div>
-                    <div className={createType === 'habit' ? 'grid grid-cols-3 gap-2' : 'grid grid-cols-4 gap-2'}>
+                    <div className={createType === "habit" ? "grid grid-cols-3 gap-2" : "grid grid-cols-4 gap-2"}>
                       {[
-                        { id: 'daily', label: 'Everyday' },
-                        { id: 'specific_days', label: 'Specific Days' },
-                        { id: 'monthly', label: 'Monthly' },
-                        ...(createType === 'habit' ? [] : [{ id: 'once', label: 'One Time' }])
+                        { id: "daily", label: "Everyday" },
+                        { id: "specific_days", label: "Specific Days" },
+                        { id: "monthly", label: "Monthly" },
+                        ...(createType === "habit" ? [] : [{ id: "once", label: "One Time" }]),
                       ].map((m) => (
                         <button
                           key={m.id}
                           type="button"
                           onClick={() => {
                             setFormFrequencyMode(m.id as any);
-                            if (m.id !== 'once') {
+                            if (m.id !== "once") {
                               setFormIsStudyTask(false);
                             }
                           }}
                           className={`py-2 rounded-xl font-black text-xs border transition-all text-center ${
                             formFrequencyMode === m.id
-                              ? 'bg-accent-gradient text-white border-accent-primary shadow-md shadow-accent/20'
-                              : 'bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                              ? "bg-accent-gradient text-white border-accent-primary shadow-md shadow-accent/20"
+                              : "bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300"
                           }`}
                         >
                           {m.label}
@@ -1072,9 +1324,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       ))}
                     </div>
 
-                    {formFrequencyMode === 'specific_days' && (
+                    {formFrequencyMode === "specific_days" && (
                       <div className="flex gap-1.5 pt-1 justify-between">
-                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => {
+                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
                           const active = formFrequencyDays.includes(day);
                           return (
                             <button
@@ -1082,13 +1334,15 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                               type="button"
                               onClick={() => {
                                 setFormFrequencyDays(
-                                  active ? formFrequencyDays.filter((d: string) => d !== day) : [...formFrequencyDays, day]
+                                  active
+                                    ? formFrequencyDays.filter((d: string) => d !== day)
+                                    : [...formFrequencyDays, day],
                                 );
                               }}
                               className={`flex-1 py-1.5 rounded-lg font-black transition-all ${
                                 active
-                                  ? 'bg-amber-500 text-white shadow-xs'
-                                  : 'bg-slate-100 dark:bg-slate-950 text-slate-500 border border-slate-200 dark:border-slate-800'
+                                  ? "bg-amber-500 text-white shadow-xs"
+                                  : "bg-slate-100 dark:bg-slate-950 text-slate-500 border border-slate-200 dark:border-slate-800"
                               }`}
                             >
                               {day}
@@ -1098,16 +1352,18 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       </div>
                     )}
 
-                    {formFrequencyMode === 'monthly' && (
+                    {formFrequencyMode === "monthly" && (
                       <div className="flex items-center justify-between gap-3 pt-1.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
-                        <label className="font-extrabold text-slate-700 dark:text-slate-300 text-xs">Repeat on Day of Month:</label>
+                        <label className="font-extrabold text-slate-700 dark:text-slate-300 text-xs">
+                          Repeat on Day of Month:
+                        </label>
                         <div className="w-40">
                           <ShadcnSelect
                             value={String(formMonthlyDay || 1)}
                             onChange={(val: string) => setFormMonthlyDay(Number(val))}
                             options={Array.from({ length: 31 }, (_, i) => ({
                               value: String(i + 1),
-                              label: `Day ${i + 1} of month`
+                              label: `Day ${i + 1} of month`,
                             }))}
                           />
                         </div>
@@ -1116,61 +1372,67 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   </div>
 
                   {/* Target Goal & Unit (Hidden for Batch Revision Tasks) */}
-                  {formStudyTaskMode !== 'batch_revision' && !formIsBatchRevision && (
+                  {formStudyTaskMode !== "batch_revision" && !formIsBatchRevision && (
                     <>
-                      {formTargetUnit === 'yes_no' || formTargetUnit === 'boolean' ? (
+                      {formTargetUnit === "yes_no" || formTargetUnit === "boolean" ? (
                         <div>
-                          <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Unit Selector</label>
+                          <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">
+                            Unit Selector
+                          </label>
                           <ShadcnSelect
                             value={formTargetUnit}
                             onChange={(val: string) => {
                               setFormTargetUnit(val);
-                              if (val === 'yes_no' || val === 'boolean' || val === 'time') {
+                              if (val === "yes_no" || val === "boolean" || val === "time") {
                                 setFormTargetVal(1);
                               }
                             }}
                             options={[
-                              { value: 'yes_no', label: 'Mark Done' },
-                              { value: 'time', label: 'Timely Target' },
-                              { value: 'minutes', label: 'Minutes' },
-                              { value: 'lectures', label: 'Lectures' },
-                              { value: 'times', label: 'Times' },
-                              { value: 'pages', label: 'Pages' },
-                              { value: 'answers', label: 'Answers' },
-                              { value: 'custom', label: 'Custom Unit...' }
+                              { value: "yes_no", label: "Mark Done" },
+                              { value: "time", label: "Timely Target" },
+                              { value: "minutes", label: "Minutes" },
+                              { value: "lectures", label: "Lectures" },
+                              { value: "times", label: "Times" },
+                              { value: "pages", label: "Pages" },
+                              { value: "answers", label: "Answers" },
+                              { value: "custom", label: "Custom Unit..." },
                             ]}
                           />
                         </div>
-                      ) : formTargetUnit === 'time' ? (
+                      ) : formTargetUnit === "time" ? (
                         <div className="space-y-2">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div>
-                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Timely Target</label>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">
+                                Timely Target
+                              </label>
                               <ShadcnTimePicker
-                                value={formWakeUpTargetTime || '04:00'}
+                                value={formWakeUpTargetTime || "04:00"}
                                 onChange={(t) => setFormWakeUpTargetTime(t)}
                                 alignRight={false}
                               />
                             </div>
                             <div>
-                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Unit Selector</label>
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">
+                                Unit Selector
+                              </label>
                               <ShadcnSelect
                                 value={formTargetUnit}
                                 onChange={(val: string) => {
                                   setFormTargetUnit(val);
-                                  if (val === 'yes_no' || val === 'boolean' || val === 'time') {
+                                  if (val === "yes_no" || val === "boolean" || val === "time") {
                                     setFormTargetVal(1);
                                   }
                                 }}
                                 options={[
-                                  { value: 'yes_no', label: 'Mark Done' },
-                                  { value: 'time', label: 'Timely Target' },
-                                  { value: 'minutes', label: 'Minutes' },
-                                  { value: 'lectures', label: 'Lectures' },
-                                  { value: 'times', label: 'Times' },
-                                  { value: 'pages', label: 'Pages' },
-                                  { value: 'answers', label: 'Answers' },
-                                  { value: 'custom', label: 'Custom Unit...' }
+                                  { value: "yes_no", label: "Mark Done" },
+                                  { value: "time", label: "Timely Target" },
+                                  { value: "minutes", label: "Minutes" },
+                                  { value: "lectures", label: "Lectures" },
+                                  { value: "times", label: "Times" },
+                                  { value: "pages", label: "Pages" },
+                                  { value: "answers", label: "Answers" },
+                                  { value: "custom", label: "Custom Unit..." },
                                 ]}
                               />
                             </div>
@@ -1179,7 +1441,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       ) : (
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Target Quantity</label>
+                            <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">
+                              Target Quantity
+                            </label>
                             <input
                               type="number"
                               min="1"
@@ -1190,34 +1454,36 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                           </div>
 
                           <div>
-                            <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Unit Selector</label>
+                            <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">
+                              Unit Selector
+                            </label>
                             <ShadcnSelect
                               value={formTargetUnit}
                               onChange={(val: string) => {
                                 setFormTargetUnit(val);
-                                if (val === 'yes_no' || val === 'boolean') {
+                                if (val === "yes_no" || val === "boolean") {
                                   setFormTargetVal(1);
                                 }
                               }}
                               options={[
-                                { value: 'yes_no', label: 'Mark Done' },
-                                { value: 'time', label: 'Timely Target' },
-                                { value: 'minutes', label: 'Minutes' },
-                                { value: 'lectures', label: 'Lectures' },
-                                { value: 'times', label: 'Times' },
-                                { value: 'pages', label: 'Pages' },
-                                { value: 'answers', label: 'Answers' },
-                                { value: 'custom', label: 'Custom Unit...' }
+                                { value: "yes_no", label: "Mark Done" },
+                                { value: "time", label: "Timely Target" },
+                                { value: "minutes", label: "Minutes" },
+                                { value: "lectures", label: "Lectures" },
+                                { value: "times", label: "Times" },
+                                { value: "pages", label: "Pages" },
+                                { value: "answers", label: "Answers" },
+                                { value: "custom", label: "Custom Unit..." },
                               ]}
                             />
-                            {formTargetUnit === 'time' && (
-                                <ShadcnTimePicker
-                                  value={formWakeUpTargetTime || '04:00'}
-                                  onChange={(t) => setFormWakeUpTargetTime(t)}
-                                  alignRight={true}
-                                />
+                            {formTargetUnit === "time" && (
+                              <ShadcnTimePicker
+                                value={formWakeUpTargetTime || "04:00"}
+                                onChange={(t) => setFormWakeUpTargetTime(t)}
+                                alignRight={true}
+                              />
                             )}
-                            {formTargetUnit === 'custom' && (
+                            {formTargetUnit === "custom" && (
                               <input
                                 type="text"
                                 placeholder="e.g. Quizzes, MCQs"
@@ -1234,7 +1500,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
                   {/* Start Date */}
                   <div>
-                    <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Scheduled Date</label>
+                    <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">
+                      Scheduled Date
+                    </label>
                     <ShadcnDatePicker
                       selectedDate={formStartDate}
                       onSelectDate={(d: string) => setFormStartDate(d)}
@@ -1260,7 +1528,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   className="px-6 py-2.5 rounded-xl font-black text-white bg-accent-gradient shadow-lg shadow-accent/30 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
                 >
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                  <span>{editingHabitId ? 'Save Changes' : 'Create Item'}</span>
+                  <span>{editingHabitId ? "Save Changes" : "Create Item"}</span>
                 </button>
               </div>
             </form>
@@ -1283,16 +1551,24 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               <div className="flex items-center gap-3.5">
                 <div
                   className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-md shrink-0 ring-4 ring-accent-primary/10"
-                  style={{ backgroundColor: `${progressModalHabit.color || 'var(--accent)'}18`, color: progressModalHabit.color || 'var(--accent)' }}
+                  style={{
+                    backgroundColor: `${progressModalHabit.color || "var(--accent)"}18`,
+                    color: progressModalHabit.color || "var(--accent)",
+                  }}
                 >
-                  {progressModalHabit.icon || '🏃'}
+                  {progressModalHabit.icon || "🏃"}
                 </div>
                 <div className="space-y-1">
                   <h3 className={`font-black text-lg leading-tight tracking-tight ${textTitle}`}>
                     {progressModalHabit.title}
                   </h3>
                   <div className="flex items-center gap-2 flex-wrap text-xs font-bold text-slate-500 dark:text-slate-400">
-                    <span>Goal: <strong className="text-slate-800 dark:text-slate-100 font-extrabold">{getTargetGoalLabel(progressModalHabit)}</strong></span>
+                    <span>
+                      Goal:{" "}
+                      <strong className="text-slate-800 dark:text-slate-100 font-extrabold">
+                        {getTargetGoalLabel(progressModalHabit)}
+                      </strong>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1312,7 +1588,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 <span>Logged Till Now Today</span>
               </div>
               <span className="px-3 py-1 rounded-xl bg-white dark:bg-slate-800 text-accent-primary font-black font-display text-xs shadow-xs border border-accent-primary/20">
-                {existingModalVal} {progressModalHabit.target?.unit || 'hours'}
+                {existingModalVal} {progressModalHabit.target?.unit || "hours"}
               </span>
             </div>
 
@@ -1321,23 +1597,26 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               <div className="grid grid-cols-2 gap-1.5 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 text-xs font-extrabold">
                 <button
                   type="button"
-                  onClick={() => setProgressModalMode('add')}
+                  onClick={() => setProgressModalMode("add")}
                   className={`py-2 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 ${
-                    progressModalMode === 'add'
-                      ? 'bg-accent-gradient text-white shadow-md shadow-accent/10 font-black'
-                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    progressModalMode === "add"
+                      ? "bg-accent-gradient text-white shadow-md shadow-accent/10 font-black"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                   }`}
                 >
-                  <Plus size={14} /> Add to <span className="font-display">{existingModalVal} {progressModalHabit.target?.unit || 'h'}</span>
+                  <Plus size={14} /> Add to{" "}
+                  <span className="font-display">
+                    {existingModalVal} {progressModalHabit.target?.unit || "h"}
+                  </span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setProgressModalMode('replace')}
+                  onClick={() => setProgressModalMode("replace")}
                   className={`py-2 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 ${
-                    progressModalMode === 'replace'
-                      ? 'bg-accent-gradient text-white shadow-md shadow-accent/10 font-black'
-                      : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                    progressModalMode === "replace"
+                      ? "bg-accent-gradient text-white shadow-md shadow-accent/10 font-black"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
                   }`}
                 >
                   <Edit3 size={14} /> Overwrite Total
@@ -1347,16 +1626,44 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
             {/* Hero Stepper / Hours & Minutes Slider Controls */}
             {(() => {
-              const unitStr = (progressModalHabit.target?.unit || '').toLowerCase().trim();
-              const isHoursOnly = ['hours', 'hrs', 'hour'].includes(unitStr);
-              const isMinsOnly = ['mins', 'minutes', 'min'].includes(unitStr);
-              const nonTimeUnits = ['pages', 'page', 'times', 'time', 'questions', 'question', 'chapters', 'chapter', 'items', 'item', 'modules', 'module', 'words', 'word', 'count', 'number', 'boolean', 'yes_no', 'ltrs', 'liters', 'ltr', 'liter', 'kg', 'km', 'lectures', 'answers'];
+              const unitStr = (progressModalHabit.target?.unit || "").toLowerCase().trim();
+              const isHoursOnly = ["hours", "hrs", "hour"].includes(unitStr);
+              const isMinsOnly = ["mins", "minutes", "min"].includes(unitStr);
+              const nonTimeUnits = [
+                "pages",
+                "page",
+                "times",
+                "time",
+                "questions",
+                "question",
+                "chapters",
+                "chapter",
+                "items",
+                "item",
+                "modules",
+                "module",
+                "words",
+                "word",
+                "count",
+                "number",
+                "boolean",
+                "yes_no",
+                "ltrs",
+                "liters",
+                "ltr",
+                "liter",
+                "kg",
+                "km",
+                "lectures",
+                "answers",
+              ];
               const isExplicitlyNonTime = nonTimeUnits.includes(unitStr);
 
               const isTimeBased =
-                (isHoursOnly || isMinsOnly) ||
+                isHoursOnly ||
+                isMinsOnly ||
                 (!isExplicitlyNonTime &&
-                  (unitStr === '' || unitStr === 'time' || unitStr === 'duration') &&
+                  (unitStr === "" || unitStr === "time" || unitStr === "duration") &&
                   (progressModalHabit.isStudyTask || progressModalHabit.subject));
 
               const formatDuration = (hrsDecimal: number) => {
@@ -1364,7 +1671,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 const h = Math.floor(totalMins / 60);
                 const m = totalMins % 60;
                 if (h > 0 && m > 0) return `${h} hr ${m} mins`;
-                if (h > 0) return `${h} hr${h > 1 ? 's' : ''}`;
+                if (h > 0) return `${h} hr${h > 1 ? "s" : ""}`;
                 return `${m} mins`;
               };
 
@@ -1388,10 +1695,10 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 setProgressModalValue(Number((newTotalMins / 60).toFixed(4)));
               };
 
-              const existingValInHours = isMinsOnly ? (existingModalVal || 0) / 60 : (existingModalVal || 0);
+              const existingValInHours = isMinsOnly ? (existingModalVal || 0) / 60 : existingModalVal || 0;
 
               const projectedTotalInHours =
-                progressModalMode === 'add' && existingValInHours > 0
+                progressModalMode === "add" && existingValInHours > 0
                   ? Number((existingValInHours + progressModalValue).toFixed(4))
                   : progressModalValue;
               const pct = Math.round((projectedTotalInHours / (targetValInHours || 1)) * 100);
@@ -1422,7 +1729,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                           disabled={isTargetUnder60Mins}
                         />
 
-                        <div className="text-2xl font-black font-display text-slate-300 dark:text-slate-700 self-center pt-5">:</div>
+                        <div className="text-2xl font-black font-display text-slate-300 dark:text-slate-700 self-center pt-5">
+                          :
+                        </div>
 
                         <TimerWheelColumn
                           columnTitle="Minutes"
@@ -1438,7 +1747,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     <div className="pt-2 space-y-2">
                       <div className="flex items-center justify-between text-xs font-black">
                         <span className="text-slate-500 dark:text-slate-400 font-bold">Projected Total</span>
-                        <span className={`font-black font-display ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                        <span
+                          className={`font-black font-display ${isComplete ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}
+                        >
                           {formatDuration(projectedTotalInHours)} / {formatDuration(targetValInHours)} ({pct}%)
                         </span>
                       </div>
@@ -1447,8 +1758,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${
                             isComplete
-                              ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/50'
-                              : 'bg-gradient-to-r from-amber-500 to-orange-500'
+                              ? "bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/50"
+                              : "bg-gradient-to-r from-amber-500 to-orange-500"
                           }`}
                           style={{ width: `${Math.min(100, pct)}%` }}
                         />
@@ -1481,7 +1792,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                         className="w-32 text-center text-4xl font-black font-display bg-transparent text-slate-900 dark:text-slate-100 outline-none focus:scale-105 transition-transform"
                       />
                       <span className="text-2xs font-black text-accent-primary uppercase tracking-widest mt-0.5">
-                        {progressModalHabit.target?.unit || 'times'}
+                        {progressModalHabit.target?.unit || "times"}
                       </span>
                     </div>
 
@@ -1497,7 +1808,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   {/* Projected Progress & Total Bar */}
                   {(() => {
                     const nonTimeProjectedTotal =
-                      progressModalMode === 'add' && existingModalVal > 0
+                      progressModalMode === "add" && existingModalVal > 0
                         ? Number((existingModalVal + progressModalValue).toFixed(2))
                         : progressModalValue;
                     const nonTimePct = Math.round((nonTimeProjectedTotal / (rawTargetVal || 1)) * 100);
@@ -1507,8 +1818,11 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 space-y-2.5">
                         <div className="flex items-center justify-between text-xs font-black">
                           <span className="text-slate-500 dark:text-slate-400 font-bold">Projected Total</span>
-                          <span className={`font-black font-display ${isNonTimeComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
-                            {nonTimeProjectedTotal} / {rawTargetVal} {progressModalHabit.target?.unit || 'times'} ({nonTimePct}%)
+                          <span
+                            className={`font-black font-display ${isNonTimeComplete ? "text-emerald-600 dark:text-emerald-400" : "text-indigo-600 dark:text-indigo-400"}`}
+                          >
+                            {nonTimeProjectedTotal} / {rawTargetVal} {progressModalHabit.target?.unit || "times"} (
+                            {nonTimePct}%)
                           </span>
                         </div>
 
@@ -1516,8 +1830,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                           <div
                             className={`h-full rounded-full transition-all duration-500 ${
                               isNonTimeComplete
-                                ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/50'
-                                : 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                                ? "bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/50"
+                                : "bg-gradient-to-r from-indigo-500 to-purple-500"
                             }`}
                             style={{ width: `${Math.min(100, nonTimePct)}%` }}
                           />
@@ -1546,7 +1860,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 className="px-6 py-2.5 rounded-xl font-extrabold text-xs bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2 active:scale-95 disabled:opacity-50"
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                <span>{saving ? 'Saving...' : 'Save Progress'}</span>
+                <span>{saving ? "Saving..." : "Save Progress"}</span>
               </button>
             </div>
           </div>
@@ -1614,7 +1928,7 @@ function TimerWheelColumn({
     if (containerRef.current && !isUserScrollingRef.current) {
       containerRef.current.scrollTo({
         top: selectedIdx * itemHeight,
-        behavior: 'auto',
+        behavior: "auto",
       });
     }
   }, [selectedIdx]);
@@ -1640,7 +1954,7 @@ function TimerWheelColumn({
       if (containerRef.current && isUserScrollingRef.current) {
         containerRef.current.scrollTo({
           top: clampedIndex * itemHeight,
-          behavior: 'smooth',
+          behavior: "smooth",
         });
       }
       isUserScrollingRef.current = false;
@@ -1654,13 +1968,15 @@ function TimerWheelColumn({
     if (containerRef.current) {
       containerRef.current.scrollTo({
         top: idx * itemHeight,
-        behavior: 'auto',
+        behavior: "auto",
       });
     }
   };
 
   return (
-    <div className={`flex flex-col items-center transition-opacity ${disabled ? 'opacity-30 pointer-events-none select-none' : ''}`}>
+    <div
+      className={`flex flex-col items-center transition-opacity ${disabled ? "opacity-30 pointer-events-none select-none" : ""}`}
+    >
       <span className="text-[10px] font-black uppercase tracking-widest font-display text-slate-400 dark:text-slate-500 mb-1.5 flex items-center gap-1">
         {columnTitle} {disabled && <span className="text-[9px] text-slate-400 font-normal">(Off)</span>}
       </span>
@@ -1687,11 +2003,11 @@ function TimerWheelColumn({
                 onClick={() => handleItemClick(opt, idx)}
                 className={`shrink-0 h-[44px] w-full flex items-center justify-center gap-1 transition-all duration-100 cursor-pointer ${
                   isSelected
-                    ? 'text-2xl font-black font-display text-amber-600 dark:text-amber-400 scale-105'
-                    : 'text-sm font-bold font-display text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 opacity-60'
+                    ? "text-2xl font-black font-display text-amber-600 dark:text-amber-400 scale-105"
+                    : "text-sm font-bold font-display text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 opacity-60"
                 }`}
               >
-                <span className="font-display tracking-wider">{String(opt).padStart(2, '0')}</span>
+                <span className="font-display tracking-wider">{String(opt).padStart(2, "0")}</span>
                 {isSelected && (
                   <span className="text-xs font-black uppercase tracking-wider font-display text-amber-600 dark:text-amber-400">
                     {unitLabel}

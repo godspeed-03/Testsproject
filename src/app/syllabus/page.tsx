@@ -94,7 +94,7 @@ function ShadcnStatusDropdown({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1.5 z-50 w-48 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-1.5 font-bold space-y-0.5 text-xs animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute right-0 top-full mt-1.5 z-50 w-48 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-1.5 font-bold space-y-0.5 text-xs animate-in fade-in zoom-in-95 duration-100">
           {STATUS_STAGES.map((st) => {
             const isSelected = st.value.toLowerCase() === (currentStatus || "").toLowerCase();
             return (
@@ -454,14 +454,15 @@ export default function SyllabusPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="grid grid-cols-3 sm:flex sm:items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={() => setShowRulesetsModal(true)}
-              className="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border border-slate-300 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
+              className="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs px-2.5 sm:px-3.5 py-2.5 sm:py-2 rounded-xl flex items-center justify-center gap-1.5 border border-slate-300 dark:border-slate-700 shadow-xs transition-all cursor-pointer whitespace-nowrap"
             >
-              <Settings size={15} className="text-amber-500" />
-              <span>Ruleset Templates</span>
+              <Settings size={15} className="text-amber-500 shrink-0" />
+              <span className="hidden sm:inline">Ruleset Templates</span>
+              <span className="sm:hidden">Templates</span>
             </button>
 
             <button
@@ -472,46 +473,70 @@ export default function SyllabusPage() {
                 }
                 setShowBulkAddPanel((current) => !current);
               }}
-              className={`font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border shadow-xs transition-all cursor-pointer ${
+              className={`font-extrabold text-xs px-2.5 sm:px-3.5 py-2.5 sm:py-2 rounded-xl flex items-center justify-center gap-1.5 border shadow-xs transition-all cursor-pointer whitespace-nowrap ${
                 showBulkAddPanel
                   ? "bg-indigo-600 text-white border-indigo-500 shadow-indigo-600/20"
                   : "bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-500 shadow-cyan-600/20"
               }`}
             >
-              <Sparkles size={15} className="text-amber-300" />
+              <Sparkles size={15} className="text-amber-300 shrink-0" />
               <span>Bulk Add</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-all shrink-0 active:scale-95 cursor-pointer"
+              className="bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs px-2.5 sm:px-3.5 py-2.5 sm:py-2 rounded-xl flex items-center justify-center gap-1.5 shadow-md transition-all shrink-0 active:scale-95 cursor-pointer whitespace-nowrap"
             >
-              <Plus size={16} /> Add Subject
+              <Plus size={16} className="shrink-0" />
+              <span className="hidden sm:inline">Add Subject</span>
+              <span className="sm:hidden">Subject</span>
             </button>
           </div>
         </div>
 
         {/* Filter Bar & View Control */}
-        <div className={`p-3 rounded-2xl border ${cardBg} shadow-xs space-y-2.5`}>
+        <div className={`p-3 sm:p-3.5 rounded-2xl border ${cardBg} shadow-xs space-y-2.5`}>
           <div className="flex flex-col gap-2.5">
-            <div className="flex items-center justify-between gap-2.5 flex-wrap">
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mb-1 scrollbar-none">
-                <Filter size={14} className="text-slate-400 shrink-0 hidden sm:block mr-1" />
-                {categories.map((cat) => (
+            {/* Row 1: Full-width Category Scroll Bar */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mb-1 scrollbar-none snap-x w-full">
+              <Filter size={14} className="text-slate-400 shrink-0 hidden sm:block mr-1" />
+              {categories.map((cat) => (
+                <button
+                  key={cat.value}
+                  type="button"
+                  onClick={() => setCategoryFilter(cat.value)}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all border whitespace-nowrap shrink-0 cursor-pointer snap-start ${
+                    categoryFilter === cat.value
+                      ? "bg-accent-gradient text-white border-transparent shadow-xs"
+                      : "bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-indigo-500/50"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Row 2: Search Input + View Mode Switcher in One Row */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 min-w-0">
+                <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search subject by title or source..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-slate-100 dark:bg-slate-950 text-xs px-3.5 py-2 pl-9 pr-14 rounded-xl outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-indigo-500 transition-colors"
+                />
+                {searchTerm && (
                   <button
-                    key={cat.value}
                     type="button"
-                    onClick={() => setCategoryFilter(cat.value)}
-                    className={`px-3 py-1 rounded-lg text-xs font-black transition-all border whitespace-nowrap shrink-0 cursor-pointer ${
-                      categoryFilter === cat.value
-                        ? "bg-accent-gradient text-white border-transparent shadow-sm"
-                        : "bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-indigo-500/50"
-                    }`}
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 hover:text-rose-500 transition-colors cursor-pointer"
                   >
-                    {cat.label}
+                    Clear
                   </button>
-                ))}
+                )}
               </div>
 
               {/* View Switcher Toggle (Grid Cards vs Table) */}
@@ -527,7 +552,7 @@ export default function SyllabusPage() {
                   title="Grid Card View"
                 >
                   <LayoutGrid size={14} />
-                  <span>Cards</span>
+                  <span className="hidden xs:inline sm:inline">Cards</span>
                 </button>
                 <button
                   type="button"
@@ -540,20 +565,9 @@ export default function SyllabusPage() {
                   title="Table View"
                 >
                   <Table size={14} />
-                  <span>Table</span>
+                  <span className="hidden xs:inline sm:inline">Table</span>
                 </button>
               </div>
-            </div>
-
-            <div className="relative">
-              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search subject by title or source..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-100 dark:bg-slate-950 text-xs px-3.5 py-2 pl-9 rounded-xl outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-indigo-500 transition-colors"
-              />
             </div>
           </div>
         </div>

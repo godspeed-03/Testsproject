@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
-import { getUserFromCookies } from '@/lib/auth';
+import { NextResponse } from "next/server";
+import { getUserFromCookies } from "@/lib/auth";
 import {
   getEffectiveUserId,
   calculateAndSaveWeeklyData,
   getAllAvailableWeeks,
-} from '@/lib/weeklyAnalyticsEngine';
+  formatWeekLabel,
+} from "@/lib/weeklyAnalyticsEngine";
 
 export async function GET(req: Request) {
   try {
@@ -12,10 +13,10 @@ export async function GET(req: Request) {
     const effectiveUserId = await getEffectiveUserId(user?.userId);
 
     const { searchParams } = new URL(req.url);
-    const weekOffset = parseInt(searchParams.get('weekOffset') || '0', 10);
-    const weekKey = searchParams.get('weekKey');
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
+    const weekOffset = parseInt(searchParams.get("weekOffset") || "0", 10);
+    const weekKey = searchParams.get("weekKey");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
     let targetDate = new Date();
     let customStart: string | undefined;
@@ -25,12 +26,12 @@ export async function GET(req: Request) {
       customStart = startDate;
       customEnd = endDate;
     } else if (weekKey) {
-      const [startStr, endStr] = weekKey.split('_to_');
+      const [startStr, endStr] = weekKey.split("_to_");
       if (startStr && endStr) {
         customStart = startStr;
         customEnd = endStr;
       } else if (startStr) {
-        targetDate = new Date(startStr + 'T00:00:00');
+        targetDate = new Date(startStr + "T00:00:00");
       }
     } else if (weekOffset !== 0) {
       targetDate.setDate(targetDate.getDate() + weekOffset * 7);
@@ -42,16 +43,18 @@ export async function GET(req: Request) {
     ]);
 
     const breakdown = (weeklyDoc?.breakdown as any) || {};
+    const weekLabel = weeklyDoc?.weekKey ? formatWeekLabel(weeklyDoc.weekKey) : "Current Week";
 
     return NextResponse.json({
       ...weeklyDoc,
       ...breakdown,
       availableWeeks,
+      weekLabel,
       weekOffset,
     });
   } catch (error: any) {
-    console.error('Error in weekly analytics GET route:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error("Error in weekly analytics GET route:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -81,12 +84,12 @@ export async function POST(req: Request) {
       customStart = startDate;
       customEnd = endDate;
     } else if (weekKey) {
-      const [startStr, endStr] = weekKey.split('_to_');
+      const [startStr, endStr] = weekKey.split("_to_");
       if (startStr && endStr) {
         customStart = startStr;
         customEnd = endStr;
       } else if (startStr) {
-        targetDate = new Date(startStr + 'T00:00:00');
+        targetDate = new Date(startStr + "T00:00:00");
       }
     } else if (weekOffset !== 0) {
       targetDate.setDate(targetDate.getDate() + weekOffset * 7);
@@ -98,10 +101,12 @@ export async function POST(req: Request) {
     ]);
 
     const breakdown = (weeklyDoc?.breakdown as any) || {};
+    const weekLabel = weeklyDoc?.weekKey ? formatWeekLabel(weeklyDoc.weekKey) : "Current Week";
     const responseData = {
       ...weeklyDoc,
       ...breakdown,
       availableWeeks,
+      weekLabel,
       weekOffset,
     };
 
@@ -110,11 +115,11 @@ export async function POST(req: Request) {
       data: responseData,
       ...responseData,
       calculatedAt: weeklyDoc.updatedAt
-        ? new Date(weeklyDoc.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        ? new Date(weeklyDoc.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        : new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     });
   } catch (error: any) {
-    console.error('Error in recalculate weekly POST route:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error("Error in recalculate weekly POST route:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

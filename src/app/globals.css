@@ -59,268 +59,300 @@
 
 /* BASE ROOT TOKENS */
 :root {
-  --accent: #00FFC2;
+  --accent: #00ffc2;
   --accent-glow: rgba(0, 255, 194, 0.4);
-  --accent-start: #00FFC2;
-  --accent-mid: #00E0A8;
-  --accent-end: #00C490;
-  --primary-accent: #00FFC2;
+  --accent-start: #00ffc2;
+  --accent-mid: #00e0a8;
+  --accent-end: #00c490;
+  --primary-accent: #00ffc2;
 
-  --bg-base: #0D0F1A;
-  --bg-card: #161A2B;
-  --bg-elevated: #1E2338;
-  --text-primary: #F5F5FA;
-  --text-muted: #8A8FA3;
-  --success: #39FF14;
-  --danger: #FF2D55;
-  --warning: #FFB800;
+  --bg-base: #0d0f1a;
+  --bg-card: #161a2b;
+  --bg-elevated: #1e2338;
+  --text-primary: #f5f5fa;
+  --text-muted: #8a8fa3;
+  --success: #39ff14;
+  --danger: #ff2d55;
+  --warning: #ffb800;
 
-  --score-s: #B026FF;
-  --score-a: #39FF14;
-  --score-b: #FFB800;
-  --score-fail: #FF2D55;
+  --score-s: #b026ff;
+  --score-a: #39ff14;
+  --score-b: #ffb800;
+  --score-fail: #ff2d55;
 }
 
 /* 8 OKLCH-CALIBRATED ADAPTIVE MULTI-TONE ACCENT THEMES: LIGHT MODE (EXECUTIVE HIGH-CONTRAST) */
-:root.theme-neon-red, :root[data-accent-theme="neon-red"], [data-accent-theme="neon-red"] {
-  --accent: #DC2626 !important;
+:root.theme-neon-red,
+:root[data-accent-theme="neon-red"],
+[data-accent-theme="neon-red"] {
+  --accent: #dc2626 !important;
   --accent-glow: rgba(220, 38, 38, 0.25) !important;
-  --accent-start: #EF4444 !important;
-  --accent-mid: #DC2626 !important;
-  --accent-end: #B91C1C !important;
-  --primary-accent: #DC2626 !important;
-  --accent-secondary: #2563EB !important;
+  --accent-start: #ef4444 !important;
+  --accent-mid: #dc2626 !important;
+  --accent-end: #b91c1c !important;
+  --primary-accent: #dc2626 !important;
+  --accent-secondary: #2563eb !important;
   --accent-secondary-glow: rgba(37, 99, 235, 0.25) !important;
   --accent-tertiary: #059669 !important;
-  --accent-quaternary: #D97706 !important;
-  --accent-quinary: #7C3AED !important;
-  --accent-text: #FFFFFF !important;
+  --accent-quaternary: #d97706 !important;
+  --accent-quinary: #7c3aed !important;
+  --accent-text: #ffffff !important;
 }
 
-:root.theme-neon-green, :root[data-accent-theme="neon-green"], [data-accent-theme="neon-green"] {
-  --accent: #15803D !important;
+:root.theme-neon-green,
+:root[data-accent-theme="neon-green"],
+[data-accent-theme="neon-green"] {
+  --accent: #15803d !important;
   --accent-glow: rgba(21, 128, 61, 0.25) !important;
-  --accent-start: #16A34A !important;
-  --accent-mid: #15803D !important;
+  --accent-start: #16a34a !important;
+  --accent-mid: #15803d !important;
   --accent-end: #166534 !important;
-  --primary-accent: #15803D !important;
-  --accent-secondary: #0284C7 !important;
+  --primary-accent: #15803d !important;
+  --accent-secondary: #0284c7 !important;
   --accent-secondary-glow: rgba(2, 132, 199, 0.25) !important;
-  --accent-tertiary: #6D28D9 !important;
-  --accent-quaternary: #B45309 !important;
-  --accent-quinary: #DC2626 !important;
-  --accent-text: #FFFFFF !important;
+  --accent-tertiary: #6d28d9 !important;
+  --accent-quaternary: #b45309 !important;
+  --accent-quinary: #dc2626 !important;
+  --accent-text: #ffffff !important;
 }
 
-:root.theme-neon-blue, :root[data-accent-theme="neon-blue"], [data-accent-theme="neon-blue"] {
-  --accent: #2563EB !important;
+:root.theme-neon-blue,
+:root[data-accent-theme="neon-blue"],
+[data-accent-theme="neon-blue"] {
+  --accent: #2563eb !important;
   --accent-glow: rgba(37, 99, 235, 0.25) !important;
-  --accent-start: #3B82F6 !important;
-  --accent-mid: #2563EB !important;
-  --accent-end: #1D4ED8 !important;
-  --primary-accent: #2563EB !important;
-  --accent-secondary: #7C3AED !important;
+  --accent-start: #3b82f6 !important;
+  --accent-mid: #2563eb !important;
+  --accent-end: #1d4ed8 !important;
+  --primary-accent: #2563eb !important;
+  --accent-secondary: #7c3aed !important;
   --accent-secondary-glow: rgba(124, 58, 237, 0.25) !important;
   --accent-tertiary: #059669 !important;
-  --accent-quaternary: #DB2777 !important;
-  --accent-quinary: #D97706 !important;
-  --accent-text: #FFFFFF !important;
+  --accent-quaternary: #db2777 !important;
+  --accent-quinary: #d97706 !important;
+  --accent-text: #ffffff !important;
 }
 
-:root.theme-neon-purple, :root[data-accent-theme="neon-purple"], [data-accent-theme="neon-purple"] {
-  --accent: #6D28D9 !important;
+:root.theme-neon-purple,
+:root[data-accent-theme="neon-purple"],
+[data-accent-theme="neon-purple"] {
+  --accent: #6d28d9 !important;
   --accent-glow: rgba(109, 40, 217, 0.25) !important;
-  --accent-start: #7C3AED !important;
-  --accent-mid: #6D28D9 !important;
-  --accent-end: #5B21B6 !important;
-  --primary-accent: #6D28D9 !important;
-  --accent-secondary: #BE185D !important;
+  --accent-start: #7c3aed !important;
+  --accent-mid: #6d28d9 !important;
+  --accent-end: #5b21b6 !important;
+  --primary-accent: #6d28d9 !important;
+  --accent-secondary: #be185d !important;
   --accent-secondary-glow: rgba(190, 24, 93, 0.25) !important;
-  --accent-tertiary: #2563EB !important;
+  --accent-tertiary: #2563eb !important;
   --accent-quaternary: #059669 !important;
-  --accent-quinary: #C2410C !important;
-  --accent-text: #FFFFFF !important;
+  --accent-quinary: #c2410c !important;
+  --accent-text: #ffffff !important;
 }
 
-:root.theme-neon-pink, :root[data-accent-theme="neon-pink"], [data-accent-theme="neon-pink"] {
-  --accent: #BE185D !important;
+:root.theme-neon-pink,
+:root[data-accent-theme="neon-pink"],
+[data-accent-theme="neon-pink"] {
+  --accent: #be185d !important;
   --accent-glow: rgba(190, 24, 93, 0.25) !important;
-  --accent-start: #DB2777 !important;
-  --accent-mid: #BE185D !important;
-  --accent-end: #9D174D !important;
-  --primary-accent: #BE185D !important;
-  --accent-secondary: #6D28D9 !important;
+  --accent-start: #db2777 !important;
+  --accent-mid: #be185d !important;
+  --accent-end: #9d174d !important;
+  --primary-accent: #be185d !important;
+  --accent-secondary: #6d28d9 !important;
   --accent-secondary-glow: rgba(109, 40, 217, 0.25) !important;
-  --accent-tertiary: #0284C7 !important;
-  --accent-quaternary: #15803D !important;
-  --accent-quinary: #D97706 !important;
-  --accent-text: #FFFFFF !important;
+  --accent-tertiary: #0284c7 !important;
+  --accent-quaternary: #15803d !important;
+  --accent-quinary: #d97706 !important;
+  --accent-text: #ffffff !important;
 }
 
-:root.theme-neon-orange, :root[data-accent-theme="neon-orange"], [data-accent-theme="neon-orange"] {
-  --accent: #C2410C !important;
+:root.theme-neon-orange,
+:root[data-accent-theme="neon-orange"],
+[data-accent-theme="neon-orange"] {
+  --accent: #c2410c !important;
   --accent-glow: rgba(194, 65, 12, 0.25) !important;
-  --accent-start: #EA580C !important;
-  --accent-mid: #C2410C !important;
-  --accent-end: #9A3412 !important;
-  --primary-accent: #C2410C !important;
-  --accent-secondary: #2563EB !important;
+  --accent-start: #ea580c !important;
+  --accent-mid: #c2410c !important;
+  --accent-end: #9a3412 !important;
+  --primary-accent: #c2410c !important;
+  --accent-secondary: #2563eb !important;
   --accent-secondary-glow: rgba(37, 99, 235, 0.25) !important;
-  --accent-tertiary: #7C3AED !important;
+  --accent-tertiary: #7c3aed !important;
   --accent-quaternary: #059669 !important;
-  --accent-quinary: #BE185D !important;
-  --accent-text: #FFFFFF !important;
+  --accent-quinary: #be185d !important;
+  --accent-text: #ffffff !important;
 }
 
-:root.theme-neon-yellow, :root[data-accent-theme="neon-yellow"], [data-accent-theme="neon-yellow"] {
-  --accent: #B45309 !important;
+:root.theme-neon-yellow,
+:root[data-accent-theme="neon-yellow"],
+[data-accent-theme="neon-yellow"] {
+  --accent: #b45309 !important;
   --accent-glow: rgba(180, 83, 9, 0.25) !important;
-  --accent-start: #D97706 !important;
-  --accent-mid: #B45309 !important;
-  --accent-end: #92400E !important;
-  --primary-accent: #B45309 !important;
-  --accent-secondary: #1D4ED8 !important;
+  --accent-start: #d97706 !important;
+  --accent-mid: #b45309 !important;
+  --accent-end: #92400e !important;
+  --primary-accent: #b45309 !important;
+  --accent-secondary: #1d4ed8 !important;
   --accent-secondary-glow: rgba(29, 78, 216, 0.25) !important;
-  --accent-tertiary: #DC2626 !important;
+  --accent-tertiary: #dc2626 !important;
   --accent-quaternary: #059669 !important;
-  --accent-quinary: #6D28D9 !important;
-  --accent-text: #FFFFFF !important;
+  --accent-quinary: #6d28d9 !important;
+  --accent-text: #ffffff !important;
 }
 
-:root.theme-neon-teal, :root[data-accent-theme="neon-teal"], [data-accent-theme="neon-teal"] {
-  --accent: #0F766E !important;
+:root.theme-neon-teal,
+:root[data-accent-theme="neon-teal"],
+[data-accent-theme="neon-teal"] {
+  --accent: #0f766e !important;
   --accent-glow: rgba(15, 118, 110, 0.25) !important;
-  --accent-start: #0D9488 !important;
-  --accent-mid: #0F766E !important;
-  --accent-end: #115E59 !important;
-  --primary-accent: #0F766E !important;
-  --accent-secondary: #4338CA !important;
+  --accent-start: #0d9488 !important;
+  --accent-mid: #0f766e !important;
+  --accent-end: #115e59 !important;
+  --primary-accent: #0f766e !important;
+  --accent-secondary: #4338ca !important;
   --accent-secondary-glow: rgba(67, 56, 202, 0.25) !important;
-  --accent-tertiary: #E11D48 !important;
-  --accent-quaternary: #D97706 !important;
-  --accent-quinary: #65A30D !important;
-  --accent-text: #FFFFFF !important;
+  --accent-tertiary: #e11d48 !important;
+  --accent-quaternary: #d97706 !important;
+  --accent-quinary: #65a30d !important;
+  --accent-text: #ffffff !important;
 }
 
 /* 8 OKLCH-CALIBRATED ADAPTIVE MULTI-TONE ACCENT THEMES: DARK MODE (PERCEPTUAL NEON GLOW) */
-.dark.theme-neon-red, .dark[data-accent-theme="neon-red"], .dark [data-accent-theme="neon-red"] {
-  --accent: #FF2A5F !important;
+.dark.theme-neon-red,
+.dark[data-accent-theme="neon-red"],
+.dark [data-accent-theme="neon-red"] {
+  --accent: #ff2a5f !important;
   --accent-glow: rgba(255, 42, 95, 0.45) !important;
-  --accent-start: #FF3B6B !important;
-  --accent-mid: #FF2A5F !important;
-  --accent-end: #E6004C !important;
-  --primary-accent: #FF2A5F !important;
-  --accent-secondary: #00F0FF !important;
+  --accent-start: #ff3b6b !important;
+  --accent-mid: #ff2a5f !important;
+  --accent-end: #e6004c !important;
+  --primary-accent: #ff2a5f !important;
+  --accent-secondary: #00f0ff !important;
   --accent-secondary-glow: rgba(0, 240, 255, 0.45) !important;
-  --accent-tertiary: #10B981 !important;
-  --accent-quaternary: #F59E0B !important;
-  --accent-quinary: #A855F7 !important;
-  --accent-text: #FFFFFF !important;
+  --accent-tertiary: #10b981 !important;
+  --accent-quaternary: #f59e0b !important;
+  --accent-quinary: #a855f7 !important;
+  --accent-text: #ffffff !important;
 }
 
-.dark.theme-neon-green, .dark[data-accent-theme="neon-green"], .dark [data-accent-theme="neon-green"] {
-  --accent: #10B981 !important;
+.dark.theme-neon-green,
+.dark[data-accent-theme="neon-green"],
+.dark [data-accent-theme="neon-green"] {
+  --accent: #10b981 !important;
   --accent-glow: rgba(16, 185, 129, 0.45) !important;
-  --accent-start: #34D399 !important;
-  --accent-mid: #10B981 !important;
+  --accent-start: #34d399 !important;
+  --accent-mid: #10b981 !important;
   --accent-end: #059669 !important;
-  --primary-accent: #10B981 !important;
-  --accent-secondary: #0EA5E9 !important;
+  --primary-accent: #10b981 !important;
+  --accent-secondary: #0ea5e9 !important;
   --accent-secondary-glow: rgba(14, 165, 233, 0.45) !important;
-  --accent-tertiary: #A855F7 !important;
-  --accent-quaternary: #FACC15 !important;
-  --accent-quinary: #FF2A5F !important;
-  --accent-text: #FFFFFF !important;
+  --accent-tertiary: #a855f7 !important;
+  --accent-quaternary: #facc15 !important;
+  --accent-quinary: #ff2a5f !important;
+  --accent-text: #ffffff !important;
 }
 
-.dark.theme-neon-blue, .dark[data-accent-theme="neon-blue"], .dark [data-accent-theme="neon-blue"] {
-  --accent: #0EA5E9 !important;
+.dark.theme-neon-blue,
+.dark[data-accent-theme="neon-blue"],
+.dark [data-accent-theme="neon-blue"] {
+  --accent: #0ea5e9 !important;
   --accent-glow: rgba(14, 165, 233, 0.45) !important;
-  --accent-start: #38BDF8 !important;
-  --accent-mid: #0EA5E9 !important;
-  --accent-end: #0284C7 !important;
-  --primary-accent: #0EA5E9 !important;
-  --accent-secondary: #A855F7 !important;
+  --accent-start: #38bdf8 !important;
+  --accent-mid: #0ea5e9 !important;
+  --accent-end: #0284c7 !important;
+  --primary-accent: #0ea5e9 !important;
+  --accent-secondary: #a855f7 !important;
   --accent-secondary-glow: rgba(168, 85, 247, 0.45) !important;
-  --accent-tertiary: #10B981 !important;
-  --accent-quaternary: #EC4899 !important;
-  --accent-quinary: #F59E0B !important;
-  --accent-text: #FFFFFF !important;
+  --accent-tertiary: #10b981 !important;
+  --accent-quaternary: #ec4899 !important;
+  --accent-quinary: #f59e0b !important;
+  --accent-text: #ffffff !important;
 }
 
-.dark.theme-neon-purple, .dark[data-accent-theme="neon-purple"], .dark [data-accent-theme="neon-purple"] {
-  --accent: #A855F7 !important;
+.dark.theme-neon-purple,
+.dark[data-accent-theme="neon-purple"],
+.dark [data-accent-theme="neon-purple"] {
+  --accent: #a855f7 !important;
   --accent-glow: rgba(168, 85, 247, 0.45) !important;
-  --accent-start: #C084FC !important;
-  --accent-mid: #A855F7 !important;
-  --accent-end: #7C3AED !important;
-  --primary-accent: #A855F7 !important;
-  --accent-secondary: #EC4899 !important;
+  --accent-start: #c084fc !important;
+  --accent-mid: #a855f7 !important;
+  --accent-end: #7c3aed !important;
+  --primary-accent: #a855f7 !important;
+  --accent-secondary: #ec4899 !important;
   --accent-secondary-glow: rgba(236, 72, 153, 0.45) !important;
-  --accent-tertiary: #0EA5E9 !important;
-  --accent-quaternary: #10B981 !important;
-  --accent-quinary: #F97316 !important;
-  --accent-text: #FFFFFF !important;
+  --accent-tertiary: #0ea5e9 !important;
+  --accent-quaternary: #10b981 !important;
+  --accent-quinary: #f97316 !important;
+  --accent-text: #ffffff !important;
 }
 
-.dark.theme-neon-pink, .dark[data-accent-theme="neon-pink"], .dark [data-accent-theme="neon-pink"] {
-  --accent: #EC4899 !important;
+.dark.theme-neon-pink,
+.dark[data-accent-theme="neon-pink"],
+.dark [data-accent-theme="neon-pink"] {
+  --accent: #ec4899 !important;
   --accent-glow: rgba(236, 72, 153, 0.45) !important;
-  --accent-start: #F472B6 !important;
-  --accent-mid: #EC4899 !important;
-  --accent-end: #DB2777 !important;
-  --primary-accent: #EC4899 !important;
-  --accent-secondary: #A855F7 !important;
+  --accent-start: #f472b6 !important;
+  --accent-mid: #ec4899 !important;
+  --accent-end: #db2777 !important;
+  --primary-accent: #ec4899 !important;
+  --accent-secondary: #a855f7 !important;
   --accent-secondary-glow: rgba(168, 85, 247, 0.45) !important;
-  --accent-tertiary: #00E5FF !important;
-  --accent-quaternary: #84CC16 !important;
-  --accent-quinary: #FBBF24 !important;
-  --accent-text: #FFFFFF !important;
+  --accent-tertiary: #00e5ff !important;
+  --accent-quaternary: #84cc16 !important;
+  --accent-quinary: #fbbf24 !important;
+  --accent-text: #ffffff !important;
 }
 
-.dark.theme-neon-orange, .dark[data-accent-theme="neon-orange"], .dark [data-accent-theme="neon-orange"] {
-  --accent: #F97316 !important;
+.dark.theme-neon-orange,
+.dark[data-accent-theme="neon-orange"],
+.dark [data-accent-theme="neon-orange"] {
+  --accent: #f97316 !important;
   --accent-glow: rgba(249, 115, 22, 0.45) !important;
-  --accent-start: #FB923C !important;
-  --accent-mid: #F97316 !important;
-  --accent-end: #EA580C !important;
-  --primary-accent: #F97316 !important;
-  --accent-secondary: #06B6D4 !important;
+  --accent-start: #fb923c !important;
+  --accent-mid: #f97316 !important;
+  --accent-end: #ea580c !important;
+  --primary-accent: #f97316 !important;
+  --accent-secondary: #06b6d4 !important;
   --accent-secondary-glow: rgba(6, 182, 212, 0.45) !important;
-  --accent-tertiary: #A855F7 !important;
-  --accent-quaternary: #10B981 !important;
-  --accent-quinary: #FF2A5F !important;
-  --accent-text: #FFFFFF !important;
+  --accent-tertiary: #a855f7 !important;
+  --accent-quaternary: #10b981 !important;
+  --accent-quinary: #ff2a5f !important;
+  --accent-text: #ffffff !important;
 }
 
-.dark.theme-neon-yellow, .dark[data-accent-theme="neon-yellow"], .dark [data-accent-theme="neon-yellow"] {
-  --accent: #EAB308 !important;
+.dark.theme-neon-yellow,
+.dark[data-accent-theme="neon-yellow"],
+.dark [data-accent-theme="neon-yellow"] {
+  --accent: #eab308 !important;
   --accent-glow: rgba(234, 179, 8, 0.45) !important;
-  --accent-start: #FACC15 !important;
-  --accent-mid: #EAB308 !important;
-  --accent-end: #CA8A04 !important;
-  --primary-accent: #EAB308 !important;
-  --accent-secondary: #38BDF8 !important;
+  --accent-start: #facc15 !important;
+  --accent-mid: #eab308 !important;
+  --accent-end: #ca8a04 !important;
+  --primary-accent: #eab308 !important;
+  --accent-secondary: #38bdf8 !important;
   --accent-secondary-glow: rgba(56, 189, 248, 0.45) !important;
-  --accent-tertiary: #FF2A5F !important;
-  --accent-quaternary: #10B981 !important;
-  --accent-quinary: #A855F7 !important;
-  --accent-text: #090D16 !important;
+  --accent-tertiary: #ff2a5f !important;
+  --accent-quaternary: #10b981 !important;
+  --accent-quinary: #a855f7 !important;
+  --accent-text: #090d16 !important;
 }
 
-.dark.theme-neon-teal, .dark[data-accent-theme="neon-teal"], .dark [data-accent-theme="neon-teal"] {
-  --accent: #14B8A6 !important;
+.dark.theme-neon-teal,
+.dark[data-accent-theme="neon-teal"],
+.dark [data-accent-theme="neon-teal"] {
+  --accent: #14b8a6 !important;
   --accent-glow: rgba(20, 184, 166, 0.45) !important;
-  --accent-start: #2DD4BF !important;
-  --accent-mid: #14B8A6 !important;
-  --accent-end: #0D9488 !important;
-  --primary-accent: #14B8A6 !important;
-  --accent-secondary: #818CF8 !important;
+  --accent-start: #2dd4bf !important;
+  --accent-mid: #14b8a6 !important;
+  --accent-end: #0d9488 !important;
+  --primary-accent: #14b8a6 !important;
+  --accent-secondary: #818cf8 !important;
   --accent-secondary-glow: rgba(129, 140, 248, 0.45) !important;
-  --accent-tertiary: #FF2A5F !important;
-  --accent-quaternary: #F59E0B !important;
-  --accent-quinary: #A3E635 !important;
-  --accent-text: #FFFFFF !important;
+  --accent-tertiary: #ff2a5f !important;
+  --accent-quaternary: #f59e0b !important;
+  --accent-quinary: #a3e635 !important;
+  --accent-text: #ffffff !important;
 }
 
 :root {
@@ -348,8 +380,8 @@
 
 .dark {
   --bg-base: #020617;
-  --bg-card: #0F172A;
-  --bg-elevated: #1E293B;
+  --bg-card: #0f172a;
+  --bg-elevated: #1e293b;
 
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -377,7 +409,10 @@
   }
   body {
     @apply bg-background text-foreground antialiased selection:bg-amber-500/20;
-    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1,
+      "ss01" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -415,7 +450,7 @@
   .glass-panel {
     @apply bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm rounded-xl overflow-hidden;
   }
-  
+
   .glass-header {
     @apply bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm sticky top-0 z-50;
   }
@@ -423,7 +458,7 @@
   .btn-primary {
     @apply px-4 py-2 bg-primary text-primary-foreground font-semibold rounded-lg shadow hover:bg-primary/90 transition-all duration-300 active:scale-[0.98];
   }
-  
+
   .btn-secondary {
     @apply px-4 py-2 bg-secondary text-secondary-foreground font-semibold rounded-lg hover:bg-secondary/80 transition-all duration-300 border border-slate-200 active:scale-[0.98];
   }
@@ -441,59 +476,123 @@
     --tw-prose-counters: var(--muted-foreground);
     --tw-prose-bullets: var(--muted-foreground);
   }
-  
+
   .prose p {
     @apply leading-relaxed mb-4 text-[15px];
   }
-  
+
   .prose ol {
     @apply list-decimal pl-6 mb-5 space-y-2;
   }
-  
+
   .prose ul {
     @apply list-disc pl-6 mb-5 space-y-2;
   }
-  
+
   .prose li {
     @apply pl-1 text-[15px] leading-relaxed marker:text-foreground/70 marker:font-semibold;
   }
-  
+
   .prose strong {
     @apply font-bold text-foreground;
   }
 }
 
-/* Custom Scrollbar */
-.custom-scrollbar::-webkit-scrollbar {
+/* Custom Scrollbar - global and theme-aware (Vertical scrollbar styled, Horizontal scrollbar globally hidden) */
+:root {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent, #00ffc2) transparent;
+  --scrollbar-track: rgba(148, 163, 184, 0.14);
+  --scrollbar-thumb: var(--accent, #00ffc2);
+  --scrollbar-thumb-hover: var(--accent-mid, var(--accent, #00ffc2));
+}
+
+.dark {
+  --scrollbar-track: rgba(15, 23, 42, 0.45);
+  --scrollbar-thumb: var(--accent, #00ffc2);
+  --scrollbar-thumb-hover: var(--accent-start, var(--accent, #00ffc2));
+}
+
+/* Globally suppress horizontal scrollbars while preserving touch/drag/swipe horizontal scrolling */
+::-webkit-scrollbar:horizontal {
+  display: none !important;
+  height: 0px !important;
+  background: transparent !important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
   width: 6px;
-  height: 6px;
+  height: 0px !important;
 }
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent; 
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4); 
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
   border-radius: 999px;
 }
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 0.7); 
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--scrollbar-thumb), var(--scrollbar-thumb-hover));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
-.dark .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.6);
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover,
+*::-webkit-scrollbar-thumb:hover {
+  filter: brightness(1.08);
 }
-.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(71, 85, 105, 0.9);
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 0px !important;
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes scaleUp {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .animate-fade-in {
@@ -506,16 +605,25 @@
 
 /* ACCENT THEME DYNAMIC UTILITIES - ULTRA NEON VIBE & SHARP GLOW */
 .bg-accent-gradient {
-  background: linear-gradient(135deg, var(--accent-start, var(--accent)), var(--accent-mid, var(--accent)), var(--accent-end, var(--accent))) !important;
-  color: var(--accent-text, #FFFFFF) !important;
-  box-shadow: 0 0 16px var(--accent-glow), 0 4px 14px rgba(0, 0, 0, 0.2) !important;
+  background: linear-gradient(
+    135deg,
+    var(--accent-start, var(--accent)),
+    var(--accent-mid, var(--accent)),
+    var(--accent-end, var(--accent))
+  ) !important;
+  color: var(--accent-text, #ffffff) !important;
+  box-shadow:
+    0 0 16px var(--accent-glow),
+    0 4px 14px rgba(0, 0, 0, 0.2) !important;
   border: 1px solid rgba(255, 255, 255, 0.25) !important;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .bg-accent-gradient:hover {
   filter: brightness(1.12) !important;
-  box-shadow: 0 0 24px var(--accent-glow), 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+  box-shadow:
+    0 0 24px var(--accent-glow),
+    0 6px 20px rgba(0, 0, 0, 0.3) !important;
 }
 
 .bg-accent-primary {
@@ -529,7 +637,9 @@
 
 .glow-text-neon {
   color: var(--accent) !important;
-  text-shadow: 0 0 10px var(--accent-glow), 0 0 20px var(--accent-glow) !important;
+  text-shadow:
+    0 0 10px var(--accent-glow),
+    0 0 20px var(--accent-glow) !important;
 }
 
 .border-accent-primary {
@@ -548,8 +658,8 @@
 /* MULTI-TONE HARMONIZED ACCENT UTILITIES */
 .bg-accent-secondary {
   background: var(--accent-secondary) !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 0 14px var(--accent-secondary-glow, rgba(0,0,0,0.2)) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 14px var(--accent-secondary-glow, rgba(0, 0, 0, 0.2)) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
 
@@ -566,14 +676,14 @@
 }
 
 .bg-accent-secondary-light {
-  background-color: var(--accent-secondary-glow, rgba(0,0,0,0.15)) !important;
+  background-color: var(--accent-secondary-glow, rgba(0, 0, 0, 0.15)) !important;
   color: var(--accent-secondary) !important;
 }
 
 .bg-accent-tertiary {
   background: var(--accent-tertiary) !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 0 10px rgba(0,0,0,0.15) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15) !important;
 }
 
 .text-accent-tertiary {
@@ -586,8 +696,8 @@
 
 .bg-accent-quaternary {
   background: var(--accent-quaternary) !important;
-  color: #FFFFFF !important;
-  box-shadow: 0 0 10px rgba(0,0,0,0.15) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15) !important;
 }
 
 .text-accent-quaternary {
@@ -600,7 +710,7 @@
 
 .bg-accent-quinary {
   background: var(--accent-quinary) !important;
-  color: #FFFFFF !important;
+  color: #ffffff !important;
 }
 
 .text-accent-quinary {
@@ -628,7 +738,9 @@
   padding: 12px 16px !important;
   font-weight: 600 !important;
   font-size: 0.875rem !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
   border: 1px solid rgba(226, 232, 240, 0.9) !important;
   background: #ffffff !important;
   color: #0f172a !important;

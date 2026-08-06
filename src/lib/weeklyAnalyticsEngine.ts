@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import prisma from "@/lib/prisma";
 
 export function getStudyDayKey(d: Date = new Date()): string {
   const adjusted = new Date(d);
@@ -6,28 +6,50 @@ export function getStudyDayKey(d: Date = new Date()): string {
     adjusted.setDate(adjusted.getDate() - 1);
   }
   const y = adjusted.getFullYear();
-  const m = String(adjusted.getMonth() + 1).padStart(2, '0');
-  const day = String(adjusted.getDate()).padStart(2, '0');
+  const m = String(adjusted.getMonth() + 1).padStart(2, "0");
+  const day = String(adjusted.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
 
-export function getWeekKey(d: Date = new Date()): string {
+function getWeekRange(d: Date = new Date()) {
   const now = new Date(d);
   const dayOfWeek = now.getDay();
   const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-  const mon = new Date(now);
-  mon.setDate(now.getDate() + diffToMon);
 
-  const sun = new Date(mon);
-  sun.setDate(mon.getDate() + 6);
+  const start = new Date(now);
+  start.setDate(now.getDate() + diffToMon);
 
-  const monKey = getStudyDayKey(mon);
-  const sunKey = getStudyDayKey(sun);
-  return `${monKey}_to_${sunKey}`;
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  return { start, end };
+}
+
+export function getWeekKey(d: Date = new Date()): string {
+  const { start, end } = getWeekRange(d);
+  const startKey = getStudyDayKey(start);
+  const endKey = getStudyDayKey(end);
+  return `${startKey}_to_${endKey}`;
+}
+
+export function formatWeekLabel(weekKey: string): string {
+  const [startStr, endStr] = weekKey.split("_to_");
+  if (!startStr || !endStr) return weekKey;
+
+  const startDate = new Date(startStr + "T00:00:00");
+  const endDate = new Date(endStr + "T00:00:00");
+
+  const startFormatted = startDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const endFormatted = endDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const yearStr = endDate.getFullYear();
+
+  return weekKey === getWeekKey(new Date())
+    ? `This Week (${startFormatted} – ${endFormatted})`
+    : `${startFormatted} – ${endFormatted}, ${yearStr}`;
 }
 
 export async function getEffectiveUserId(userId?: string): Promise<string> {
-  return userId || '';
+  return userId || "";
 }
 
 export function formatMinutes(totalMins: number): string {
@@ -38,36 +60,36 @@ export function formatMinutes(totalMins: number): string {
   const hrs = Math.floor(roundedMins / 60);
   const remMins = roundedMins % 60;
   if (remMins === 0) {
-    return `${hrs} ${hrs === 1 ? 'hr' : 'hrs'}`;
+    return `${hrs} ${hrs === 1 ? "hr" : "hrs"}`;
   }
-  return `${hrs} ${hrs === 1 ? 'hr' : 'hrs'} ${remMins} mins`;
+  return `${hrs} ${hrs === 1 ? "hr" : "hrs"} ${remMins} mins`;
 }
 
 export function isHabitScheduledOnDate(h: any, dayKey: string): boolean {
   if (h.startDate && h.startDate > dayKey) return false;
   if (h.endDate && h.endDate < dayKey) return false;
 
-  const freq = typeof h.frequency === 'object' && h.frequency !== null ? (h.frequency as any) : {};
-  const mode = freq.mode || 'daily';
+  const freq = typeof h.frequency === "object" && h.frequency !== null ? (h.frequency as any) : {};
+  const mode = freq.mode || "daily";
 
-  if (mode === 'daily' || mode === 'everyday') return true;
+  if (mode === "daily" || mode === "everyday") return true;
 
-  if (mode === 'once') return h.startDate === dayKey;
+  if (mode === "once") return h.startDate === dayKey;
 
-  if (mode === 'specific_days' || mode === 'specific' || mode === 'weekly') {
+  if (mode === "specific_days" || mode === "specific" || mode === "weekly") {
     const days = freq.days || [];
     if (days.length === 0) return true;
-    const dayObj = new Date(dayKey + 'T00:00:00');
-    const dayShort = dayObj.toLocaleString('en-US', { weekday: 'short' }).toLowerCase();
-    const dayFull = dayObj.toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+    const dayObj = new Date(dayKey + "T00:00:00");
+    const dayShort = dayObj.toLocaleString("en-US", { weekday: "short" }).toLowerCase();
+    const dayFull = dayObj.toLocaleString("en-US", { weekday: "long" }).toLowerCase();
     return days.some((d: any) => {
       const lowerD = String(d).toLowerCase().trim();
       return lowerD === dayShort || lowerD === dayFull || lowerD.startsWith(dayShort) || dayShort.startsWith(lowerD);
     });
   }
 
-  if (mode === 'monthly') {
-    const dayObj = new Date(dayKey + 'T00:00:00');
+  if (mode === "monthly") {
+    const dayObj = new Date(dayKey + "T00:00:00");
     const targetDay = freq.monthlyDay || 1;
     return dayObj.getDate() === targetDay;
   }
@@ -76,41 +98,58 @@ export function isHabitScheduledOnDate(h: any, dayKey: string): boolean {
 }
 
 function isTimeBasedActivity(h: any): boolean {
-  const targetObj = typeof h.target === 'object' && h.target !== null ? (h.target as any) : {};
-  const unit = (targetObj.unit || '').toLowerCase().trim();
-  return ['hrs', 'hr', 'hours', 'hour', 'mins', 'min', 'minutes', 'minute'].includes(unit);
+  const targetObj = typeof h.target === "object" && h.target !== null ? (h.target as any) : {};
+  const unit = (targetObj.unit || "").toLowerCase().trim();
+  return ["hrs", "hr", "hours", "hour", "mins", "min", "minutes", "minute"].includes(unit);
 }
 
 function getHabitItemHours(h: any, entry: any): number {
   if (!isTimeBasedActivity(h)) return 0;
 
-  const targetObj = typeof h.target === 'object' && h.target !== null ? (h.target as any) : {};
-  const unit = (targetObj.unit || '').toLowerCase().trim();
+  const targetObj = typeof h.target === "object" && h.target !== null ? (h.target as any) : {};
+  const unit = (targetObj.unit || "").toLowerCase().trim();
   const val = Number(entry?.value || 0);
 
-  if (val <= 0 && entry?.status !== 'done') return 0;
+  if (val <= 0 && entry?.status !== "done") return 0;
 
-  const effectiveVal = val > 0 ? val : (entry?.status === 'done' ? Number(targetObj.value || 0) : 0);
+  const effectiveVal = val > 0 ? val : entry?.status === "done" ? Number(targetObj.value || 0) : 0;
 
-  if (['hrs', 'hr', 'hours', 'hour'].includes(unit)) return effectiveVal;
-  if (['mins', 'min', 'minutes', 'minute'].includes(unit)) return effectiveVal / 60;
+  if (["hrs", "hr", "hours", "hour"].includes(unit)) return effectiveVal;
+  if (["mins", "min", "minutes", "minute"].includes(unit)) return effectiveVal / 60;
 
   return 0;
 }
 
-const INVALID_SUBJECT_NAMES = new Set(['study', 'general', 'gs1', 'gs2', 'gs3', 'gs4', 'csat', 'reading', 'revision', 'task', 'habit', 'uncategorized']);
+const INVALID_SUBJECT_NAMES = new Set([
+  "study",
+  "general",
+  "gs1",
+  "gs2",
+  "gs3",
+  "gs4",
+  "csat",
+  "reading",
+  "revision",
+  "task",
+  "habit",
+  "uncategorized",
+]);
 
-function resolveValidSubject(rawSubj: string | undefined, title: string | undefined, validSyllabusSubjects: string[]): string | null {
-  const cleanSubj = (rawSubj || '').trim();
+function resolveValidSubject(
+  rawSubj: string | undefined,
+  title: string | undefined,
+  validSyllabusSubjects: string[],
+): string | null {
+  const cleanSubj = (rawSubj || "").trim();
   if (cleanSubj && !INVALID_SUBJECT_NAMES.has(cleanSubj.toLowerCase())) return cleanSubj;
 
-  if (title && title.includes(':')) {
-    const candidate = title.split(':')[0].trim();
+  if (title && title.includes(":")) {
+    const candidate = title.split(":")[0].trim();
     if (candidate && !INVALID_SUBJECT_NAMES.has(candidate.toLowerCase())) return candidate;
   }
 
   if (title) {
-    const cleanTitle = title.replace(/^\[R[123]\s+Revision\]\s*/i, '').trim();
+    const cleanTitle = title.replace(/^\[R[123]\s+Revision\]\s*/i, "").trim();
     const matched = validSyllabusSubjects.find((s) => cleanTitle.toLowerCase().includes(s.toLowerCase()));
     if (matched) return matched;
 
@@ -126,30 +165,30 @@ export async function calculateAndSaveWeeklyData(
   userId?: string,
   targetDate: Date = new Date(),
   customStart?: string,
-  customEnd?: string
+  customEnd?: string,
 ) {
   const effectiveUserId = await getEffectiveUserId(userId);
   let weekKey: string;
   const dayKeys: string[] = [];
-  const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const weeklyData: Array<{ day: string; dateKey: string; hours: number; tasksCount: number; target: number }> = [];
 
   if (customStart && customEnd) {
     weekKey = `${customStart}_to_${customEnd}`;
-    const startD = new Date(customStart + 'T00:00:00');
-    const endD = new Date(customEnd + 'T00:00:00');
+    const startD = new Date(customStart + "T00:00:00");
+    const endD = new Date(customEnd + "T00:00:00");
     const diffDays = Math.max(1, Math.round((endD.getTime() - startD.getTime()) / (1000 * 3600 * 24)) + 1);
 
     for (let i = 0; i < diffDays; i++) {
       const d = new Date(startD);
       d.setDate(startD.getDate() + i);
       const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
       const dayKey = `${y}-${m}-${day}`;
       dayKeys.push(dayKey);
 
-      const dayLabel = d.toLocaleString('en-US', { weekday: 'short' });
+      const dayLabel = d.toLocaleString("en-US", { weekday: "short" });
       weeklyData.push({
         day: dayLabel,
         dateKey: dayKey,
@@ -169,8 +208,8 @@ export async function calculateAndSaveWeeklyData(
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
       const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
       const dayKey = `${y}-${m}-${day}`;
       dayKeys.push(dayKey);
       weeklyData.push({
@@ -209,13 +248,21 @@ export async function calculateAndSaveWeeklyData(
     }
   > = {};
   const subjectHoursMap: Record<string, { subject: string; hours: number; color: string }> = {};
-  const colors = ['bg-indigo-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500', 'bg-purple-500', 'bg-blue-500'];
+  const colors = [
+    "bg-indigo-500",
+    "bg-emerald-500",
+    "bg-amber-500",
+    "bg-rose-500",
+    "bg-cyan-500",
+    "bg-purple-500",
+    "bg-blue-500",
+  ];
 
   habits.forEach((h, idx) => {
-    if (h.type === 'habit') {
-      const targetObj = typeof h.target === 'object' && h.target !== null ? (h.target as any) : {};
-      const unit = (targetObj.unit || 'times').trim();
-      const val = typeof targetObj.value === 'number' && targetObj.value > 0 ? targetObj.value : null;
+    if (h.type === "habit") {
+      const targetObj = typeof h.target === "object" && h.target !== null ? (h.target as any) : {};
+      const unit = (targetObj.unit || "times").trim();
+      const val = typeof targetObj.value === "number" && targetObj.value > 0 ? targetObj.value : null;
 
       const scheduledDaysCount = dayKeys.filter((dk) => isHabitScheduledOnDate(h, dk)).length;
 
@@ -235,7 +282,7 @@ export async function calculateAndSaveWeeklyData(
     new Set([
       ...syllabusItems.map((s) => s.subject).filter(Boolean),
       ...topicRevisions.map((t) => t.subject).filter(Boolean),
-    ])
+    ]),
   ).filter((s) => !INVALID_SUBJECT_NAMES.has(s.toLowerCase()));
 
   validSyllabusSubjects.forEach((subj, idx) => {
@@ -256,8 +303,8 @@ export async function calculateAndSaveWeeklyData(
       const history = Array.isArray(h.history) ? h.history : [];
       const entry = history.find((e: any) => e.date === dKey);
 
-      if (entry && (entry.status === 'done' || (entry.value && entry.value > 0))) {
-        if (entry.status === 'done') {
+      if (entry && (entry.status === "done" || (entry.value && entry.value > 0))) {
+        if (entry.status === "done") {
           dayTasksCount++;
           totalTasksDone++;
         }
@@ -265,7 +312,7 @@ export async function calculateAndSaveWeeklyData(
         if (habitStatsMap[hId]) {
           const val = entry.value || 1;
           habitStatsMap[hId].totalValue += val;
-          if (entry.status === 'done') {
+          if (entry.status === "done") {
             habitStatsMap[hId].completedDays += 1;
           }
         }
@@ -278,7 +325,11 @@ export async function calculateAndSaveWeeklyData(
             const subj = resolveValidSubject(h.subject || undefined, h.title, validSyllabusSubjects);
             if (subj) {
               if (!subjectHoursMap[subj]) {
-                subjectHoursMap[subj] = { subject: subj, hours: 0, color: colors[Object.keys(subjectHoursMap).length % colors.length] };
+                subjectHoursMap[subj] = {
+                  subject: subj,
+                  hours: 0,
+                  color: colors[Object.keys(subjectHoursMap).length % colors.length],
+                };
               }
               subjectHoursMap[subj].hours += itemHours;
             }
@@ -297,8 +348,8 @@ export async function calculateAndSaveWeeklyData(
   const dailyAverageHours = Number((weeklyTotalHours / 7).toFixed(1));
 
   const recurringHabits = habits.filter((h: any) => {
-    const freq = typeof h.frequency === 'object' && h.frequency !== null ? (h.frequency as any) : {};
-    if (freq.mode === 'once' || h.type === 'event') return false;
+    const freq = typeof h.frequency === "object" && h.frequency !== null ? (h.frequency as any) : {};
+    if (freq.mode === "once" || h.type === "event") return false;
     const stats = habitStatsMap[h.id];
     if (!stats) return false;
     // Only include habits scheduled for this week or with logged progress
@@ -314,20 +365,20 @@ export async function calculateAndSaveWeeklyData(
       const stats = habitStatsMap[h.id];
       if (!stats) return;
 
-      const unitLower = (stats.unit || '').toLowerCase().trim();
+      const unitLower = (stats.unit || "").toLowerCase().trim();
       let habitPct = 0;
       const effectiveScheduledDays = Math.max(1, stats.scheduledDaysCount);
 
-      if (unitLower === 'time' || h.target?.targetTime || /wake\s*up/i.test(h.title || '')) {
+      if (unitLower === "time" || h.target?.targetTime || /wake\s*up/i.test(h.title || "")) {
         const history = Array.isArray(h.history) ? h.history : [];
         let habitWakeUpPtsSum = 0;
         dayKeys.forEach((dk) => {
           if (isHabitScheduledOnDate(h, dk)) {
             const entry = history.find((e: any) => e.date === dk);
             if (entry) {
-              if (typeof entry.pts === 'number') {
+              if (typeof entry.pts === "number") {
                 habitWakeUpPtsSum += entry.pts;
-              } else if (entry.status === 'done') {
+              } else if (entry.status === "done") {
                 habitWakeUpPtsSum += 100;
               }
             }
@@ -335,7 +386,7 @@ export async function calculateAndSaveWeeklyData(
         });
         const maxPossibleWakePts = effectiveScheduledDays * 100;
         habitPct = maxPossibleWakePts > 0 ? (habitWakeUpPtsSum / maxPossibleWakePts) * 100 : 0;
-      } else if (['yes_no', 'boolean'].includes(unitLower) || !stats.targetValue) {
+      } else if (["yes_no", "boolean"].includes(unitLower) || !stats.targetValue) {
         habitPct = (stats.completedDays / effectiveScheduledDays) * 100;
       } else {
         const weeklyTarget = stats.targetValue * effectiveScheduledDays;
@@ -371,20 +422,20 @@ export async function calculateAndSaveWeeklyData(
     .filter((h) => h.scheduledDaysCount > 0 || h.completedDays > 0 || h.totalValue > 0)
     .map((h) => {
       const unitLower = h.unit.toLowerCase();
-      let formattedVal = '';
+      let formattedVal = "";
       let pct = 0;
       const effectiveScheduledDays = Math.max(1, h.scheduledDaysCount);
 
-      if (['yes_no', 'boolean'].includes(unitLower) || h.targetValue === null) {
+      if (["yes_no", "boolean"].includes(unitLower) || h.targetValue === null) {
         formattedVal = `${h.completedDays} / ${effectiveScheduledDays} days`;
         pct = Math.min(100, Math.round((h.completedDays / effectiveScheduledDays) * 100));
-      } else if (['hrs', 'hr', 'hours', 'hour'].includes(unitLower)) {
+      } else if (["hrs", "hr", "hours", "hour"].includes(unitLower)) {
         const weeklyTargetHours = h.targetValue * effectiveScheduledDays;
         const loggedMins = Math.round(h.totalValue * 60);
         const weeklyTargetMins = Math.round(weeklyTargetHours * 60);
         formattedVal = `${formatMinutes(loggedMins)} / ${formatMinutes(weeklyTargetMins)}`;
         pct = Math.min(100, Math.round((h.totalValue / Math.max(0.1, weeklyTargetHours)) * 100));
-      } else if (['mins', 'min', 'minutes', 'minute'].includes(unitLower)) {
+      } else if (["mins", "min", "minutes", "minute"].includes(unitLower)) {
         const weeklyTargetMins = h.targetValue * effectiveScheduledDays;
         const loggedMins = h.totalValue;
         formattedVal = `${formatMinutes(loggedMins)} / ${formatMinutes(weeklyTargetMins)}`;
@@ -469,7 +520,7 @@ export async function getAllAvailableWeeks(userId?: string) {
   const docs = await prisma.weeklyData.findMany({
     where: { userId: effectiveUserId },
     select: { weekKey: true, updatedAt: true },
-    orderBy: { weekKey: 'desc' },
+    orderBy: { weekKey: "desc" },
   });
 
   const weekKeySet = new Set(docs.map((d) => d.weekKey));
@@ -486,24 +537,11 @@ export async function getAllAvailableWeeks(userId?: string) {
   const sortedKeys = Array.from(weekKeySet).sort().reverse();
 
   return sortedKeys.map((wk) => {
-    const [startStr, endStr] = wk.split('_to_');
-    const startDate = new Date(startStr + 'T00:00:00');
-    const endDate = new Date(endStr + 'T00:00:00');
-
-    const startFormatted = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const endFormatted = endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const yearStr = endDate.getFullYear();
-
-    let label = `${startFormatted} – ${endFormatted}, ${yearStr}`;
-    if (wk === currentWeekKey) {
-      label = `This Week (${startFormatted} – ${endFormatted})`;
-    }
-
     return {
       weekKey: wk,
-      label,
-      startDate: startStr,
-      endDate: endStr,
+      label: formatWeekLabel(wk),
+      startDate: wk.split("_to_")[0],
+      endDate: wk.split("_to_")[1],
       isCurrent: wk === currentWeekKey,
     };
   });

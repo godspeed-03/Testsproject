@@ -43,7 +43,7 @@ export default function NavbarClient({ user }: NavbarClientProps) {
           </div>
 
           {/* Quick Action Icons */}
-          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar shrink py-0.5">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 overflow-x-auto no-scrollbar shrink py-0.5">
             {user && (
               <>
                 {/* Log Task / Habit Shortcut Icon */}

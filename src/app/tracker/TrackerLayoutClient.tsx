@@ -290,7 +290,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
         </div>
 
         {/* Mobile Horizontal Pill Navigation Bar (<768px) with Touch Snap & Sticky Header */}
-        <div className="md:hidden sticky top-14 z-40 backdrop-blur-md bg-slate-50/90 dark:bg-slate-950/90 overflow-x-auto flex items-center gap-1.5 py-2 scrollbar-none -mx-3.5 px-3.5 border-b border-slate-200/80 dark:border-slate-800/80 snap-x snap-mandatory shadow-xs">
+        <div className="md:hidden sticky top-14 z-40 backdrop-blur-md bg-slate-50/90 dark:bg-slate-950/90 overflow-x-auto flex items-center gap-1.5 py-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden -mx-3.5 px-3.5 border-b border-slate-200/80 dark:border-slate-800/80 snap-x snap-mandatory shadow-xs">
           {navTabs.map((tab) => {
             const Icon = tab.icon;
             const active = pathname === tab.href || (pathname === '/tracker' && tab.href === '/tracker/agenda');
@@ -479,14 +479,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                               setFormTitle('');
                             }
                           }}
-                          className={`py-2 px-2 text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          className={`py-2 px-1 text-[10px] sm:text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer ${
                             formStudyTaskMode === 'none'
                               ? 'bg-slate-900 text-white dark:bg-slate-800 dark:text-white shadow-xs'
                               : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
                           }`}
                         >
                           <span>📝</span>
-                          <span>No Link</span>
+                          <span className="whitespace-nowrap">No Link</span>
                         </button>
 
                         <button
@@ -496,14 +496,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             setFormIsStudyTask(true);
                             setFormIsBatchRevision(false);
                           }}
-                          className={`py-2 px-2 text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          className={`py-2 px-1 text-[10px] sm:text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer ${
                             formStudyTaskMode === 'single'
                               ? 'bg-indigo-600 text-white shadow-xs'
                               : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
                           }`}
                         >
                           <span>🎓</span>
-                          <span>UPSC Single</span>
+                          <span className="whitespace-nowrap">UPSC Single</span>
                         </button>
 
                         <button
@@ -517,14 +517,14 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             setFormColor('#8B5CF6');
                             setShowEmojiPicker(false);
                           }}
-                          className={`py-2 px-2 text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                          className={`py-2 px-1 text-[10px] sm:text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1 cursor-pointer ${
                             formStudyTaskMode === 'batch_revision'
                               ? 'bg-purple-600 text-white shadow-xs'
                               : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
                           }`}
                         >
                           <span>⚡</span>
-                          <span>Batch Revision</span>
+                          <span className="whitespace-nowrap">Batch Revision</span>
                         </button>
                       </div>
 

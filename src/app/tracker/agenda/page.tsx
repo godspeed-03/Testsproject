@@ -77,36 +77,13 @@ export default function AgendaPage() {
     <div className="space-y-6">
       {/* Header + Date Picker Strip */}
       <div className={`p-3.5 sm:p-4 rounded-2xl border ${cardBg} space-y-3 shadow-xs`}>
-        <div className="flex flex-wrap justify-between items-center gap-2.5">
-          <div className="flex items-center gap-3">
+        {/* Top Row: Date Picker on Left | View Switcher & Rest Day Action on Right */}
+        <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-2 shrink-0">
             <ShadcnDatePicker selectedDate={selectedDate} onSelectDate={setSelectedDate} disablePastDates={false} />
           </div>
 
-          {/* Search & Type Filters */}
-          <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-            <div className="relative w-full sm:w-56">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search tasks..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 outline-none w-full"
-              />
-            </div>
-
-            <div className="w-full sm:w-36">
-              <ShadcnSelect
-                value={typeFilter}
-                onChange={(val: string) => setTypeFilter(val as any)}
-                options={[
-                  { value: "ALL", label: "All Items" },
-                  { value: "habit", label: "Habits Only" },
-                  { value: "task", label: "Tasks & Events" },
-                ]}
-              />
-            </div>
-
+          <div className="flex items-center gap-2 shrink-0">
             {/* Cards vs Row-wise View Switcher Toggle */}
             <div className="flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
               <button
@@ -137,14 +114,14 @@ export default function AgendaPage() {
               </button>
             </div>
 
-            {/* Single Dynamic Action Button: Rest Day when today, Jump to Today when viewing another date */}
+            {/* Single Dynamic Action Button: Rest Day / Today */}
             {selectedDate === getTodayIso() ? (
               <ActionTooltip label="Mark today as Rest Day: shift uncompleted tasks to tomorrow & log habits as rest">
                 <button
                   type="button"
                   disabled={saving}
                   onClick={() => handleMarkRestDay(selectedDate)}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-black hover:bg-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 shrink-0"
+                  className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-black hover:bg-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 shrink-0"
                 >
                   <Coffee size={14} />
                   <span>Rest Day</span>
@@ -154,12 +131,38 @@ export default function AgendaPage() {
               <button
                 type="button"
                 onClick={handleGoToToday}
-                className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-black hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0 active:scale-95"
+                className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-xs font-black hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs shrink-0 active:scale-95"
               >
                 <CheckSquare size={14} />
                 <span>Today</span>
               </button>
             )}
+          </div>
+        </div>
+
+        {/* Second Row: Search tasks & Type Filter Dropdown */}
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full pt-1">
+          <div className="relative w-full sm:flex-1 h-[36px]">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 pr-3 py-1.5 h-full text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 outline-none w-full"
+            />
+          </div>
+
+          <div className="w-full sm:w-44 shrink-0 h-[36px]">
+            <ShadcnSelect
+              value={typeFilter}
+              onChange={(val: string) => setTypeFilter(val as any)}
+              options={[
+                { value: "ALL", label: "All Items" },
+                { value: "habit", label: "Habits Only" },
+                { value: "task", label: "Tasks & Events" },
+              ]}
+            />
           </div>
         </div>
 
@@ -591,7 +594,7 @@ export default function AgendaPage() {
                 key={h.id || h._id}
                 style={topBorderStyle}
                 onClick={() => handleItemClick(h, selectedDate)}
-                className={`p-3.5 rounded-xl border border-t-4 ${topAccentColor} ${itemCardBg} flex flex-col justify-between gap-3 transition-all hover:border-accent-primary hover:shadow-neon-glow shadow-xs relative cursor-pointer group`}
+                className={`p-2.5 sm:p-3 rounded-xl border border-t-4 ${topAccentColor} ${itemCardBg} flex flex-col justify-between gap-2 transition-all hover:border-accent-primary hover:shadow-neon-glow shadow-xs relative cursor-pointer group`}
               >
                 {/* Header: Centered Type Badge & Top-Right Circular Progress Ring */}
                 <div className="flex items-center justify-between gap-2">
@@ -628,8 +631,8 @@ export default function AgendaPage() {
                   </div>
 
                   {/* Circular Progress Ring in Top Right Corner */}
-                  <div className="relative w-8 h-8 shrink-0 flex items-center justify-center" title={`${cardPct}% Progress`}>
-                    <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 36 36">
+                  <div className="relative w-7 h-7 shrink-0 flex items-center justify-center" title={`${cardPct}% Progress`}>
+                    <svg className="w-7 h-7 transform -rotate-90" viewBox="0 0 36 36">
                       <path
                         className="text-slate-200 dark:text-slate-800"
                         strokeWidth="3.5"
@@ -661,25 +664,25 @@ export default function AgendaPage() {
                         d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
                     </svg>
-                    <span className="absolute text-[8.5px] font-black font-mono text-slate-700 dark:text-slate-200">
+                    <span className="absolute text-[8px] font-black font-mono text-slate-700 dark:text-slate-200">
                       {cardPct}%
                     </span>
                   </div>
                 </div>
 
                 {/* Header: Icon & Wrapped Title */}
-                <div className="space-y-2.5">
-                  <div className="flex items-start gap-2.5 min-w-0">
+                <div className="space-y-1.5">
+                  <div className="flex items-start gap-2 min-w-0">
                     <div
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0 shadow-inner mt-0.5"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0 shadow-inner mt-0.5"
                       style={{ backgroundColor: `${h.color}20`, color: h.color, border: `1px solid ${h.color}40` }}
                     >
                       {h.icon || h.category?.icon || "🏃"}
                     </div>
-                    <div className="min-w-0 flex-1 space-y-1">
+                    <div className="min-w-0 flex-1">
                       <h4
                         onClick={() => handleItemClick(h, selectedDate)}
-                        className={`font-black font-display text-xs sm:text-sm leading-snug break-words cursor-pointer hover:text-indigo-500 transition-colors ${titleColorClass}`}
+                        className={`font-black font-display text-xs sm:text-sm leading-tight break-words cursor-pointer hover:text-indigo-500 transition-colors ${titleColorClass}`}
                       >
                         {h.title}
                       </h4>
@@ -687,7 +690,7 @@ export default function AgendaPage() {
                   </div>
 
                   {/* Goal display */}
-                  <div className="pt-0.5">
+                  <div>
                     <div className="flex items-center justify-between text-xs">
                       {isNumeric ? (
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-black border ${badgeColorClass}`}>
@@ -722,7 +725,7 @@ export default function AgendaPage() {
                 </div>
 
                 {/* Footer Action Bar */}
-                <div className="pt-1.5 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between">
+                <div className="pt-1 flex items-center justify-between">
                   <div className="flex items-center gap-1">
                     <button
                       type="button"

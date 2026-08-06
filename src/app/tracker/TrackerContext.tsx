@@ -265,7 +265,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [selectedDate, setSelectedDate] = useState<string>(getTodayIso());
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'ALL' | 'habit' | 'task' | 'event'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'habit' | 'task' | 'event'>('task');
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<'habit' | 'task' | 'event' | 'list'>('habit');

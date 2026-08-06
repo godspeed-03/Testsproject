@@ -22,22 +22,30 @@ function getSslConfig(): pg.PoolConfig['ssl'] {
   return { rejectUnauthorized: false };
 }
 
-const pool = new pg.Pool({
-  connectionString,
-  ssl: getSslConfig(),
-});
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient;
+  pgPool?: pg.Pool;
+};
 
-const adapter = new PrismaPg(pool);
+if (!globalForPrisma.pgPool) {
+  globalForPrisma.pgPool = new pg.Pool({
+    connectionString,
+    ssl: getSslConfig(),
+    max: 2,
+    idleTimeoutMillis: 2000,
+    connectionTimeoutMillis: 5000,
+  });
+}
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const pool = globalForPrisma.pgPool;
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
+if (!globalForPrisma.prisma) {
+  const adapter = new PrismaPg(pool);
+  globalForPrisma.prisma = new PrismaClient({
     adapter,
     log: ['error'],
   });
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
-
+export const prisma = globalForPrisma.prisma;
 export default prisma;

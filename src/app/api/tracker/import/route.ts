@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     const data = sanitizeBson(rawData);
 
     const habitsInput = data.habits || data.habitItems || [];
-    const listsInput = data.lists || data.checkLists || [];
+    const listsInput = data.lists || data.checkLists || data.checklists || [];
     const topicRevisionsInput = data.topicrevisions || data.topicRevisions || [];
     const syllabusInput = data.syllabusitems || data.syllabusList || data.syllabus || [];
     const testLogsInput = data.testlogs || data.testLogs || [];

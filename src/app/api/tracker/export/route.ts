@@ -133,6 +133,7 @@ export async function GET() {
     return NextResponse.json({
       habits: formattedHabits,
       lists: formattedLists,
+      checkLists: formattedLists,
       topicRevisions: formattedTopicRevisions,
       syllabusList: formattedSyllabus,
       testLogs: formattedTestLogs,

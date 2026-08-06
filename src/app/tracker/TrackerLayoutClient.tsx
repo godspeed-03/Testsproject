@@ -1333,7 +1333,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               const unitStr = (progressModalHabit.target?.unit || '').toLowerCase().trim();
               const isHoursOnly = ['hours', 'hrs', 'hour'].includes(unitStr);
               const isMinsOnly = ['mins', 'minutes', 'min'].includes(unitStr);
-              const nonTimeUnits = ['pages', 'page', 'times', 'time', 'questions', 'question', 'chapters', 'chapter', 'items', 'item', 'modules', 'module', 'words', 'word', 'count', 'number', 'boolean', 'yes_no'];
+              const nonTimeUnits = ['pages', 'page', 'times', 'time', 'questions', 'question', 'chapters', 'chapter', 'items', 'item', 'modules', 'module', 'words', 'word', 'count', 'number', 'boolean', 'yes_no', 'ltrs', 'liters', 'ltr', 'liter', 'kg', 'km', 'lectures', 'answers'];
               const isExplicitlyNonTime = nonTimeUnits.includes(unitStr);
 
               const isTimeBased =

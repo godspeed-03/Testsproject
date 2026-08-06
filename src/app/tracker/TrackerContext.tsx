@@ -764,9 +764,9 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
 
     const isRevision = typeof h.title === 'string' && /^\[R[123]\s+Revision\]/i.test(h.title);
     const unitStr = (h.target?.unit || '').toLowerCase().trim();
-    const isTimeGoal = ['mins', 'minutes', 'min', 'minute', 'hours', 'hrs', 'hour'].includes(unitStr);
+    const isBooleanGoal = unitStr === 'yes_no' || unitStr === 'boolean' || h.type === 'event';
     
-    if (isRevision || !isTimeGoal || h.type === 'event') {
+    if (isRevision || isBooleanGoal) {
       handleToggleLog(h.id || h._id, date, 'toggle');
     } else {
       const existing = (h.history || []).find((hist: any) => hist.date === date);
@@ -775,7 +775,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       setProgressModalHabit(h);
       setProgressModalDate(date);
       setProgressModalMode(existingVal > 0 ? 'add' : 'replace');
-      const unitStr = (h.target?.unit || '').toLowerCase().trim();
       const isTimeGoal = ['mins', 'minutes', 'min', 'minute', 'hours', 'hrs', 'hour'].includes(unitStr);
       setProgressModalValue(isTimeGoal ? 0 : 1);
       setShowProgressModal(true);

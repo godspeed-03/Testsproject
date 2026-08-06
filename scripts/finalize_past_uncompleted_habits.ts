@@ -83,7 +83,8 @@ async function finalizePast() {
           console.log(`Setting past uncompleted "${h.title}" on ${current} to "failed"`);
         } else {
           const entry = history[existingIdx];
-          if (entry.status !== 'done' && entry.status !== 'failed' && entry.status !== 'false') {
+          const val = entry.value || 0;
+          if (val === 0 && entry.status !== 'done' && entry.status !== 'failed' && entry.status !== 'false') {
             history[existingIdx] = { ...entry, status: 'failed' };
             modified = true;
             console.log(`Updating past uncompleted "${h.title}" on ${current} from "${entry.status}" to "failed"`);

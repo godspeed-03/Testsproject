@@ -31,9 +31,12 @@ if (!globalForPrisma.pgPool) {
   globalForPrisma.pgPool = new pg.Pool({
     connectionString,
     ssl: getSslConfig(),
-    max: 2,
-    idleTimeoutMillis: 2000,
-    connectionTimeoutMillis: 5000,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  });
+  globalForPrisma.pgPool.on('error', (err) => {
+    console.error('Unexpected idle pg pool error:', err);
   });
 }
 

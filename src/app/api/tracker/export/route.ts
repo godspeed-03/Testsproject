@@ -37,6 +37,7 @@ export async function GET() {
       consistencySnapshots,
       allTimeSnapshot,
       routineConfig,
+      batchedRevisions,
     ] = await Promise.all([
       prisma.habitItem.findMany({ where: { userId } }),
       prisma.checkList.findMany({ where: { userId } }),
@@ -49,6 +50,7 @@ export async function GET() {
       prisma.consistencySnapshot.findMany({ where: { userId } }),
       prisma.allTimeSnapshot.findUnique({ where: { userId } }),
       prisma.routineConfig.findUnique({ where: { userId } }),
+      prisma.batchedRevisionItem.findMany({ where: { userId } }),
     ]);
 
     const formattedHabits = habits.map((h) => ({
@@ -67,7 +69,6 @@ export async function GET() {
       subject: item.subject,
       category: item.category || 'GS1',
       status: item.status || 'Not Started',
-      source: item.source || '',
       date: item.date || '',
       nextRev: item.nextRev || '',
       rules: buildDynamicRulesFromLegacy(item, dbRuleSets),
@@ -110,6 +111,7 @@ export async function GET() {
         lastRevisedDate: t.lastRevisedDate,
         status: t.status,
         isAugmentedRevision: t.isAugmentedRevision,
+        isBatchedRevision: t.isBatchedRevision,
         isOverdue: overdueInfo.isOverdue,
         overdueDays: overdueInfo.overdueDays,
         nextScheduledDate: t.nextScheduledDate,
@@ -135,6 +137,7 @@ export async function GET() {
       lists: formattedLists,
       checkLists: formattedLists,
       topicRevisions: formattedTopicRevisions,
+      batchedRevisions,
       syllabusList: formattedSyllabus,
       testLogs: formattedTestLogs,
       ruleSets: formattedRuleSets,

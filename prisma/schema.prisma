@@ -47,6 +47,7 @@ model HabitItem {
   endDate             String?
   isStudyTask         Boolean  @default(false)
   isAugmentedRevision Boolean  @default(true)
+  isBatchRevision     Boolean  @default(false)
   subject             String?  @default("")
   topic               String?  @default("")
   color               String?  @default("#6366F1")
@@ -64,21 +65,19 @@ model HabitItem {
 }
 
 model SyllabusItem {
-  id               String   @id @default(cuid())
-  userId           String
-  customId         String?
-  subject          String
-  category         String
-  status           String   @default("Not Started")
-  source           String?  @default("")
-  date             String?  @default("")
-  nextRev          String?  @default("")
-  color            String?  @default("")
-  icon             String?  @default("")
-  rules            Json     @default("[]")
-  topicRevisionIds Json     @default("[]")
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  customId  String?
+  subject   String
+  category  String
+  status    String   @default("Not Started")
+  date      String?  @default("")
+  nextRev   String?  @default("")
+  color     String?  @default("")
+  icon      String?  @default("")
+  rules     Json     @default("[]")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -146,6 +145,7 @@ model TopicRevision {
   lastRevisedDate     String?  @default("")
   status              String?  @default("Pending")
   isAugmentedRevision Boolean  @default(true)
+  isBatchedRevision   Boolean  @default(false)
   nextScheduledDate   String?  @default("")
   isOverdue           Boolean  @default(false)
   overdueDays         Int      @default(0)
@@ -290,14 +290,17 @@ model RoutineConfig {
 }
 
 model BatchedRevisionItem {
-  id            String   @id @default(cuid())
-  userId        String
-  habitId       String?
-  topicStatuses Json     @default("[]") 
-  isAllDone     Boolean  @default(false)
-  completedDate String?  @default("")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id               String   @id @default(cuid())
+  userId           String
+  habitId          String?
+  topicRevisionIds Json     @default("[]")
+  title            String   @default("")
+  subjectIds       Json     @default("[]")
+  topicStatuses    Json     @default("[]")
+  isAllDone        Boolean  @default(false)
+  completedDate    String?  @default("")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

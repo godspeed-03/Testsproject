@@ -278,7 +278,7 @@ export default function AgendaPage() {
             const isDone = hist?.status === "done";
             const isSkipped = hist?.status === "skipped" || hist?.status === "rest";
             const loggedVal = hist ? hist.value || 0 : 0;
-            const isFailed = !isSkipped && (hist?.status === "failed" || hist?.status === "false" || (isPastDate && !isDone && loggedVal === 0));
+            const isFailed = !isSkipped && (hist?.status === "failed" || hist?.status === "false" || (isPastDate && !isDone && loggedVal === 0)) && loggedVal === 0;
             const isNumeric =
               h.target?.unit &&
               h.target?.unit !== "yes_no" &&
@@ -405,7 +405,23 @@ export default function AgendaPage() {
                       </span>
                       {(() => {
                         const isAugmentedTask = h.isAugmentedRevision;
-                        if (h.title?.startsWith("[R1")) {
+                        const isBatchRev = Boolean(
+                          h.isBatchRevision ||
+                          h.isBatchedRevision ||
+                          (Array.isArray(h.selectedMicroTopicsCluster) && h.selectedMicroTopicsCluster.length > 0) ||
+                          (typeof h.title === 'string' && (
+                            /batch\s*revision/i.test(h.title) ||
+                            /^WEEK\s+\d+/i.test(h.title.trim()) ||
+                            /^\[R[123]\s+Revision\]/i.test(h.title.trim())
+                          ))
+                        );
+                        if (isBatchRev) {
+                          return (
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/30 shrink-0 flex items-center gap-0.5">
+                              ⚡ Batch Revision
+                            </span>
+                          );
+                        } else if (h.title?.startsWith("[R1")) {
                           return (
                             <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500 text-white shadow-xs shrink-0">
                               ⚡ R1
@@ -432,7 +448,10 @@ export default function AgendaPage() {
                         }
                         return null;
                       })()}
-                      <h4 className={`font-bold text-xs sm:text-sm truncate max-w-[200px] sm:max-w-none ${titleColorClass}`}>
+                      <h4
+                        onClick={() => handleItemClick(h, selectedDate)}
+                        className={`font-bold text-xs sm:text-sm truncate max-w-[200px] sm:max-w-none cursor-pointer hover:text-indigo-500 transition-colors ${titleColorClass}`}
+                      >
                         {h.title}
                       </h4>
 
@@ -497,6 +516,17 @@ export default function AgendaPage() {
                       type="button"
                       disabled={saving || selectedDate < getTodayIso()}
                       onClick={() => handleItemClick(h, selectedDate)}
+                      title={
+                        selectedDate < getTodayIso()
+                          ? "Backdate editing is disabled"
+                          : h.isBatchRevision
+                            ? "Click to Manage Batch Revision Topics"
+                            : isDone
+                              ? "Click to Mark as False / Missed"
+                              : isFailed
+                                ? "Click to Reset to None"
+                                : "Click to Mark as True / Done"
+                      }
                       className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${buttonStyleClass} ${selectedDate < getTodayIso() ? "cursor-not-allowed" : ""}`}
                     >
                       {togglingId === `${h.id || h._id}_${selectedDate}` ? (
@@ -523,61 +553,115 @@ export default function AgendaPage() {
               <div
                 key={h.id || h._id}
                 style={topBorderStyle}
-                className={`p-3.5 rounded-xl border border-t-4 ${topAccentColor} ${itemCardBg} flex flex-col justify-between gap-3 transition-all hover:border-accent-primary hover:shadow-neon-glow shadow-xs relative`}
+                onClick={() => handleItemClick(h, selectedDate)}
+                className={`p-3.5 rounded-xl border border-t-4 ${topAccentColor} ${itemCardBg} flex flex-col justify-between gap-3 transition-all hover:border-accent-primary hover:shadow-neon-glow shadow-xs relative cursor-pointer group`}
               >
-                {/* Centered Top Type Badge */}
-                <div className="flex justify-center -mt-1">
-                  <span className="text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 tracking-wider">
-                    {h.type}
-                  </span>
-                </div>
-
-                {/* Header: Icon, Title & Badges */}
-                <div className="space-y-2.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0 shadow-inner"
-                        style={{ backgroundColor: `${h.color}20`, color: h.color, border: `1px solid ${h.color}40` }}
-                      >
-                        {h.icon || h.category?.icon || "🏃"}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <h4 className={`font-black font-display text-xs sm:text-sm leading-tight truncate ${titleColorClass}`}>
-                          {h.title}
-                        </h4>
-                      </div>
-                    </div>
-
-                    {/* Tag / Revision Pill */}
+                {/* Header: Centered Type Badge & Top-Right Circular Progress Ring */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 tracking-wider">
+                      {h.type}
+                    </span>
                     {(() => {
                       const isAugmentedTask = h.isAugmentedRevision;
-                      if (h.title?.startsWith("[R1")) {
-                        return <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500 text-white shadow-xs shrink-0">⚡ R1</span>;
+                      const isBatchRev = Boolean(
+                        h.isBatchRevision ||
+                        h.isBatchedRevision ||
+                        (Array.isArray(h.selectedMicroTopicsCluster) && h.selectedMicroTopicsCluster.length > 0) ||
+                        (typeof h.title === 'string' && (
+                          /batch\s*revision/i.test(h.title) ||
+                          /^WEEK\s+\d+/i.test(h.title.trim()) ||
+                          /^\[R[123]\s+Revision\]/i.test(h.title.trim())
+                        ))
+                      );
+                      if (isBatchRev) {
+                        return (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleItemClick(h, selectedDate);
+                            }}
+                            className="text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/30 tracking-wider flex items-center gap-0.5 cursor-pointer hover:bg-purple-500/25 transition-colors"
+                            title="Click to Manage Batch Revision Topics"
+                          >
+                            ⚡ Batch Revision
+                          </span>
+                        );
+                      } else if (h.title?.startsWith("[R1")) {
+                        return <span className="text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500 text-white shadow-xs tracking-wider">⚡ R1</span>;
                       } else if (h.title?.startsWith("[R2")) {
-                        return <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-600 text-white shadow-xs shrink-0">⚡ R2</span>;
+                        return <span className="text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-600 text-white shadow-xs tracking-wider">⚡ R2</span>;
                       } else if (h.title?.startsWith("[R3")) {
-                        return <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-indigo-600 text-white shadow-xs shrink-0">⚡ R3</span>;
+                        return <span className="text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-600 text-white shadow-xs tracking-wider">⚡ R3</span>;
                       } else if (h.isStudyTask && isAugmentedTask && h.frequency?.mode === "once") {
-                        return <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 shrink-0">📖 1st Read</span>;
+                        return <span className="text-[8.5px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 tracking-wider">📖 1st Read</span>;
                       }
                       return null;
                     })()}
                   </div>
 
-                  {/* Progress Pipeline & Goal display */}
-                  <div className="space-y-1 pt-0.5">
-                    <div className="flex items-center justify-between text-[9.5px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      <span>PROGRESS PIPELINE</span>
-                      <span className="font-mono text-[10px]">{cardPct}%</span>
-                    </div>
-                    <div className="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                      <div
-                        className={`h-full transition-all duration-300 rounded-full ${progressBarFill}`}
-                        style={{ width: `${cardPct}%` }}
+                  {/* Circular Progress Ring in Top Right Corner */}
+                  <div className="relative w-8 h-8 shrink-0 flex items-center justify-center" title={`${cardPct}% Progress`}>
+                    <svg className="w-8 h-8 transform -rotate-90" viewBox="0 0 36 36">
+                      <path
+                        className="text-slate-200 dark:text-slate-800"
+                        strokeWidth="3.5"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                       />
+                      <path
+                        className={`transition-all duration-500 ease-out ${
+                          isSkipped
+                            ? "text-amber-500"
+                            : isDone || pTier === "done"
+                              ? "text-emerald-500"
+                              : pTier === "p75"
+                                ? "text-lime-500"
+                                : pTier === "p50"
+                                  ? "text-amber-500"
+                                  : pTier === "p25"
+                                    ? "text-orange-500"
+                                    : isFailed
+                                      ? "text-rose-500"
+                                      : "text-indigo-500"
+                        }`}
+                        strokeDasharray={`${cardPct}, 100`}
+                        strokeWidth="3.5"
+                        strokeLinecap="round"
+                        stroke="currentColor"
+                        fill="none"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      />
+                    </svg>
+                    <span className="absolute text-[8.5px] font-black font-mono text-slate-700 dark:text-slate-200">
+                      {cardPct}%
+                    </span>
+                  </div>
+                </div>
+
+                {/* Header: Icon & Wrapped Title */}
+                <div className="space-y-2.5">
+                  <div className="flex items-start gap-2.5 min-w-0">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0 shadow-inner mt-0.5"
+                      style={{ backgroundColor: `${h.color}20`, color: h.color, border: `1px solid ${h.color}40` }}
+                    >
+                      {h.icon || h.category?.icon || "🏃"}
                     </div>
-                    <div className="flex items-center justify-between pt-1 text-xs">
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <h4
+                        onClick={() => handleItemClick(h, selectedDate)}
+                        className={`font-black font-display text-xs sm:text-sm leading-snug break-words cursor-pointer hover:text-indigo-500 transition-colors ${titleColorClass}`}
+                      >
+                        {h.title}
+                      </h4>
+                    </div>
+                  </div>
+
+                  {/* Goal display */}
+                  <div className="pt-0.5">
+                    <div className="flex items-center justify-between text-xs">
                       {isNumeric ? (
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-black border ${badgeColorClass}`}>
                           Logged: {(() => {
@@ -616,7 +700,10 @@ export default function AgendaPage() {
                     <button
                       type="button"
                       disabled={saving || selectedDate < getTodayIso()}
-                      onClick={() => handleOpenEditModal(h)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenEditModal(h);
+                      }}
                       className={`p-1 rounded-lg transition-colors ${
                         selectedDate < getTodayIso()
                           ? "text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-40"
@@ -631,7 +718,10 @@ export default function AgendaPage() {
                       <button
                         type="button"
                         disabled={saving || deletingId === (h.id || h._id)}
-                        onClick={() => handleDeleteHabit(h.id || h._id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteHabit(h.id || h._id);
+                        }}
                         className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                         title="Delete Task"
                       >
@@ -647,15 +737,20 @@ export default function AgendaPage() {
                   <button
                     type="button"
                     disabled={saving || selectedDate < getTodayIso()}
-                    onClick={() => handleItemClick(h, selectedDate)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleItemClick(h, selectedDate);
+                    }}
                     title={
                       selectedDate < getTodayIso()
                         ? "Backdate editing is disabled"
-                        : isDone
-                          ? "Click to Mark as False / Missed"
-                          : isFailed
-                            ? "Click to Reset to None"
-                            : "Click to Mark as True / Done"
+                        : h.isBatchRevision
+                          ? "Click to Manage Batch Revision Topics"
+                          : isDone
+                            ? "Click to Mark as False / Missed"
+                            : isFailed
+                              ? "Click to Reset to None"
+                              : "Click to Mark as True / Done"
                     }
                     className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${buttonStyleClass} ${selectedDate < getTodayIso() ? "cursor-not-allowed" : ""}`}
                   >

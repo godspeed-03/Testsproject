@@ -33,6 +33,7 @@ export async function processTopicTag(
     topic: string;
     isRevision?: boolean;
     isAugmentedRevision?: boolean;
+    isBatchedRevision?: boolean;
     clusterTitle?: string;
     subTopics?: string[];
     note?: string;
@@ -41,9 +42,9 @@ export async function processTopicTag(
 ) {
   if (!tag.topic || !tag.topic.trim()) return null;
 
-  const subjName = tag.subject ? tag.subject.trim() : 'General Studies';
+  const subjName = tag.subject && tag.subject.trim() ? tag.subject.trim() : 'All';
   const topicName = tag.topic.trim();
-  const catName = tag.category || 'GS1';
+  const catName = tag.category && tag.category.trim() ? tag.category.trim() : 'N/A';
 
   const isAugmentedRevision = !!tag.isAugmentedRevision;
 
@@ -72,23 +73,26 @@ export async function processTopicTag(
           { stage: 'R3', scheduledDate: r3Sched, completedDate: '', status: 'Pending', note: '' },
         ];
 
-        doc = await prisma.topicRevision.create({
-          data: {
-            userId,
-            customId,
-            subject: subjName,
-            category: catName,
-            topic: topicName,
-            firstReadDate: logDate,
-            lastRevisedDate: '',
-            isAugmentedRevision: true,
-            status: 'Pending',
-            isOverdue: overdueInfo.isOverdue,
-            overdueDays: overdueInfo.overdueDays,
-            nextScheduledDate: r1Sched,
-            revisions,
-          },
-        });
+        const createData: any = {
+          userId,
+          customId,
+          subject: subjName,
+          category: catName,
+          topic: topicName,
+          firstReadDate: logDate,
+          lastRevisedDate: '',
+          isAugmentedRevision: true,
+          status: 'Pending',
+          isOverdue: overdueInfo.isOverdue,
+          overdueDays: overdueInfo.overdueDays,
+          nextScheduledDate: r1Sched,
+          revisions,
+        };
+        if (tag.isBatchedRevision) {
+          createData.isBatchedRevision = true;
+        }
+
+        doc = await prisma.topicRevision.create({ data: createData });
       } else {
         const r1Sched = addDaysStr(logDate, -7);
         const r2Sched = addDaysStr(logDate, 21);
@@ -101,27 +105,7 @@ export async function processTopicTag(
           { stage: 'R3', scheduledDate: r3Sched, completedDate: '', status: 'Pending', note: '' },
         ];
 
-        doc = await prisma.topicRevision.create({
-          data: {
-            userId,
-            customId,
-            subject: subjName,
-            category: catName,
-            topic: topicName,
-            firstReadDate: logDate,
-            lastRevisedDate: logDate,
-            isAugmentedRevision: true,
-            status: 'Completed',
-            isOverdue: false,
-            overdueDays: 0,
-            nextScheduledDate: r2Sched,
-            revisions,
-          },
-        });
-      }
-    } else {
-      doc = await prisma.topicRevision.create({
-        data: {
+        const createData: any = {
           userId,
           customId,
           subject: subjName,
@@ -129,14 +113,40 @@ export async function processTopicTag(
           topic: topicName,
           firstReadDate: logDate,
           lastRevisedDate: logDate,
-          isAugmentedRevision: false,
+          isAugmentedRevision: true,
           status: 'Completed',
           isOverdue: false,
           overdueDays: 0,
-          nextScheduledDate: '',
-          revisions: [],
-        },
-      });
+          nextScheduledDate: r2Sched,
+          revisions,
+        };
+        if (tag.isBatchedRevision) {
+          createData.isBatchedRevision = true;
+        }
+
+        doc = await prisma.topicRevision.create({ data: createData });
+      }
+    } else {
+      const createData: any = {
+        userId,
+        customId,
+        subject: subjName,
+        category: catName,
+        topic: topicName,
+        firstReadDate: logDate,
+        lastRevisedDate: logDate,
+        isAugmentedRevision: false,
+        status: 'Completed',
+        isOverdue: false,
+        overdueDays: 0,
+        nextScheduledDate: '',
+        revisions: [],
+      };
+      if (tag.isBatchedRevision) {
+        createData.isBatchedRevision = true;
+      }
+
+      doc = await prisma.topicRevision.create({ data: createData });
     }
   } else {
     // Existing record - update revisions
@@ -211,15 +221,20 @@ export async function processTopicTag(
       overdueDays = 0;
     }
 
+    const updateData: any = {
+      lastRevisedDate,
+      nextScheduledDate,
+      isOverdue,
+      overdueDays,
+      revisions,
+    };
+    if (tag.isBatchedRevision || doc.isBatchedRevision) {
+      updateData.isBatchedRevision = true;
+    }
+
     doc = await prisma.topicRevision.update({
       where: { id: doc.id },
-      data: {
-        lastRevisedDate,
-        nextScheduledDate,
-        isOverdue,
-        overdueDays,
-        revisions,
-      },
+      data: updateData,
     });
   }
 
@@ -232,15 +247,11 @@ export async function processTopicTag(
   });
 
   if (sysItem) {
-    const existingTopicRevIds: string[] = Array.isArray(sysItem.topicRevisionIds) ? (sysItem.topicRevisionIds as string[]) : [];
-    const updatedTopicRevIds = existingTopicRevIds.includes(doc.id) ? existingTopicRevIds : [...existingTopicRevIds, doc.id];
-
     await prisma.syllabusItem.update({
       where: { id: sysItem.id },
       data: {
         date: logDate,
         nextRev: isAugmentedRevision ? doc.nextScheduledDate : sysItem.nextRev,
-        topicRevisionIds: updatedTopicRevIds,
       },
     });
   }

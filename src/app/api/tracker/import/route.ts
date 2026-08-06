@@ -91,12 +91,30 @@ export async function POST(req: Request) {
         firstReadDate: t.firstReadDate || t.date || '',
         lastRevisedDate: t.lastRevisedDate || '',
         isAugmentedRevision: t.isAugmentedRevision !== undefined ? t.isAugmentedRevision : true,
+        isBatchedRevision: t.isBatchedRevision !== undefined ? !!t.isBatchedRevision : false,
         isOverdue: !!t.isOverdue,
         overdueDays: t.overdueDays || 0,
         nextScheduledDate: t.nextScheduledDate || '',
         revisions: t.revisions || [],
       }));
       await prisma.topicRevision.createMany({ data: docs });
+    }
+
+    // 3b. Process Batched Revisions
+    const batchedRevisionsInput = data.batchedrevisions || data.batchedRevisions || data.batchedRevisionItems || [];
+    if (Array.isArray(batchedRevisionsInput) && batchedRevisionsInput.length > 0) {
+      await prisma.batchedRevisionItem.deleteMany({ where: { userId } });
+      const docs = batchedRevisionsInput.map((b: any) => ({
+        userId,
+        habitId: b.habitId || null,
+        topicRevisionIds: b.topicRevisionIds || (b.topicRevisionId ? [b.topicRevisionId] : []),
+        title: b.title || '',
+        subjectIds: b.subjectIds || [],
+        topicStatuses: b.topicStatuses || [],
+        isAllDone: !!b.isAllDone,
+        completedDate: b.completedDate || '',
+      }));
+      await prisma.batchedRevisionItem.createMany({ data: docs });
     }
 
     // 4. Process Syllabus Items
@@ -108,7 +126,6 @@ export async function POST(req: Request) {
         subject: item.subject,
         category: item.category || 'GS1',
         status: item.status || 'Not Started',
-        source: item.source || '',
         date: item.date || '',
         nextRev: item.nextRev || '',
         rules: item.rules || buildDynamicRulesFromLegacy(item),

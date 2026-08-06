@@ -126,6 +126,7 @@ function ShadcnStatusDropdown({
 export default function SyllabusPage() {
   const [syllabusList, setSyllabusList] = useState<any[]>([]);
   const [topicRevisions, setTopicRevisions] = useState<any[]>([]);
+  const [batchedRevisions, setBatchedRevisions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showRulesetsModal, setShowRulesetsModal] = useState(false);
@@ -166,6 +167,7 @@ export default function SyllabusPage() {
         const data = await res.json();
         setSyllabusList(data.syllabusList || []);
         setTopicRevisions(data.topicRevisions || []);
+        setBatchedRevisions(data.batchedRevisions || []);
       }
     } catch (e) {
       console.error("Failed to load syllabus data", e);
@@ -1102,6 +1104,7 @@ export default function SyllabusPage() {
           selectedSubjectTopics={selectedSubjectModal}
           onClose={() => setSelectedSubjectModal(null)}
           topicRevisions={topicRevisions}
+          batchedRevisions={batchedRevisions}
           getCategoryBadge={getCategoryBadge}
           isLight={false}
           cardBg="bg-white dark:bg-slate-900"

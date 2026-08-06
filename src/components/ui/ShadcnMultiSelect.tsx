@@ -105,9 +105,6 @@ export default function ShadcnMultiSelect({
             </>
           ) : someSelected ? (
             <>
-              <span className="px-2 py-0.5 rounded-md bg-purple-600 text-white text-[10px] font-black shrink-0 shadow-2xs">
-                {selectedValues.length} Selected
-              </span>
               <span className="truncate font-bold text-slate-800 dark:text-slate-200">
                 {options
                   .filter((o) => selectedValues.includes(o.value))
@@ -140,7 +137,7 @@ export default function ShadcnMultiSelect({
       {/* Dropdown Menu */}
       {isOpen && (
         <div
-          className={`absolute left-0 top-full mt-1.5 z-[9999] w-full min-w-[240px] max-h-72 flex flex-col rounded-2xl border shadow-2xl p-2 animate-scale-up glass-panel ${dropdownStyle}`}
+          className={`absolute -left-10 top-full mt-1.5 z-[9999] w-full min-w-[260px] max-h-72 flex flex-col rounded-2xl border shadow-2xl p-2 animate-scale-up glass-panel ${dropdownStyle}`}
         >
           {/* Search bar inside dropdown */}
           <div className="relative mb-1.5 shrink-0">

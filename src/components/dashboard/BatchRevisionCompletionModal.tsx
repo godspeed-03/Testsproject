@@ -15,6 +15,7 @@ interface BatchRevisionCompletionModalProps {
   habit: any;
   date: string;
   onSave: (completedTopicKeys: string[], isAllDone: boolean) => Promise<void>;
+  batchedRevisions?: any[];
 }
 
 export default function BatchRevisionCompletionModal({
@@ -23,6 +24,7 @@ export default function BatchRevisionCompletionModal({
   habit,
   date,
   onSave,
+  batchedRevisions = [],
 }: BatchRevisionCompletionModalProps) {
   const [checkedMap, setCheckedMap] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
@@ -30,6 +32,16 @@ export default function BatchRevisionCompletionModal({
   // Parse topics cluster
   const clusterItems: TopicClusterItem[] = React.useMemo(() => {
     if (!habit) return [];
+    const matchedBatch = (batchedRevisions || []).find(
+      (b: any) => b.habitId === (habit.id || habit._id) || b.habitId === habit.customId
+    );
+    if (matchedBatch && Array.isArray(matchedBatch.topicStatuses) && matchedBatch.topicStatuses.length > 0) {
+      return matchedBatch.topicStatuses.map((t: any) => ({
+        category: t.category || (typeof habit.category === "string" ? habit.category : habit.category?.label || "GS"),
+        subject: t.subject || habit.subject || "General",
+        topic: t.topic || t.topicId,
+      }));
+    }
     if (Array.isArray(habit.selectedMicroTopicsCluster) && habit.selectedMicroTopicsCluster.length > 0) {
       return habit.selectedMicroTopicsCluster;
     }
@@ -41,8 +53,15 @@ export default function BatchRevisionCompletionModal({
         topic: t,
       }));
     }
-    return [];
-  }, [habit]);
+    // Fallback if no cluster stored: use habit title & subject
+    return [
+      {
+        category: typeof habit.category === "string" ? habit.category : habit.category?.label || "GS",
+        subject: habit.subject || "Batch Revision",
+        topic: habit.title || "General Revision",
+      },
+    ];
+  }, [habit, batchedRevisions]);
 
   const getTopicKey = (item: TopicClusterItem) => {
     return `${item.category || ""}|${item.subject}|${item.topic}`;
@@ -54,11 +73,22 @@ export default function BatchRevisionCompletionModal({
       const isDone = hist?.status === "done";
       const savedCompletedArr: string[] = Array.isArray(hist?.completedTopics) ? hist.completedTopics : [];
 
+      const matchedBatch = (batchedRevisions || []).find(
+        (b: any) => b.habitId === (habit.id || habit._id) || b.habitId === habit.customId
+      );
+      const batchTopicStatuses = matchedBatch && Array.isArray(matchedBatch.topicStatuses) ? matchedBatch.topicStatuses : [];
+
       const initialMap: Record<string, boolean> = {};
       clusterItems.forEach((item) => {
         const key = getTopicKey(item);
+        const batchItem = batchTopicStatuses.find(
+          (bt: any) => String(bt.topic).toLowerCase() === item.topic.toLowerCase()
+        );
+
         if (isDone) {
           initialMap[key] = true;
+        } else if (batchItem && typeof batchItem.isDone === "boolean") {
+          initialMap[key] = batchItem.isDone;
         } else if (savedCompletedArr.length > 0) {
           initialMap[key] = savedCompletedArr.includes(key) || savedCompletedArr.includes(item.topic);
         } else {
@@ -67,7 +97,7 @@ export default function BatchRevisionCompletionModal({
       });
       setCheckedMap(initialMap);
     }
-  }, [isOpen, habit, date, clusterItems]);
+  }, [isOpen, habit, date, clusterItems, batchedRevisions]);
 
   if (!isOpen || !habit) return null;
 
@@ -113,13 +143,13 @@ export default function BatchRevisionCompletionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-slate-900 border border-purple-500/30 dark:border-purple-500/40 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 border border-purple-500/30 dark:border-purple-500/40 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-5 border-b border-purple-500/20 dark:border-purple-800/40 bg-purple-50/50 dark:bg-purple-950/20 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-xs"
+              className="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-xs"
               style={{
                 backgroundColor: habit.color ? `${habit.color}20` : "#8B5CF620",
                 color: habit.color || "#8B5CF6",
@@ -130,12 +160,12 @@ export default function BatchRevisionCompletionModal({
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-950 px-2 py-0.5 rounded-md">
-                  Batch Revision Task
+                <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-950 px-2 py-0.5 rounded-md border border-purple-500/20">
+                  ⚡ Batch Revision Cluster
                 </span>
                 <span className="text-[10px] font-bold text-slate-400">{date}</span>
               </div>
-              <h3 className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate max-w-[220px]">
+              <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-slate-100 truncate max-w-[260px] mt-0.5 font-display">
                 {habit.title}
               </h3>
             </div>
@@ -151,23 +181,23 @@ export default function BatchRevisionCompletionModal({
         </div>
 
         {/* Dynamic Progress Bar */}
-        <div className="px-5 py-3 bg-slate-50/80 dark:bg-slate-950/50 border-b border-slate-200/60 dark:border-slate-800/60 shrink-0">
+        <div className="px-5 py-3.5 bg-slate-50/80 dark:bg-slate-950/50 border-b border-slate-200/60 dark:border-slate-800/60 shrink-0">
           <div className="flex items-center justify-between text-xs font-black mb-1.5">
             <span className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <Sparkles size={14} className="text-amber-500" />
-              <span>Revision Cluster Progress</span>
+              <span>Revision Progress</span>
             </span>
-            <span className={isAllDone ? "text-emerald-500" : "text-purple-600 dark:text-purple-400"}>
+            <span className={isAllDone ? "text-emerald-500 font-extrabold" : "text-purple-600 dark:text-purple-400 font-extrabold"}>
               {completedCount} / {totalCount} Topics ({progressPercent}%)
             </span>
           </div>
 
-          <div className="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+          <div className="w-full bg-slate-200 dark:bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-300/40 dark:border-slate-700/40">
             <div
-              className={`h-full transition-all duration-300 ${
+              className={`h-full rounded-full transition-all duration-300 ${
                 isAllDone
-                  ? "bg-emerald-500 shadow-emerald-500/50"
-                  : "bg-purple-600 shadow-purple-500/30"
+                  ? "bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/50"
+                  : "bg-gradient-to-r from-purple-600 to-indigo-600 shadow-purple-500/30"
               }`}
               style={{ width: `${progressPercent}%` }}
             />
@@ -178,7 +208,7 @@ export default function BatchRevisionCompletionModal({
         <div className="p-4 space-y-2.5 overflow-y-auto flex-1 custom-scrollbar">
           <div className="flex items-center justify-between px-1">
             <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
-              Check completed topics below:
+              Mark individual topics completed:
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -212,28 +242,29 @@ export default function BatchRevisionCompletionModal({
                 <div
                   key={idx}
                   onClick={() => toggleTopic(key)}
-                  className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
                     isChecked
-                      ? "bg-purple-500/10 border-purple-500/40 dark:bg-purple-950/30 shadow-2xs"
+                      ? "bg-purple-500/10 border-purple-500/40 dark:bg-purple-950/30 shadow-xs"
                       : "bg-slate-50 dark:bg-slate-950/60 border-slate-200/80 dark:border-slate-800/80 hover:border-purple-500/30"
                   }`}
                 >
-                  <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                  <div className="flex items-start gap-3 flex-1 min-w-0">
+                    {/* Circular Radio/Check Box Indicator */}
                     <button
                       type="button"
-                      className={`w-5 h-5 rounded-lg flex items-center justify-center text-white shrink-0 mt-0.5 transition-all ${
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0 mt-0.5 transition-all cursor-pointer ${
                         isChecked
-                          ? "bg-purple-600 shadow-xs scale-105"
-                          : "border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900"
+                          ? "bg-purple-600 shadow-md scale-105 ring-2 ring-purple-400/40"
+                          : "border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-purple-400"
                       }`}
                     >
-                      {isChecked && <Check size={12} className="stroke-[3]" />}
+                      {isChecked && <Check size={14} className="stroke-[3]" />}
                     </button>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {item.category && (
-                          <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-md bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-md bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-500/20">
                             {item.category}
                           </span>
                         )}
@@ -242,7 +273,7 @@ export default function BatchRevisionCompletionModal({
                         </span>
                       </div>
                       <p
-                        className={`text-xs font-extrabold transition-all leading-snug mt-0.5 ${
+                        className={`text-xs sm:text-sm font-extrabold transition-all leading-snug mt-1 ${
                           isChecked
                             ? "text-purple-700 dark:text-purple-300 line-through opacity-85"
                             : "text-slate-900 dark:text-slate-100"
@@ -254,13 +285,13 @@ export default function BatchRevisionCompletionModal({
                   </div>
 
                   <span
-                    className={`text-[10px] font-black px-2 py-0.5 rounded-lg shrink-0 ${
+                    className={`text-[10px] font-black px-2.5 py-1 rounded-xl shrink-0 border transition-all ${
                       isChecked
-                        ? "bg-purple-600 text-white"
-                        : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                        : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
                     }`}
                   >
-                    {isChecked ? "Done" : "Pending"}
+                    {isChecked ? "Completed" : "Pending"}
                   </span>
                 </div>
               );

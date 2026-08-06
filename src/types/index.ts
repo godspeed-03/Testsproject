@@ -61,11 +61,9 @@ export interface ISyllabusItem {
   subject: string;
   category: string;
   status: string;
-  source?: string;
   date?: string;
   nextRev?: string;
   rules?: ISyllabusRuleState[];
-  topicRevisionIds?: string[];
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }

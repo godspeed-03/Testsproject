@@ -81,7 +81,6 @@ export async function GET() {
       subject: item.subject,
       category: item.category || 'GS1',
       status: item.status || 'Not Started',
-      source: item.source || '',
       date: item.date || '',
       nextRev: item.nextRev || '',
       rules: buildDynamicRulesFromLegacy(item, dbRuleSets),

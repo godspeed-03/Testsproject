@@ -14,7 +14,7 @@ export const getTodayIso = (): string => {
 
 export const getHabitProgressColor = (loggedVal: number, targetVal: number, unitStr: string, status?: string) => {
   if (status === 'done') return 'done';
-  if (status === 'failed' || status === 'false') return 'failed';
+  if ((status === 'failed' || status === 'false') && (!loggedVal || loggedVal <= 0)) return 'failed';
   if (!loggedVal || loggedVal <= 0) return 'none';
 
   let normLogged = loggedVal;
@@ -31,9 +31,9 @@ export const getHabitProgressColor = (loggedVal: number, targetVal: number, unit
   const pct = Math.round((normLogged / normTarget) * 100);
 
   if (pct >= 100) return 'done';
-  if (pct >= 75) return 'p75';
-  if (pct >= 50) return 'p50';
-  if (pct >= 25) return 'p25';
+  if (pct >= 67) return 'p75';
+  if (pct >= 34) return 'p50';
+  if (pct >= 1) return 'p25';
   return 'p0';
 };
 
@@ -290,6 +290,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [syllabusSubjects, setSyllabusSubjects] = useState<string[]>([]);
   const [syllabusItems, setSyllabusItems] = useState<any[]>([]);
   const [topicRevisions, setTopicRevisions] = useState<any[]>([]);
+  const [batchedRevisions, setBatchedRevisions] = useState<any[]>([]);
   const [formIsStudyTask, setFormIsStudyTask] = useState(true);
   const [formStudyTaskMode, setFormStudyTaskMode] = useState<'none' | 'single' | 'batch_revision'>('single');
   const [formIsBatchRevision, setFormIsBatchRevision] = useState(false);
@@ -503,6 +504,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
         }
         if (data.syllabusItems) setSyllabusItems(data.syllabusItems);
         if (data.topicRevisions) setTopicRevisions(data.topicRevisions);
+        if (data.batchedRevisions) setBatchedRevisions(data.batchedRevisions);
         if (data.syllabusSubjects) {
           setSyllabusSubjects(data.syllabusSubjects);
           if (data.syllabusSubjects.length > 0 && !formSubject) {
@@ -554,7 +556,57 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormReminderTime(r?.time || '08:00');
     setFormStartDate(item.startDate || new Date().toISOString().split('T')[0]);
     setFormEndDate(item.endDate || '');
-    setFormIsStudyTask(itemType === 'habit' ? false : !!item.isStudyTask);
+
+    const isBatchRev = Boolean(item.isBatchRevision);
+
+    if (isBatchRev) {
+      setFormIsStudyTask(true);
+      setFormStudyTaskMode('batch_revision');
+      setFormIsBatchRevision(true);
+
+      let clusterItems: Array<{ category: string; subject: string; topic: string }> = [];
+      if (Array.isArray(item.selectedMicroTopicsCluster) && item.selectedMicroTopicsCluster.length > 0) {
+        clusterItems = item.selectedMicroTopicsCluster;
+      } else {
+        const matchedBatch = (batchedRevisions || []).find(
+          (b: any) => b.habitId === (item.id || item._id) || b.habitId === item.customId
+        );
+        if (matchedBatch && Array.isArray(matchedBatch.topicStatuses) && matchedBatch.topicStatuses.length > 0) {
+          clusterItems = matchedBatch.topicStatuses.map((t: any) => ({
+            category: t.category || "GS",
+            subject: t.subject || item.subject || "General",
+            topic: t.topic || t.topicId,
+          }));
+        } else if (item.topic) {
+          const parts = String(item.topic).split(',').map(t => t.trim()).filter(Boolean);
+          const cat = typeof item.category === 'string' ? item.category : item.category?.label || 'GS';
+          clusterItems = parts.map(t => ({
+            category: cat,
+            subject: item.subject || 'General',
+            topic: t,
+          }));
+        }
+      }
+
+      setFormRevisionClusterBadges(clusterItems);
+      setFormSelectedMicroTopics(clusterItems.map((c) => c.topic));
+    } else if (itemType === 'task' && (item.isStudyTask || item.subject || item.topic)) {
+      setFormIsStudyTask(true);
+      setFormStudyTaskMode('single');
+      setFormIsBatchRevision(false);
+      setFormRevisionClusterBadges([]);
+      if (Array.isArray(item.selectedMicroTopics)) {
+        setFormSelectedMicroTopics(item.selectedMicroTopics);
+      } else if (item.topic) {
+        setFormSelectedMicroTopics(String(item.topic).split(',').map(t => t.trim()).filter(Boolean));
+      }
+    } else {
+      setFormIsStudyTask(itemType === 'habit' ? false : !!item.isStudyTask);
+      setFormStudyTaskMode(itemType === 'task' && item.isStudyTask ? 'single' : 'none');
+      setFormIsBatchRevision(false);
+      setFormRevisionClusterBadges([]);
+    }
+
     setFormIsAugmentedRevision(item.isAugmentedRevision !== undefined ? !!item.isAugmentedRevision : true);
     setFormSubject(item.subject || '');
     setFormTopic(item.topic || '');
@@ -676,8 +728,13 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     // Check if task is a Batch Revision item
     const isBatchRev = Boolean(
       h.isBatchRevision ||
+      h.isBatchedRevision ||
       (Array.isArray(h.selectedMicroTopicsCluster) && h.selectedMicroTopicsCluster.length > 0) ||
-      (typeof h.title === 'string' && h.title.includes('Batch Revision'))
+      (typeof h.title === 'string' && (
+        /batch\s*revision/i.test(h.title) ||
+        /^WEEK\s+\d+/i.test(h.title.trim()) ||
+        /^\[R[123]\s+Revision\]/i.test(h.title.trim())
+      ))
     );
 
     if (isBatchRev) {
@@ -760,6 +817,12 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
         if (data.syllabusSubjects) {
           setSyllabusSubjects(data.syllabusSubjects);
         }
+        if (data.batchedRevisions) {
+          setBatchedRevisions(data.batchedRevisions);
+        }
+        if (data.topicRevisions) {
+          setTopicRevisions(data.topicRevisions);
+        }
       }
     } catch (e) {
       console.error('Failed to delete item', e);
@@ -789,17 +852,31 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
         const isStudyTask = createType === 'task' ? (formStudyTaskMode !== 'none') : false;
         const isBatchRevision = createType === 'task' ? (formStudyTaskMode === 'batch_revision') : false;
 
+        if (createType === 'task') {
+          if (formStudyTaskMode === 'batch_revision') {
+            if (!formRevisionClusterBadges || formRevisionClusterBadges.length === 0) {
+              alert('Please select at least one micro-topic for your Batch Revision cluster.');
+              setSaving(false);
+              return;
+            }
+          } else if (formStudyTaskMode === 'single') {
+            if (!formSubject.trim()) {
+              alert('Please select a subject for your study task.');
+              setSaving(false);
+              return;
+            }
+            if (!formTopic.trim() && formSelectedMicroTopics.length === 0) {
+              alert('Please enter or select at least one micro-topic.');
+              setSaving(false);
+              return;
+            }
+          }
+        }
+
         let selectedClusterPayload: Array<{ category: string; subject: string; topic: string }> = [];
 
         if (isBatchRevision) {
           selectedClusterPayload = formRevisionClusterBadges;
-        } else if (isStudyTask) {
-          const catLabel = typeof formCategory === 'string' ? formCategory : (formCategory?.label || 'GS1');
-          if (formSelectedMicroTopics.length > 0) {
-            selectedClusterPayload = formSelectedMicroTopics.map((t) => ({ category: catLabel, subject: formSubject, topic: t }));
-          } else if (formTopic.trim()) {
-            selectedClusterPayload = [{ category: catLabel, subject: formSubject, topic: formTopic.trim() }];
-          }
         }
 
         let computedTitle = formTitle.trim();
@@ -855,8 +932,8 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           selectedMicroTopics: formSelectedMicroTopics,
           selectedMicroTopicsCluster: selectedClusterPayload,
           isAugmentedRevision: isStudyTask ? (isBatchRevision ? false : formIsAugmentedRevision) : undefined,
-          icon: formIcon,
-          color: formColor
+          icon: isBatchRevision ? '⚡' : formIcon,
+          color: isBatchRevision ? '#8B5CF6' : formColor
         };
 
         const res = await fetch('/api/tracker/habits', {
@@ -868,6 +945,8 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
         if (res.ok) {
           const data = await res.json();
           setHabits(data.habits);
+          if (data.batchedRevisions) setBatchedRevisions(data.batchedRevisions);
+          if (data.topicRevisions) setTopicRevisions(data.topicRevisions);
           setShowCreateModal(false);
           resetFormState();
         }
@@ -890,7 +969,10 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       });
       if (res.ok) {
         const data = await res.json();
-        setHabits(data.habits);
+        if (data.habits) setHabits(data.habits);
+        if (data.topicRevisions) setTopicRevisions(data.topicRevisions);
+        if (data.batchedRevisions) setBatchedRevisions(data.batchedRevisions);
+        if (data.syllabusItems) setSyllabusItems(data.syllabusItems);
         await fetchTrackerData();
       }
     } catch (e) {
@@ -955,9 +1037,10 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const getWeekDaysForSelectedDate = (centerIsoDate: string) => {
     const d = new Date(centerIsoDate + 'T00:00:00');
     const dayOfWeek = d.getDay();
-    const sundayOffset = dayOfWeek;
+    // Monday = 0 offset, Sunday = 6 offset (week starts on Monday)
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
     const startOfWeek = new Date(d);
-    startOfWeek.setDate(d.getDate() - sundayOffset);
+    startOfWeek.setDate(d.getDate() - mondayOffset);
 
     const days = [];
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -1110,6 +1193,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     syllabusSubjects,
     syllabusItems,
     topicRevisions,
+    batchedRevisions,
     formIsStudyTask,
     setFormIsStudyTask,
     formStudyTaskMode,

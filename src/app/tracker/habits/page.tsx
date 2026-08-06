@@ -401,11 +401,10 @@ export default function HabitsPage() {
                         const hist = (h.history || []).find((entry: any) => entry.date === d.iso);
                         const isDone = hist?.status === 'done';
                         const isSkipped = hist?.status === 'skipped' || hist?.status === 'rest';
-                        const isFailed = !isSkipped && (hist?.status === 'failed' || hist?.status === 'false');
+                        const val = hist ? (hist.value || 0) : 0;
+                        const isFailed = !isSkipped && (hist?.status === 'failed' || hist?.status === 'false') && val === 0;
                         const isPast = d.iso < todayIso;
                         const isToday = d.iso === todayIso;
-
-                        const val = hist ? (hist.value || 0) : 0;
                         const pTier = getHabitProgressColor(val, h.target?.value || 1, h.target?.unit, hist?.status);
 
                         let cellStyle = '';
@@ -529,8 +528,8 @@ export default function HabitsPage() {
                           const hist = (h.history || []).find((entry: any) => entry.date === w.iso);
                           const isDone = hist?.status === 'done';
                           const isSkipped = hist?.status === 'skipped' || hist?.status === 'rest';
-                          const isFailed = !isSkipped && (hist?.status === 'failed' || hist?.status === 'false');
-                          const val = hist ? hist.value : 0;
+                          const val = hist ? (hist.value || 0) : 0;
+                          const isFailed = !isSkipped && (hist?.status === 'failed' || hist?.status === 'false') && val === 0;
                           const isPast = w.iso < todayIso;
 
                           const pTier = getHabitProgressColor(val, h.target?.value || 1, h.target?.unit, hist?.status);

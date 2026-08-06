@@ -1,10 +1,26 @@
 import { useState } from 'react';
-import { X, Search, BookOpen, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { X, Search, BookOpen, CheckCircle2, Clock, AlertTriangle, Layers } from 'lucide-react';
+
+function addDaysToStr(dateStr: string, days: number): string {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d.getTime())) return '—';
+    d.setDate(d.getDate() + days);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  } catch {
+    return '—';
+  }
+}
 
 interface SubjectTopicsModalProps {
   selectedSubjectTopics: any | null;
   onClose: () => void;
   topicRevisions: any[];
+  batchedRevisions?: any[];
   getCategoryBadge: (category: string) => string;
   isLight: boolean;
   cardBg: string;
@@ -18,6 +34,7 @@ export default function SubjectTopicsModal({
   selectedSubjectTopics,
   onClose,
   topicRevisions,
+  batchedRevisions = [],
   getCategoryBadge,
   isLight,
   cardBg,
@@ -30,13 +47,33 @@ export default function SubjectTopicsModal({
 
   if (!selectedSubjectTopics) return null;
 
+  const subjNorm = selectedSubjectTopics.subject?.toLowerCase();
+
   const allSubjTopics = topicRevisions.filter(
-    (tr: any) => tr.subject?.toLowerCase() === selectedSubjectTopics.subject?.toLowerCase()
+    (tr: any) => tr.subject?.toLowerCase() === subjNorm
   );
 
   const subjTopics = allSubjTopics.filter((tr: any) =>
     !modalTopicSearch || tr.topic?.toLowerCase().includes(modalTopicSearch.toLowerCase())
   );
+
+  const subjIdNorm = (selectedSubjectTopics.id || selectedSubjectTopics.dbId || '').toLowerCase();
+
+  const relevantBatches = (batchedRevisions || []).filter((batch: any) => {
+    const topics = Array.isArray(batch.topicStatuses) ? batch.topicStatuses : [];
+    const subjectIds = Array.isArray(batch.subjectIds) ? batch.subjectIds : [];
+    return (
+      subjectIds.some((s: string) => {
+        const sLower = String(s).toLowerCase();
+        return sLower === subjNorm || (subjIdNorm && sLower === subjIdNorm);
+      }) ||
+      topics.some(
+        (t: any) =>
+          String(t.subject || '').toLowerCase() === subjNorm ||
+          (subjIdNorm && String(t.syllabusItemId || '').toLowerCase() === subjIdNorm)
+      )
+    );
+  });
 
   return (
     <div
@@ -94,6 +131,8 @@ export default function SubjectTopicsModal({
             )}
           </div>
 
+
+
           {allSubjTopics.length === 0 ? (
             <div className="text-center py-12 text-slate-400 font-bold space-y-3 max-w-md mx-auto">
               <div className="w-14 h-14 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto shadow-inner">
@@ -134,11 +173,14 @@ export default function SubjectTopicsModal({
                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800/60 font-bold">
                   {subjTopics.map((t: any) => {
                     const topicKey = t.id || t._id || t.customId;
-                    const isAugmented = t.isAugmentedRevision;
                     const revisions = t.revisions || [];
                     const r1 = revisions.find((r: any) => r.stage === 'R1');
                     const r2 = revisions.find((r: any) => r.stage === 'R2');
                     const r3 = revisions.find((r: any) => r.stage === 'R3');
+
+                    const isBatchRevTopic = false; // Will be set after matchingBatch is computed
+
+                    const isAugmented = t.isAugmentedRevision !== false && !isBatchRevTopic;
                     const isMastered = isAugmented ? !!(r3?.status === 'Completed' || r3?.completedDate) : true;
                     const stageLabel = !isAugmented
                       ? 'Topic Logged'
@@ -150,118 +192,186 @@ export default function SubjectTopicsModal({
                       ? 'R2 Pending (+21d)'
                       : 'R3 Pending (+45d)';
 
+                    const matchingBatch = (batchedRevisions || []).find((b: any) => {
+                      const revIdsArr = Array.isArray(b.topicRevisionIds) ? b.topicRevisionIds : [];
+                      if (revIdsArr.includes(t.id) || revIdsArr.includes(t.customId)) return true;
+                      const statuses = Array.isArray(b.topicStatuses) ? b.topicStatuses : [];
+                      if (statuses.some((ts: any) => ts.topicRevisionId === t.id || ts.topicRevisionId === t.customId || (ts.topic && t.topic && ts.topic.trim().toLowerCase() === t.topic.trim().toLowerCase()))) return true;
+                      if (b.title && t.topic && b.title.trim().toLowerCase() === t.topic.trim().toLowerCase()) return true;
+                      return false;
+                    });
+
+                    const clusterSubjTopics = matchingBatch
+                      ? (Array.isArray(matchingBatch.topicStatuses) ? matchingBatch.topicStatuses : [])
+                          .filter((ts: any) => {
+                            if (typeof ts === 'string') return true;
+                            if (!ts.subject) return true;
+                            const sLower = String(ts.subject).trim().toLowerCase();
+                            return sLower === subjNorm || (subjIdNorm && sLower === subjIdNorm);
+                          })
+                          .map((ts: any) => (typeof ts === 'string' ? ts : ts.topic || ts.name || ts.topicId))
+                          .filter(Boolean)
+                      : [];
+
+                    const baseDate = t.firstReadDate || t.lastRevisedDate || '';
+                    const r1TargetDate = r1?.scheduledDate || (baseDate ? addDaysToStr(baseDate, 7) : '—');
+                    const r2TargetDate = r2?.scheduledDate || (baseDate ? addDaysToStr(baseDate, 21) : '—');
+                    const r3TargetDate = r3?.scheduledDate || (baseDate ? addDaysToStr(baseDate, 45) : '—');
+
                     return (
                       <tr 
                         key={topicKey} 
                         className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
                       >
 
-                        <td className="p-4 font-black text-slate-900 dark:text-slate-100 min-w-[200px]">
-                          <span className="hover:text-amber-500 transition-colors">{t.topic}</span>
+                        <td className="p-4 font-black text-slate-900 dark:text-slate-100 min-w-[220px]">
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-extrabold hover:text-indigo-500 transition-colors text-sm">
+                                {t.topic}
+                              </span>
+                              {/* {(isBatchRevTopic || matchingBatch) && (
+                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-md bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/30 flex items-center gap-0.5">
+                                  ⚡ Batch Revision
+                                </span>
+                              )} */}
+                            </div>
+
+                            {/* Extra Revisions Array Logs */}
+                            {Array.isArray(revisions) && revisions.filter((r: any) => r.stage?.includes('Extra')).length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-0.5">
+                                {revisions
+                                  .filter((r: any) => r.stage?.includes('Extra'))
+                                  .map((exR: any, exIdx: number) => (
+                                    <span
+                                      key={exIdx}
+                                      className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20"
+                                      title={exR.note || 'Extra Revision'}
+                                    >
+                                      📌 {exR.completedDate || exR.scheduledDate}: {exR.stage}
+                                    </span>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
                         </td>
 
                         <td className="p-4 text-slate-500 dark:text-slate-400 font-bold whitespace-nowrap">
-                          {t.firstReadDate || '—'}
+                          {t.firstReadDate || baseDate || '—'}
                         </td>
 
-                        {/* R1 */}
-                        <td className="p-4 whitespace-nowrap">
-                          {isAugmented ? (
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[11px] text-slate-400 font-extrabold">Target: {r1?.scheduledDate || '—'}</span>
-                              {r1?.status === 'Skipped' ? (
-                                <span className="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-0.5 rounded-md font-black w-fit border border-slate-300 dark:border-slate-700">
-                                  Skipped
-                                </span>
-                              ) : r1?.status === 'Completed' || r1?.completedDate ? (
-                                <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
-                                  <CheckCircle2 size={11} /> {r1?.completedDate}
-                                </span>
-                              ) : t.isOverdue && (!r1 || !r1.completedDate) ? (
-                                <span className="text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-md font-black w-fit animate-pulse flex items-center gap-1">
-                                  <AlertTriangle size={11} /> Overdue (+{t.overdueDays}d)
-                                </span>
-                              ) : (
-                                <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
-                                  <Clock size={11} /> Pending
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-slate-400">—</span>
-                          )}
-                        </td>
+                        {/* Middle columns: R1/R2/R3 + Status for Augmented vs Merged Subtopics (colSpan 4) for Batched */}
+                        {isAugmented ? (
+                          <>
+                            {/* R1 Target */}
+                            <td className="p-4 whitespace-nowrap">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[11px] text-slate-400 font-extrabold">Target: {r1TargetDate}</span>
+                                {r1?.status === 'Skipped' ? (
+                                  <span className="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-0.5 rounded-md font-black w-fit border border-slate-300 dark:border-slate-700">
+                                    Skipped
+                                  </span>
+                                ) : r1?.status === 'Completed' || r1?.completedDate ? (
+                                  <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
+                                    <CheckCircle2 size={11} /> {r1?.completedDate}
+                                  </span>
+                                ) : t.isOverdue && (!r1 || !r1.completedDate) ? (
+                                  <span className="text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-md font-black w-fit animate-pulse flex items-center gap-1">
+                                    <AlertTriangle size={11} /> Overdue (+{t.overdueDays}d)
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
+                                    <Clock size={11} /> Pending
+                                  </span>
+                                )}
+                              </div>
+                            </td>
 
-                        {/* R2 */}
-                        <td className="p-4 whitespace-nowrap">
-                          {isAugmented ? (
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[11px] text-slate-400 font-extrabold">Target: {r2?.scheduledDate || '—'}</span>
-                              {r2?.status === 'Skipped' ? (
-                                <span className="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-0.5 rounded-md font-black w-fit border border-slate-300 dark:border-slate-700">
-                                  Skipped
-                                </span>
-                              ) : r2?.status === 'Completed' || r2?.completedDate ? (
-                                <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
-                                  <CheckCircle2 size={11} /> {r2?.completedDate}
-                                </span>
-                              ) : t.isOverdue && r1?.completedDate && (!r2 || !r2.completedDate) ? (
-                                <span className="text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-md font-black w-fit animate-pulse flex items-center gap-1">
-                                  <AlertTriangle size={11} /> Overdue (+{t.overdueDays}d)
-                                </span>
-                              ) : (
-                                <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
-                                  <Clock size={11} /> Pending
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-slate-400">—</span>
-                          )}
-                        </td>
+                            {/* R2 Target */}
+                            <td className="p-4 whitespace-nowrap">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[11px] text-slate-400 font-extrabold">Target: {r2TargetDate}</span>
+                                {r2?.status === 'Skipped' ? (
+                                  <span className="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-0.5 rounded-md font-black w-fit border border-slate-300 dark:border-slate-700">
+                                    Skipped
+                                  </span>
+                                ) : r2?.status === 'Completed' || r2?.completedDate ? (
+                                  <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
+                                    <CheckCircle2 size={11} /> {r2?.completedDate}
+                                  </span>
+                                ) : t.isOverdue && r1?.completedDate && (!r2 || !r2.completedDate) ? (
+                                  <span className="text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-md font-black w-fit animate-pulse flex items-center gap-1">
+                                    <AlertTriangle size={11} /> Overdue (+{t.overdueDays}d)
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
+                                    <Clock size={11} /> Pending
+                                  </span>
+                                )}
+                              </div>
+                            </td>
 
-                        {/* R3 */}
-                        <td className="p-4 whitespace-nowrap">
-                          {isAugmented ? (
-                            <div className="flex flex-col gap-1">
-                              <span className="text-[11px] text-slate-400 font-extrabold">Target: {r3?.scheduledDate || '—'}</span>
-                              {r3?.status === 'Skipped' ? (
-                                <span className="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-0.5 rounded-md font-black w-fit border border-slate-300 dark:border-slate-700">
-                                  Skipped
-                                </span>
-                              ) : r3?.status === 'Completed' || r3?.completedDate ? (
-                                <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
-                                  <CheckCircle2 size={11} /> {r3?.completedDate}
-                                </span>
-                              ) : t.isOverdue && r2?.completedDate && (!r3 || !r3.completedDate) ? (
-                                <span className="text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-md font-black w-fit animate-pulse flex items-center gap-1">
-                                  <AlertTriangle size={11} /> Overdue (+{t.overdueDays}d)
-                                </span>
-                              ) : (
-                                <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
-                                  <Clock size={11} /> Pending
-                                </span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-xs text-slate-400">—</span>
-                          )}
-                        </td>
+                            {/* R3 Target */}
+                            <td className="p-4 whitespace-nowrap">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[11px] text-slate-400 font-extrabold">Target: {r3TargetDate}</span>
+                                {r3?.status === 'Skipped' ? (
+                                  <span className="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2.5 py-0.5 rounded-md font-black w-fit border border-slate-300 dark:border-slate-700">
+                                    Skipped
+                                  </span>
+                                ) : r3?.status === 'Completed' || r3?.completedDate ? (
+                                  <span className="text-[10px] bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
+                                    <CheckCircle2 size={11} /> {r3?.completedDate}
+                                  </span>
+                                ) : t.isOverdue && r2?.completedDate && (!r3 || !r3.completedDate) ? (
+                                  <span className="text-[10px] bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-md font-black w-fit animate-pulse flex items-center gap-1">
+                                    <AlertTriangle size={11} /> Overdue (+{t.overdueDays}d)
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-md font-black w-fit flex items-center gap-1">
+                                    <Clock size={11} /> Pending
+                                  </span>
+                                )}
+                              </div>
+                            </td>
 
-                        {/* Stage Status */}
-                        <td className="p-4 whitespace-nowrap">
-                          <span
-                            className={`px-3 py-1 rounded-xl text-xs font-black whitespace-nowrap inline-flex items-center gap-1 border shadow-xs ${
-                              !isAugmented || isMastered
-                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                                : t.isOverdue
-                                ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 animate-pulse'
-                                : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                            }`}
-                          >
-                            {stageLabel}
-                          </span>
-                        </td>
+                            {/* Stage Status */}
+                            <td className="p-4 whitespace-nowrap">
+                              <span
+                                className={`px-3 py-1 rounded-xl text-xs font-black whitespace-nowrap inline-flex items-center gap-1 border shadow-xs ${
+                                  isMastered
+                                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                                    : t.isOverdue
+                                    ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30 animate-pulse'
+                                    : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                                }`}
+                              >
+                                {stageLabel}
+                              </span>
+                            </td>
+                          </>
+                        ) : (
+                          /* Non-Augmented / Batched Revision Sub-topics merged area across all 4 remaining columns */
+                          <td colSpan={4} className="p-4">
+                            {clusterSubjTopics.length > 0 ? (
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="text-[10px] font-extrabold uppercase text-purple-500 dark:text-purple-400 tracking-wider mr-1">
+                                  Associated Topics ({clusterSubjTopics.length}):
+                                </span>
+                                {clusterSubjTopics.map((topName: string, topIdx: number) => (
+                                  <span
+                                    key={topIdx}
+                                    className="text-[11px] font-extrabold px-2.5 py-1 rounded-lg bg-purple-500/15 text-purple-700 dark:text-purple-200 border border-purple-500/30 shadow-xs cursor-pointer hover:scale-105 hover:bg-purple-500/25 transition-all"
+                                  >
+                                    {topName}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-xs text-slate-400 font-semibold">—</span>
+                            )}
+                          </td>
+                        )}
                       </tr>
                     );
                   })}

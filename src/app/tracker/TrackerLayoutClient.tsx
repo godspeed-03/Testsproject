@@ -179,6 +179,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     syllabusSubjects,
     syllabusItems,
     topicRevisions,
+    batchedRevisions,
     formIsStudyTask,
     setFormIsStudyTask,
     formStudyTaskMode,
@@ -512,6 +513,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             setFormIsStudyTask(true);
                             setFormIsBatchRevision(true);
                             setFormIsAugmentedRevision(false);
+                            setFormIcon('⚡');
+                            setFormColor('#8B5CF6');
+                            setShowEmojiPicker(false);
                           }}
                           className={`py-2 px-2 text-[11px] font-black rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                             formStudyTaskMode === 'batch_revision'
@@ -619,9 +623,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       {/* OPTION 3: Batch Revision Topics across Multiple Subjects */}
                       {formStudyTaskMode === 'batch_revision' && (
                         <div className="space-y-3.5 pt-1">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Select Category</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start">
+                            <div className="sm:col-span-3">
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1 text-xs sm:text-sm">Select Category</label>
                               <ShadcnSelect
                                 value={typeof formCategory === 'string' ? formCategory : (formCategory?.label || '')}
                                 onChange={(val: string) => {
@@ -639,8 +643,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                               />
                             </div>
 
-                            <div>
-                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1">Select Subject</label>
+                            <div className="sm:col-span-4">
+                              <label className="font-extrabold block text-slate-700 dark:text-slate-300 mb-1 text-xs sm:text-sm">Select Subject</label>
                               <ShadcnSelect
                                 value={formSubject}
                                 onChange={(val: string) => {
@@ -653,124 +657,155 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                 }
                               />
                             </div>
-                          </div>
 
-                          {/* Topic Multi-Select Dropdown for active subject */}
-                          {(() => {
-                            const normalizedSubj = String(formSubject || '').trim().toLowerCase();
+                            {/* Topic Multi-Select Dropdown for active subject */}
+                            {(() => {
+                              const normalizedSubj = String(formSubject || '').trim().toLowerCase();
 
-                            const fromHabits = (habits || [])
-                              .filter((h: any) => String(h.subject || '').trim().toLowerCase() === normalizedSubj && h.topic)
-                              .flatMap((h: any) => String(h.topic).split(',').map((t: string) => t.trim()));
+                              const fromRevisions = (topicRevisions || [])
+                                .filter((r: any) => String(r.subject || '').trim().toLowerCase() === normalizedSubj && r.topic && !r.isBatchedRevision)
+                                .flatMap((r: any) => String(r.topic).split(',').map((t: string) => t.trim()))
+                                .filter((t: string) => !t.toLowerCase().includes("week ") && !t.toLowerCase().startsWith("[r"));
 
-                            const fromRevisions = (topicRevisions || [])
-                              .filter((r: any) => String(r.subject || '').trim().toLowerCase() === normalizedSubj && r.topic)
-                              .flatMap((r: any) => String(r.topic).split(',').map((t: string) => t.trim()));
+                              const fromSyllabus = (syllabusItems || [])
+                                .filter((s: any) => String(s.subject || '').trim().toLowerCase() === normalizedSubj)
+                                .flatMap((s: any) => {
+                                  const list: string[] = [];
+                                  if (s.topic) list.push(String(s.topic).trim());
+                                  if (s.topics) {
+                                    if (Array.isArray(s.topics)) list.push(...s.topics.map((t: any) => String(t).trim()));
+                                    else list.push(...String(s.topics).split(',').map((t: string) => t.trim()));
+                                  }
+                                  return list;
+                                });
 
-                            const fromSyllabus = (syllabusItems || [])
-                              .filter((s: any) => String(s.subject || '').trim().toLowerCase() === normalizedSubj)
-                              .flatMap((s: any) => {
-                                const list: string[] = [];
-                                if (s.topic) list.push(String(s.topic).trim());
-                                if (s.topics) {
-                                  if (Array.isArray(s.topics)) list.push(...s.topics.map((t: any) => String(t).trim()));
-                                  else list.push(...String(s.topics).split(',').map((t: string) => t.trim()));
-                                }
-                                if (Array.isArray(s.rules)) {
-                                  s.rules.forEach((r: any) => {
-                                    if (r.topic) list.push(String(r.topic).trim());
-                                    if (r.title) list.push(String(r.title).trim());
-                                    if (r.name) list.push(String(r.name).trim());
-                                  });
-                                }
-                                return list;
-                              });
-
-                            const existingTopics: string[] = Array.from(
-                              new Set([...fromHabits, ...fromRevisions, ...fromSyllabus].filter(Boolean))
-                            );
-
-                            const catLabel = typeof formCategory === 'string' ? formCategory : (formCategory?.label || 'GS1');
-
-                            const selectedForThisSubj = formRevisionClusterBadges
-                              .filter((b: any) => String(b.subject || '').trim().toLowerCase() === normalizedSubj)
-                              .map((b: any) => b.topic);
-
-                            const options = existingTopics.map((top: string) => ({
-                              value: top,
-                              label: top,
-                            }));
-
-                            const handleSelectionChange = (newSelectedTopics: string[]) => {
-                              const otherSubjBadges = formRevisionClusterBadges.filter(
-                                (b: any) => String(b.subject || '').trim().toLowerCase() !== normalizedSubj
+                              const existingTopics: string[] = Array.from(
+                                new Set([...fromRevisions, ...fromSyllabus].filter(Boolean))
                               );
 
-                              const newSubjBadges = newSelectedTopics.map((top: string) => ({
-                                category: catLabel,
-                                subject: formSubject,
-                                topic: top,
+                              const catLabel = typeof formCategory === 'string' ? formCategory : (formCategory?.label || 'GS1');
+
+                              const selectedForThisSubj = formRevisionClusterBadges
+                                .filter((b: any) => String(b.subject || '').trim().toLowerCase() === normalizedSubj)
+                                .map((b: any) => b.topic);
+
+                              const options = existingTopics.map((top: string) => ({
+                                value: top,
+                                label: top,
                               }));
 
-                              const updatedBadges = [...otherSubjBadges, ...newSubjBadges];
-                              setFormRevisionClusterBadges(updatedBadges);
-                            };
+                              const handleSelectionChange = (newSelectedTopics: string[]) => {
+                                const otherSubjBadges = formRevisionClusterBadges.filter(
+                                  (b: any) => String(b.subject || '').trim().toLowerCase() !== normalizedSubj
+                                );
 
-                            return (
-                              <div className="space-y-2 bg-white/90 dark:bg-slate-950/80 p-3.5 rounded-2xl border border-purple-500/30 dark:border-purple-500/40 shadow-xs">
-                                <ShadcnMultiSelect
-                                  label={`Select Topics for ${formSubject || 'Subject'}`}
-                                  placeholder={loading ? "Loading topics from DB..." : `Select ${formSubject || 'subject'} topics...`}
-                                  options={options}
-                                  selectedValues={selectedForThisSubj}
-                                  onChange={handleSelectionChange}
-                                  isLoading={loading}
-                                />
+                                const newSubjBadges = newSelectedTopics.map((top: string) => ({
+                                  category: catLabel,
+                                  subject: formSubject,
+                                  topic: top,
+                                }));
+
+                                const updatedBadges = [...otherSubjBadges, ...newSubjBadges];
+                                setFormRevisionClusterBadges(updatedBadges);
+                              };
+
+                              return (
+                                <div className="sm:col-span-5">
+                                  <ShadcnMultiSelect
+                                    label="Select Topics"
+                                    placeholder={loading ? "Loading topics..." : `Select ${formSubject || 'subject'} topics...`}
+                                    options={options}
+                                    selectedValues={selectedForThisSubj}
+                                    onChange={handleSelectionChange}
+                                    isLoading={loading}
+                                  />
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          {/* Selected Revision Cluster Badges (Clean 2-Column Grid Alignment) */}
+                          <div className="p-4 rounded-2xl bg-slate-900/90 border border-purple-500/30 shadow-xl space-y-3">
+                            <div className="flex items-center justify-between pb-2 border-b border-purple-500/20">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse shadow-glow" />
+                                <span className="font-extrabold text-xs text-purple-100 tracking-wide">
+                                  Selected Revision Cluster
+                                </span>
+                                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/35 text-purple-300">
+                                  {formRevisionClusterBadges.length} Topics
+                                </span>
                               </div>
-                            );
-                          })()}
-
-                          {/* Selected Revision Cluster Badges (Shows accumulated topics across different subjects & categories!) */}
-                          <div className="space-y-1.5 p-3 rounded-2xl bg-purple-500/10 border border-purple-500/30 dark:bg-purple-950/30 dark:border-purple-800/50">
-                            <div className="flex items-center justify-between">
-                              <span className="font-black text-xs text-purple-900 dark:text-purple-200 flex items-center gap-1.5">
-                                <span>Selected Revision Cluster ({formRevisionClusterBadges.length} Topics)</span>
-                              </span>
                               {formRevisionClusterBadges.length > 0 && (
                                 <button
                                   type="button"
                                   onClick={() => setFormRevisionClusterBadges([])}
-                                  className="text-[11px] font-extrabold text-slate-400 hover:text-rose-500 underline transition-colors cursor-pointer"
+                                  className="text-[11px] font-extrabold text-rose-400 hover:text-rose-300 hover:underline transition-colors cursor-pointer flex items-center gap-1"
                                 >
-                                  Clear All Badges
+                                  <span>Clear All</span>
                                 </button>
                               )}
                             </div>
 
                             {formRevisionClusterBadges.length === 0 ? (
-                              <p className="text-[11px] text-purple-700/70 dark:text-purple-300/70 font-medium italic">
+                              <p className="text-[11px] text-purple-300/60 font-medium italic">
                                 No topics added yet. Select a category & subject above, then pick topics to build your multi-subject revision cluster!
                               </p>
                             ) : (
-                              <div className="flex flex-wrap gap-1.5 pt-1 max-h-32 overflow-y-auto custom-scrollbar">
-                                {formRevisionClusterBadges.map((badge: any, idx: number) => (
-                                  <span
-                                    key={idx}
-                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-600/15 border border-purple-500/30 text-purple-900 dark:text-purple-200 font-black text-xs shadow-2xs"
-                                  >
-                                    <span className="text-[10px] uppercase font-bold text-purple-600 dark:text-purple-400">[{badge.subject}]</span>
-                                    <span>{badge.topic}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        setFormRevisionClusterBadges(formRevisionClusterBadges.filter((_: any, i: number) => i !== idx));
-                                      }}
-                                      className="hover:text-rose-500 font-black text-xs leading-none ml-1 cursor-pointer"
-                                    >
-                                      ✕
-                                    </button>
-                                  </span>
-                                ))}
+                              <div className="space-y-2 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                                {(() => {
+                                  // Group badges by subject
+                                  const groupMap: Record<string, { category: string; subject: string; items: { topic: string; globalIdx: number }[] }> = {};
+                                  formRevisionClusterBadges.forEach((b: any, globalIdx: number) => {
+                                    const subjKey = b.subject || "General";
+                                    if (!groupMap[subjKey]) {
+                                      groupMap[subjKey] = {
+                                        category: b.category || "GS",
+                                        subject: subjKey,
+                                        items: [],
+                                      };
+                                    }
+                                    groupMap[subjKey].items.push({ topic: b.topic, globalIdx });
+                                  });
+
+                                  return Object.values(groupMap).map((grp, gIdx) => (
+                                    <div key={gIdx} className="grid grid-cols-1 sm:grid-cols-[180px_1fr] items-start gap-2 sm:gap-3 py-1.5 border-b border-purple-500/10 last:border-b-0">
+                                      {/* Column 1: Subject Badge (Fixed Width 180px for PERFECT vertical alignment across all rows) */}
+                                      <div className="flex items-center gap-1.5 pt-0.5">
+                                        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-500/25 text-purple-300 border border-purple-500/40 shrink-0">
+                                          {grp.category}
+                                        </span>
+                                        <span className="font-black text-xs text-purple-100 uppercase tracking-wide truncate" title={grp.subject}>
+                                          {grp.subject}
+                                        </span>
+                                      </div>
+
+                                      {/* Column 2: Topic Pills (Aligns perfectly starting at exact same horizontal position) */}
+                                      <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                                        {grp.items.map((item) => (
+                                          <span
+                                            key={item.globalIdx}
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-purple-950/80 border border-purple-500/35 text-purple-100 font-extrabold text-xs shadow-xs hover:border-purple-400 transition-all group"
+                                          >
+                                            <span>{item.topic}</span>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setFormRevisionClusterBadges(
+                                                  formRevisionClusterBadges.filter((_: any, i: number) => i !== item.globalIdx)
+                                                );
+                                              }}
+                                              className="text-purple-400 hover:text-rose-400 hover:bg-rose-500/20 p-0.5 rounded transition-colors font-black text-xs leading-none"
+                                              title="Remove topic"
+                                            >
+                                              ✕
+                                            </button>
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ));
+                                })()}
                               </div>
                             )}
                           </div>
@@ -786,16 +821,18 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
 
                       <div className="relative min-w-0">
                         <div className="flex items-center gap-2 min-w-0">
-                          {/* Icon button on left of title (Choosable for all modes) */}
-                          <button
-                            type="button"
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                            title="Click to select icon & color"
-                            className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 hover:border-indigo-500 transition-all shrink-0 active:scale-95 shadow-2xs cursor-pointer"
-                            style={{ borderColor: formColor || undefined, backgroundColor: formColor ? `${formColor}15` : undefined }}
-                          >
-                            <span>{formIcon || (formStudyTaskMode === 'batch_revision' ? '⚡' : '📚')}</span>
-                          </button>
+                          {/* Icon button on left of title (Omitted for batch_revision as icon & color are hardcoded) */}
+                          {formStudyTaskMode !== 'batch_revision' && (
+                            <button
+                              type="button"
+                              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                              title="Click to select icon & color"
+                              className="px-3.5 py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-1 hover:border-indigo-500 transition-all shrink-0 active:scale-95 shadow-2xs cursor-pointer"
+                              style={{ borderColor: formColor || undefined, backgroundColor: formColor ? `${formColor}15` : undefined }}
+                            >
+                              <span>{formIcon || '📚'}</span>
+                            </button>
+                          )}
 
                           {/* Title Input */}
                           <input
@@ -807,8 +844,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                           />
                         </div>
 
-                        {/* Floating Popover: Icon & Theme Color Selector */}
-                        {showEmojiPicker && (createType === 'habit' || !formIsStudyTask) && (
+                        {/* Floating Popover: Icon & Theme Color Selector (Omitted for Batch Revision) */}
+                        {showEmojiPicker && formStudyTaskMode !== 'batch_revision' && (createType === 'habit' || !formIsStudyTask) && (
                           <div className="absolute top-full left-0 mt-1.5 w-80 sm:w-[420px] max-w-[calc(100vw-2.5rem)] p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-indigo-500/30 shadow-2xl space-y-3 animate-fade-in z-[99999]">
                             {/* Popover Header */}
                             <div className="flex items-center justify-between text-xs font-black text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800 pb-2">
@@ -1490,6 +1527,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
         habit={batchRevModalHabit}
         date={batchRevModalDate}
         onSave={handleSaveBatchRevProgress}
+        batchedRevisions={batchedRevisions}
       />
 
       {/* Timetable Code Editor & Live UI Preview Modal */}

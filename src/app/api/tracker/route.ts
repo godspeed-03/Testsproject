@@ -68,11 +68,12 @@ export async function GET() {
 
     const todayStr = new Date().toISOString().split("T")[0];
 
-    const [syllabus, testLogs, topicRevisions, dbRuleSets] = await Promise.all([
+    const [syllabus, testLogs, topicRevisions, dbRuleSets, batchedRevisions] = await Promise.all([
       prisma.syllabusItem.findMany({ where: { userId } }),
       prisma.testLog.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
       prisma.topicRevision.findMany({ where: { userId } }),
       prisma.syllabusRuleSet.findMany({ where: { userId } }),
+      prisma.batchedRevisionItem.findMany({ where: { userId } }),
     ]);
 
     const rawSyllabus = syllabus.map((item) => ({
@@ -81,7 +82,6 @@ export async function GET() {
       subject: item.subject,
       category: item.category || "GS1",
       status: item.status || "Not Started",
-      source: item.source || "",
       date: item.date || "",
       nextRev: item.nextRev || "",
       color: (item as any).color || "",
@@ -139,6 +139,7 @@ export async function GET() {
         lastRevisedDate: t.lastRevisedDate,
         status: t.status,
         isAugmentedRevision: t.isAugmentedRevision,
+        isBatchedRevision: t.isBatchedRevision,
         isOverdue: overdueInfo.isOverdue,
         overdueDays: overdueInfo.overdueDays,
         nextScheduledDate: t.nextScheduledDate,
@@ -152,6 +153,7 @@ export async function GET() {
       syllabusList: formattedSyllabus,
       testLogs: formattedTestLogs,
       topicRevisions: formattedTopicRevisions,
+      batchedRevisions,
     });
   } catch (error: any) {
     console.error("Fetch tracker data error:", error);

@@ -66,8 +66,18 @@ export default function HabitCellTooltip({
                 <Check size={10} /> Done ({pct}%)
               </span>
             ) : hist?.status === 'skipped' || hist?.status === 'rest' ? (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1">
                 ☕ Rest Day
+              </span>
+            ) : val > 0 ? (
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black flex items-center gap-1 ${
+                pct >= 67
+                  ? 'bg-lime-500/20 text-lime-300 border border-lime-500/40'
+                  : pct >= 34
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                    : 'bg-orange-500/20 text-orange-300 border border-orange-500/40'
+              }`}>
+                ⚡ Partial ({pct}%)
               </span>
             ) : isFailed ? (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1">
@@ -76,10 +86,6 @@ export default function HabitCellTooltip({
             ) : !scheduled ? (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-800 text-slate-400">
                 Off
-              </span>
-            ) : val > 0 ? (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                Partial ({pct}%)
               </span>
             ) : isPast ? (
               <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/40">

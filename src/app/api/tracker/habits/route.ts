@@ -222,12 +222,29 @@ export async function GET(req: Request) {
     }
     const userId = user.userId;
 
-    const [habitsRaw, lists, syllabusItems, topicRevisions] = await Promise.all([
+    const [habitsRaw, lists, syllabusItems, topicRevisions, batchedRevisions] = await Promise.all([
       prisma.habitItem.findMany({ where: { userId } }),
       prisma.checkList.findMany({ where: { userId } }),
       prisma.syllabusItem.findMany({ where: { userId } }),
       prisma.topicRevision.findMany({ where: { userId } }),
+      prisma.batchedRevisionItem.findMany({ where: { userId } }),
     ]);
+
+    const formattedTopicRevisions = topicRevisions.map((t) => ({
+      id: t.customId || t.id,
+      subject: t.subject,
+      category: t.category,
+      topic: t.topic,
+      firstReadDate: t.firstReadDate,
+      lastRevisedDate: t.lastRevisedDate,
+      status: t.status,
+      isAugmentedRevision: t.isAugmentedRevision,
+      isBatchedRevision: t.isBatchedRevision,
+      nextScheduledDate: t.nextScheduledDate,
+      isOverdue: t.isOverdue,
+      overdueDays: t.overdueDays,
+      revisions: Array.isArray(t.revisions) ? t.revisions : [],
+    }));
 
     const nowIst = new Date(new Date().getTime() + 5.5 * 3600000 + new Date().getTimezoneOffset() * 60000);
     const todayIso = nowIst.toISOString().split("T")[0];
@@ -335,7 +352,7 @@ export async function GET(req: Request) {
       return a.localeCompare(b);
     });
 
-    return NextResponse.json({ habits, lists, syllabusSubjects, syllabusItems, topicRevisions, categories });
+    return NextResponse.json({ habits, lists, syllabusSubjects, syllabusItems, topicRevisions: formattedTopicRevisions, batchedRevisions, categories });
   } catch (error: any) {
     console.error("Failed to fetch habit tracker data:", error);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
@@ -411,6 +428,7 @@ export async function POST(req: Request) {
         const targetHist = history.find((e: any) => e.date === targetDate);
         const isDone = targetHist?.status === "done";
 
+        const hAny = h as any;
         if (h.type !== "habit") {
           if (!isDone) {
             await prisma.habitItem.update({
@@ -418,6 +436,45 @@ export async function POST(req: Request) {
               data: { startDate: nextDateIso },
             });
             shiftedTasksCount++;
+
+            // Shift linked TopicRevision schedules if applicable
+            if (hAny.topicRevisionId || h.type === "revision" || h.type === "batch_revision") {
+              const topicRevId = hAny.topicRevisionId;
+              const topicDoc = topicRevId
+                ? await prisma.topicRevision.findFirst({ where: { id: topicRevId, userId } })
+                : await prisma.topicRevision.findFirst({
+                    where: {
+                      userId,
+                      topic: { equals: hAny.topic || h.title, mode: "insensitive" },
+                      ...(hAny.subject ? { subject: { equals: hAny.subject, mode: "insensitive" } } : {}),
+                    },
+                  });
+
+              if (topicDoc) {
+                const revisions = Array.isArray(topicDoc.revisions) ? [...(topicDoc.revisions as any[])] : [];
+                let revUpdated = false;
+                revisions.forEach((r: any) => {
+                  if (r.status === "Pending" && (r.scheduledDate === targetDate || !r.scheduledDate)) {
+                    r.scheduledDate = nextDateIso;
+                    revUpdated = true;
+                  }
+                });
+                let nextSched = topicDoc.nextScheduledDate;
+                if (nextSched === targetDate || !nextSched) {
+                  nextSched = nextDateIso;
+                  revUpdated = true;
+                }
+                if (revUpdated) {
+                  await prisma.topicRevision.update({
+                    where: { id: topicDoc.id },
+                    data: {
+                      nextScheduledDate: nextSched,
+                      revisions,
+                    },
+                  });
+                }
+              }
+            }
           }
         } else {
           if (!isDone) {
@@ -438,11 +495,58 @@ export async function POST(req: Request) {
         }
       }
 
+      // Sweep through TopicRevision table to shift any remaining pending revisions scheduled for targetDate
+      const uncompletedTopicRevs = await prisma.topicRevision.findMany({
+        where: {
+          userId,
+          status: { not: "Completed" },
+          OR: [
+            { nextScheduledDate: targetDate },
+            { firstReadDate: targetDate },
+          ],
+        },
+      });
+
+      for (const tr of uncompletedTopicRevs) {
+        const revisions = Array.isArray(tr.revisions) ? [...(tr.revisions as any[])] : [];
+        let updated = false;
+        revisions.forEach((r: any) => {
+          if (r.status === "Pending" && r.scheduledDate === targetDate) {
+            r.scheduledDate = nextDateIso;
+            updated = true;
+          }
+        });
+        let nextSched = tr.nextScheduledDate;
+        if (nextSched === targetDate) {
+          nextSched = nextDateIso;
+          updated = true;
+        }
+        if (updated) {
+          await prisma.topicRevision.update({
+            where: { id: tr.id },
+            data: {
+              nextScheduledDate: nextSched,
+              revisions,
+            },
+          });
+        }
+      }
+
       await runFullConsistencyPipeline(userId);
-      const updatedHabits = await prisma.habitItem.findMany({ where: { userId } });
+
+      const [updatedHabits, updatedTopicRevisions, updatedBatchedRevisions, updatedSyllabusItems] = await Promise.all([
+        prisma.habitItem.findMany({ where: { userId } }),
+        prisma.topicRevision.findMany({ where: { userId } }),
+        prisma.batchedRevisionItem.findMany({ where: { userId } }),
+        prisma.syllabusItem.findMany({ where: { userId } }),
+      ]);
+
       return NextResponse.json({
         success: true,
         habits: updatedHabits,
+        topicRevisions: updatedTopicRevisions,
+        batchedRevisions: updatedBatchedRevisions,
+        syllabusItems: updatedSyllabusItems,
         shiftedTasksCount,
         restHabitsCount,
         nextDateIso,
@@ -596,6 +700,8 @@ export async function POST(req: Request) {
             }
           }
 
+          const isBatchRevision = Boolean(habit.isBatchRevision);
+
           // Loop & sync each TopicRevision record in DB
           for (const item of topicsToSync) {
             if (!item.subject || !item.topic) continue;
@@ -660,6 +766,20 @@ export async function POST(req: Request) {
                 }
               }
 
+              if (item.isTopicDone && isBatchRevision) {
+                const extraStageName = `Extra Revision (Batch: ${habit.title || "Cluster"})`;
+                let extraEntry = revisionsArr.find((r: any) => r.stage === extraStageName && r.completedDate === date);
+                if (!extraEntry) {
+                  revisionsArr.push({
+                    stage: extraStageName,
+                    scheduledDate: date,
+                    completedDate: date,
+                    status: "Completed",
+                    note: "Logged via Batched Revision Task",
+                  });
+                }
+              }
+
               await prisma.topicRevision.update({
                 where: { id: topicDoc.id },
                 data: {
@@ -670,43 +790,59 @@ export async function POST(req: Request) {
                   isOverdue: false,
                   overdueDays: 0,
                   status: item.isTopicDone ? "Completed" : "Pending",
+                  isBatchedRevision: isBatchRevision ? true : topicDoc.isBatchedRevision,
                 },
               });
             }
           }
 
-          // Sync linked BatchedRevisionItem table record in PostgreSQL
+          // Sync linked BatchedRevisionItem table record in PostgreSQL ONLY if it is a Batch Revision item
           try {
             const existingBatchRecord = await prisma.batchedRevisionItem.findFirst({
               where: { userId, habitId: habit.id },
             });
 
-            const updatedStatuses = topicsToSync.map((t) => ({
-              topicId: t.topic,
-              topic: t.topic,
-              subject: t.subject,
-              isDone: t.isTopicDone,
-            }));
+            if (existingBatchRecord || isBatchRevision) {
+              const updatedStatuses = topicsToSync.map((t) => ({
+                topicId: t.topic,
+                topic: t.topic,
+                subject: t.subject,
+                isDone: t.isTopicDone,
+              }));
 
-            if (existingBatchRecord) {
-              await prisma.batchedRevisionItem.update({
-                where: { id: existingBatchRecord.id },
-                data: {
-                  topicStatuses: updatedStatuses as any,
-                  isAllDone: isDone,
-                  completedDate: isDone ? date : "",
-                },
-              });
-            } else {
-              await prisma.batchedRevisionItem.create({
-                data: {
-                  userId,
-                  habitId: habit.id,
-                  topicStatuses: updatedStatuses as any,
-                  isAllDone: isDone,
-                  completedDate: isDone ? date : "",
-                },
-              });
+              const uniqueSubjectIds = Array.from(
+                new Set(updatedStatuses.flatMap((t: any) => [t.subject, t.syllabusItemId, t.topicId]).filter(Boolean))
+              );
+              const topicRevIdsArr = Array.from(
+                new Set(updatedStatuses.map((t: any) => t.topicRevisionId).filter(Boolean))
+              );
+
+              if (existingBatchRecord) {
+                await prisma.batchedRevisionItem.update({
+                  where: { id: existingBatchRecord.id },
+                  data: {
+                    title: habit.title,
+                    topicRevisionIds: topicRevIdsArr as any,
+                    subjectIds: uniqueSubjectIds as any,
+                    topicStatuses: updatedStatuses as any,
+                    isAllDone: isDone,
+                    completedDate: isDone ? date : "",
+                  },
+                });
+              } else if (isBatchRevision) {
+                await prisma.batchedRevisionItem.create({
+                  data: {
+                    userId,
+                    habitId: habit.id,
+                    topicRevisionIds: topicRevIdsArr as any,
+                    title: habit.title,
+                    subjectIds: uniqueSubjectIds as any,
+                    topicStatuses: updatedStatuses as any,
+                    isAllDone: isDone,
+                    completedDate: isDone ? date : "",
+                  },
+                });
+              }
             }
           } catch (batchErr) {
             console.error("Failed to sync BatchedRevisionItem table:", batchErr);
@@ -783,10 +919,13 @@ export async function POST(req: Request) {
 
       const cleanSubject = (subject || "").trim();
       const categoryLabel = typeof category === "string" ? category : category?.label || category?.id || "GS1";
-      const resolvedIsAugmented =
-        isAugmentedRevision !== undefined
-          ? Boolean(isAugmentedRevision)
-          : !(/csat|maths|mathematics|math/i.test(cleanSubject) || /csat|maths|mathematics|math/i.test(categoryLabel));
+      const isBatchRevTask = Boolean(body.isBatchRevision);
+
+      const resolvedIsAugmented = isBatchRevTask
+        ? false
+        : isAugmentedRevision !== undefined
+        ? Boolean(isAugmentedRevision)
+        : !(/csat|maths|mathematics|math/i.test(cleanSubject) || /csat|maths|mathematics|math/i.test(categoryLabel));
 
       const rawTarget = target || { value: null, unit: "yes_no" };
       const rawUnitStr = (rawTarget.unit || "yes_no").toLowerCase().trim();
@@ -818,8 +957,9 @@ export async function POST(req: Request) {
           endDate: endDate || null,
           isStudyTask: !!isStudyTask,
           isAugmentedRevision: resolvedIsAugmented,
+          isBatchRevision: isBatchRevTask,
           subject: cleanSubject,
-          topic: (topic || "").trim(),
+          topic: isBatchRevTask ? ((topic || "").trim() || title || "Batched Revision") : (topic || "").trim(),
           color: color || "#6366F1",
           icon: icon || "🏃",
           streakCurrent: 0,
@@ -834,10 +974,58 @@ export async function POST(req: Request) {
           ? body.selectedMicroTopicsCluster
           : [];
 
-      if (rawCluster.length > 0) {
+      if (isBatchRevTask && rawCluster.length > 0) {
         try {
+          const batchTitle = newHabit.title || "Batched Revision";
+
+          // 1. Group cluster topics by distinct subject
+          const distinctSubjectsMap = new Map<string, string>(); // subject -> category
+
+          for (const rawItem of rawCluster) {
+            const itemObj = (typeof rawItem === "string" ? { topic: rawItem } : rawItem || {}) as any;
+            const itemTopic = String(itemObj.topic || itemObj.name || itemObj.topicName || itemObj.title || "").trim();
+            if (!itemTopic) continue;
+
+            const itemSubj = String(itemObj.subject || itemObj.subjectName || cleanSubject || "Weekly Revision").trim() || "Weekly Revision";
+            const itemCat = String(itemObj.category || itemObj.categoryLabel || categoryLabel || "REV").trim() || "REV";
+
+            if (!distinctSubjectsMap.has(itemSubj)) {
+              distinctSubjectsMap.set(itemSubj, itemCat);
+            }
+          }
+
+          if (distinctSubjectsMap.size === 0) {
+            const fallbackSubj = cleanSubject || "Weekly Revision";
+            distinctSubjectsMap.set(fallbackSubj, categoryLabel || "REV");
+          }
+
+          // 2. Create ONE TopicRevision row for EACH distinct subject in the cluster (topic = batchTitle)
+          const subjectToRevIdMap: Record<string, string> = {};
+          const createdTopicRevIds: string[] = [];
+
+          for (const [subj, cat] of Array.from(distinctSubjectsMap.entries())) {
+            const topicDoc = await processTopicTag(
+              userId,
+              {
+                subject: subj,
+                topic: batchTitle,
+                category: cat,
+                isAugmentedRevision: false,
+                isBatchedRevision: true,
+              },
+              taskStartDate
+            );
+
+            if (topicDoc?.id) {
+              subjectToRevIdMap[subj] = topicDoc.id;
+              createdTopicRevIds.push(topicDoc.id);
+            }
+          }
+
+          // 3. Build micro-topic statuses list linking each topic to its subject's TopicRevision ID
           const topicStatusesList: Array<{
             topicId: string;
+            topicRevisionId?: string | null;
             syllabusItemId?: string | null;
             topic: string;
             subject: string;
@@ -845,11 +1033,14 @@ export async function POST(req: Request) {
             isDone: boolean;
           }> = [];
 
-          for (const item of rawCluster) {
-            if (!item.subject || !item.topic) continue;
-            const itemSubj = item.subject.trim();
-            const itemTopic = item.topic.trim();
-            const itemCat = item.category?.trim() || categoryLabel;
+          for (const rawItem of rawCluster) {
+            const itemObj = (typeof rawItem === "string" ? { topic: rawItem } : rawItem || {}) as any;
+            const itemTopic = String(itemObj.topic || itemObj.name || itemObj.topicName || itemObj.title || "").trim();
+            if (!itemTopic) continue;
+
+            const itemSubj = String(itemObj.subject || itemObj.subjectName || cleanSubject || "Weekly Revision").trim() || "Weekly Revision";
+            const itemCat = String(itemObj.category || itemObj.categoryLabel || categoryLabel || "REV").trim() || "REV";
+            const topicRevId = subjectToRevIdMap[itemSubj] || createdTopicRevIds[0] || null;
 
             const sysItem = await prisma.syllabusItem.findFirst({
               where: { userId, subject: { equals: itemSubj, mode: "insensitive" } },
@@ -860,41 +1051,38 @@ export async function POST(req: Request) {
                 where: { id: sysItem.id },
                 data: {
                   status: sysItem.status === "Not Started" ? "In Progress" : sysItem.status,
-                  category: itemCat,
+                  category: itemCat !== "N/A" ? itemCat : sysItem.category,
                 },
               });
             }
 
-            const topicDoc = await processTopicTag(
-              userId,
-              {
-                subject: itemSubj,
-                topic: itemTopic,
-                category: itemCat,
-                isAugmentedRevision: resolvedIsAugmented,
-              },
-              taskStartDate,
-            );
-
             topicStatusesList.push({
-              topicId: topicDoc?.id || itemTopic,
+              topicId: topicRevId || itemTopic,
+              topicRevisionId: topicRevId,
               syllabusItemId: sysItem?.id || null,
               topic: itemTopic,
               subject: itemSubj,
               category: itemCat,
               isDone: false,
             });
-
-            if (resolvedIsAugmented) {
-              await createSrsTasksForTopic(userId, itemSubj, itemTopic, taskStartDate, category, true);
-            }
           }
 
-          // Create linked BatchedRevisionItem record in PostgreSQL
+          const uniqueSubjectIds = Array.from(
+            new Set([
+              ...Array.from(distinctSubjectsMap.keys()),
+              ...createdTopicRevIds,
+              ...topicStatusesList.flatMap((t) => [t.subject, t.syllabusItemId, t.topicRevisionId, t.topicId]).filter(Boolean),
+            ])
+          );
+
+          // 4. Create linked BatchedRevisionItem record in PostgreSQL with createdTopicRevIds array
           await prisma.batchedRevisionItem.create({
             data: {
               userId,
               habitId: newHabit.id,
+              topicRevisionIds: createdTopicRevIds as any,
+              title: newHabit.title,
+              subjectIds: uniqueSubjectIds as any,
               topicStatuses: topicStatusesList as any,
               isAllDone: false,
               completedDate: "",
@@ -905,13 +1093,14 @@ export async function POST(req: Request) {
         }
       } else if (
         isStudyTask &&
-        frequency?.mode === "once" &&
-        subject &&
         (topic || (Array.isArray(body.selectedMicroTopics) && body.selectedMicroTopics.length > 0))
       ) {
         try {
+          const effectiveSubj = cleanSubject || "All";
+          const effectiveCat = categoryLabel || "N/A";
+
           const sysItem = await prisma.syllabusItem.findFirst({
-            where: { userId, subject: { equals: cleanSubject, mode: "insensitive" } },
+            where: { userId, subject: { equals: effectiveSubj, mode: "insensitive" } },
           });
 
           if (sysItem) {
@@ -919,7 +1108,7 @@ export async function POST(req: Request) {
               where: { id: sysItem.id },
               data: {
                 status: sysItem.status === "Not Started" ? "In Progress" : sysItem.status,
-                category: categoryLabel,
+                category: effectiveCat !== "N/A" ? effectiveCat : sysItem.category,
               },
             });
           }
@@ -939,16 +1128,16 @@ export async function POST(req: Request) {
             await processTopicTag(
               userId,
               {
-                subject: cleanSubject,
+                subject: effectiveSubj,
                 topic: singleTopic,
-                category: categoryLabel,
+                category: effectiveCat,
                 isAugmentedRevision: resolvedIsAugmented,
               },
               taskStartDate,
             );
 
             if (resolvedIsAugmented) {
-              await createSrsTasksForTopic(userId, cleanSubject, singleTopic, taskStartDate, category, true);
+              await createSrsTasksForTopic(userId, effectiveSubj, singleTopic, taskStartDate, category, true);
             }
           }
         } catch (err) {
@@ -956,8 +1145,12 @@ export async function POST(req: Request) {
         }
       }
 
-      const habits = await prisma.habitItem.findMany({ where: { userId } });
-      const syllabusItems = await prisma.syllabusItem.findMany({ where: { userId } });
+      const [habits, syllabusItems, batchedRevisions, topicRevisions] = await Promise.all([
+        prisma.habitItem.findMany({ where: { userId } }),
+        prisma.syllabusItem.findMany({ where: { userId } }),
+        prisma.batchedRevisionItem.findMany({ where: { userId } }),
+        prisma.topicRevision.findMany({ where: { userId } }),
+      ]);
 
       const studyTaskSubjects = habits.filter((h: any) => h.isStudyTask && h.subject).map((h: any) => h.subject.trim());
 
@@ -965,7 +1158,7 @@ export async function POST(req: Request) {
         new Set([...syllabusItems.map((s: any) => s.subject).filter(Boolean), ...studyTaskSubjects]),
       );
 
-      return NextResponse.json({ message: "Item created", habits, syllabusSubjects });
+      return NextResponse.json({ message: "Item created", habits, syllabusSubjects, batchedRevisions, topicRevisions });
     }
 
     // Action: update
@@ -1131,6 +1324,63 @@ export async function POST(req: Request) {
       });
 
       if (targetHabit) {
+        // 1. Find and clean up linked BatchedRevisionItem record and associated SRS sub-tasks
+        const existingBatchItem = await prisma.batchedRevisionItem.findFirst({
+          where: { userId, habitId: targetHabit.id },
+        });
+
+        if (existingBatchItem) {
+          const topicStatuses = Array.isArray(existingBatchItem.topicStatuses)
+            ? (existingBatchItem.topicStatuses as any[])
+            : [];
+          const statusRevIds = topicStatuses.map((t) => t.topicRevisionId).filter(Boolean);
+          const batchRevIds = Array.isArray(existingBatchItem.topicRevisionIds)
+            ? (existingBatchItem.topicRevisionIds as string[])
+            : [];
+          const allRevIdsToDelete = Array.from(
+            new Set([...batchRevIds, ...statusRevIds].filter((id): id is string => Boolean(id)))
+          );
+
+          if (allRevIdsToDelete.length > 0) {
+            await prisma.topicRevision.deleteMany({
+              where: { id: { in: allRevIdsToDelete }, userId },
+            });
+          }
+
+          for (const tItem of topicStatuses) {
+            if (tItem.subject && tItem.topic) {
+              // Clean up Extra Revision logs from TopicRevision
+              const tDoc = await prisma.topicRevision.findFirst({
+                where: {
+                  userId,
+                  subject: { equals: tItem.subject, mode: "insensitive" },
+                  topic: { equals: tItem.topic, mode: "insensitive" },
+                },
+              });
+
+              if (tDoc) {
+                const revs = Array.isArray(tDoc.revisions) ? (tDoc.revisions as any[]) : [];
+                const cleanRevs = revs.filter(
+                  (r: any) => !(r.stage && String(r.stage).includes("Extra Revision (Batch"))
+                );
+
+                await prisma.topicRevision.update({
+                  where: { id: tDoc.id },
+                  data: { revisions: cleanRevs },
+                });
+              }
+            }
+          }
+
+          await prisma.batchedRevisionItem.deleteMany({
+            where: { id: existingBatchItem.id },
+          });
+        } else {
+          await prisma.batchedRevisionItem.deleteMany({
+            where: { userId, habitId: targetHabit.id },
+          });
+        }
+
         let subject = targetHabit.subject?.trim() || "";
         let topic = targetHabit.topic?.trim() || "";
 
@@ -1145,7 +1395,9 @@ export async function POST(req: Request) {
           }
         }
 
-        if (topic) {
+        const isBatchHabit = Boolean(targetHabit.isBatchRevision);
+
+        if (topic && !isBatchHabit) {
           if (subject) {
             await prisma.habitItem.deleteMany({
               where: {
@@ -1189,11 +1441,16 @@ export async function POST(req: Request) {
 
         await prisma.habitItem.deleteMany({ where: { id: targetHabit.id } });
       } else if (id) {
+        await prisma.batchedRevisionItem.deleteMany({ where: { userId, habitId: id } });
         await prisma.habitItem.deleteMany({ where: { id, userId } });
       }
 
-      const habits = await prisma.habitItem.findMany({ where: { userId } });
-      const syllabusItems = await prisma.syllabusItem.findMany({ where: { userId } });
+      const [habits, syllabusItems, batchedRevisions, topicRevisions] = await Promise.all([
+        prisma.habitItem.findMany({ where: { userId } }),
+        prisma.syllabusItem.findMany({ where: { userId } }),
+        prisma.batchedRevisionItem.findMany({ where: { userId } }),
+        prisma.topicRevision.findMany({ where: { userId } }),
+      ]);
 
       const studyTaskSubjects = habits.filter((h: any) => h.isStudyTask && h.subject).map((h: any) => h.subject.trim());
 
@@ -1201,7 +1458,7 @@ export async function POST(req: Request) {
         new Set([...syllabusItems.map((s: any) => s.subject).filter(Boolean), ...studyTaskSubjects]),
       );
 
-      return NextResponse.json({ message: "Habit deleted", habits, syllabusSubjects });
+      return NextResponse.json({ message: "Habit deleted", habits, syllabusSubjects, batchedRevisions, topicRevisions });
     }
 
     if (action === "delete_topic") {

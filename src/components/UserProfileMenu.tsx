@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronDown, PlusCircle, Upload, Download, FileText } from 'lucide-react';
+import { ChevronDown, PlusCircle, Upload, Download, FileText, BookOpen } from 'lucide-react';
 import LogoutButton from './LogoutButton';
 import ImportDataModal from './dashboard/ImportDataModal';
 import { useRouter, usePathname } from 'next/navigation';
@@ -169,6 +169,15 @@ export default function UserProfileMenu({ user }: UserProfileMenuProps) {
               >
                 <PlusCircle size={15} />
                 <span>Log Task / Habit</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setIsOpen(false); router.push('/syllabus'); }}
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <BookOpen size={15} className="text-purple-500" />
+                <span>Syllabus Matrix</span>
               </button>
 
               <button

@@ -344,17 +344,26 @@ export default function HabitsPage() {
                       const scheduledDays = monthDays.filter((d) => isHabitScheduledForDate(h, d.iso));
                       if (scheduledDays.length === 0) return null;
 
-                      // Exclude rest/skipped days from total denominator so rest days don't penalize score
-                      const activeScheduledDays = scheduledDays.filter((d) => {
+                      // Exclude rest/skipped days and future unelapsed days from score calculation
+                      const scorableScheduledDays = scheduledDays.filter((d) => {
+                        if (d.iso > todayIso) return false;
                         const hist = (h.history || []).find((entry: any) => entry.date === d.iso);
                         return !(hist?.status === 'skipped' || hist?.status === 'rest');
                       });
 
-                      const totalDaysToScore = activeScheduledDays.length > 0 ? activeScheduledDays.length : scheduledDays.length;
-                      const ptsPerDay = 100 / totalDaysToScore;
+                      if (scorableScheduledDays.length === 0) {
+                        return (
+                          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-black bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20 shadow-2xs shrink-0 self-start sm:self-auto">
+                            <Clock size={14} className="text-slate-400 shrink-0" />
+                            <span>Starts {h.startDate || 'Next Week'}</span>
+                          </div>
+                        );
+                      }
+
+                      const ptsPerDay = 100 / scorableScheduledDays.length;
                       let earned = 0;
 
-                      activeScheduledDays.forEach((d) => {
+                      scorableScheduledDays.forEach((d) => {
                         const hist = (h.history || []).find((entry: any) => entry.date === d.iso);
                         if (!hist) return;
                         if (hist.status === 'done') {

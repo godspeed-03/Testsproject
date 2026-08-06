@@ -217,7 +217,7 @@ export async function calculateAndSaveWeeklyData(
       const unit = (targetObj.unit || 'times').trim();
       const val = typeof targetObj.value === 'number' && targetObj.value > 0 ? targetObj.value : null;
 
-      const scheduledDaysCount = dayKeys.filter((dk) => isHabitScheduledOnDate(h, dk)).length || 1;
+      const scheduledDaysCount = dayKeys.filter((dk) => isHabitScheduledOnDate(h, dk)).length;
 
       habitStatsMap[h.id] = {
         title: h.title,
@@ -298,7 +298,11 @@ export async function calculateAndSaveWeeklyData(
 
   const recurringHabits = habits.filter((h: any) => {
     const freq = typeof h.frequency === 'object' && h.frequency !== null ? (h.frequency as any) : {};
-    return freq.mode !== 'once' && h.type !== 'event';
+    if (freq.mode === 'once' || h.type === 'event') return false;
+    const stats = habitStatsMap[h.id];
+    if (!stats) return false;
+    // Only include habits scheduled for this week or with logged progress
+    return stats.scheduledDaysCount > 0 || stats.completedDays > 0 || stats.totalValue > 0;
   });
   const totalHabitsCount = recurringHabits.length;
   let totalPointsEarned = 0;
@@ -312,11 +316,12 @@ export async function calculateAndSaveWeeklyData(
 
       const unitLower = (stats.unit || '').toLowerCase().trim();
       let habitPct = 0;
+      const effectiveScheduledDays = Math.max(1, stats.scheduledDaysCount);
 
       if (['yes_no', 'boolean'].includes(unitLower) || !stats.targetValue) {
-        habitPct = (stats.completedDays / Math.max(1, stats.scheduledDaysCount)) * 100;
+        habitPct = (stats.completedDays / effectiveScheduledDays) * 100;
       } else {
-        const weeklyTarget = stats.targetValue * stats.scheduledDaysCount;
+        const weeklyTarget = stats.targetValue * effectiveScheduledDays;
         if (weeklyTarget > 0) {
           habitPct = (stats.totalValue / weeklyTarget) * 100;
         }
@@ -346,27 +351,29 @@ export async function calculateAndSaveWeeklyData(
     .sort((a, b) => b.pct - a.pct);
 
   const habitDistribution = Object.values(habitStatsMap)
+    .filter((h) => h.scheduledDaysCount > 0 || h.completedDays > 0 || h.totalValue > 0)
     .map((h) => {
       const unitLower = h.unit.toLowerCase();
       let formattedVal = '';
       let pct = 0;
+      const effectiveScheduledDays = Math.max(1, h.scheduledDaysCount);
 
       if (['yes_no', 'boolean'].includes(unitLower) || h.targetValue === null) {
-        formattedVal = `${h.completedDays} / ${h.scheduledDaysCount} days`;
-        pct = Math.min(100, Math.round((h.completedDays / Math.max(1, h.scheduledDaysCount)) * 100));
+        formattedVal = `${h.completedDays} / ${effectiveScheduledDays} days`;
+        pct = Math.min(100, Math.round((h.completedDays / effectiveScheduledDays) * 100));
       } else if (['hrs', 'hr', 'hours', 'hour'].includes(unitLower)) {
-        const weeklyTargetHours = h.targetValue * h.scheduledDaysCount;
+        const weeklyTargetHours = h.targetValue * effectiveScheduledDays;
         const loggedMins = Math.round(h.totalValue * 60);
         const weeklyTargetMins = Math.round(weeklyTargetHours * 60);
         formattedVal = `${formatMinutes(loggedMins)} / ${formatMinutes(weeklyTargetMins)}`;
         pct = Math.min(100, Math.round((h.totalValue / Math.max(0.1, weeklyTargetHours)) * 100));
       } else if (['mins', 'min', 'minutes', 'minute'].includes(unitLower)) {
-        const weeklyTargetMins = h.targetValue * h.scheduledDaysCount;
+        const weeklyTargetMins = h.targetValue * effectiveScheduledDays;
         const loggedMins = h.totalValue;
         formattedVal = `${formatMinutes(loggedMins)} / ${formatMinutes(weeklyTargetMins)}`;
         pct = Math.min(100, Math.round((h.totalValue / Math.max(1, weeklyTargetMins)) * 100));
       } else {
-        const weeklyTarget = h.targetValue * h.scheduledDaysCount;
+        const weeklyTarget = h.targetValue * effectiveScheduledDays;
         formattedVal = `${h.totalValue} / ${weeklyTarget} ${h.unit}`;
         pct = Math.min(100, Math.round((h.totalValue / Math.max(0.1, weeklyTarget)) * 100));
       }

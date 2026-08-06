@@ -107,32 +107,33 @@ export async function GET(req: Request) {
     ]);
 
     // Build habits breakdown (filter to type === 'habit')
+    const todayStr = new Date().toISOString().split('T')[0];
     const habitsList = allHabits
       .filter((h: any) => h.type === 'habit')
       .map((h: any) => {
-      const history = Array.isArray(h.history) ? h.history : [];
-      const streak = calculateStreak(h);
-      const completedEntries = history.filter((e: any) => e.status === 'done' || (e.value && e.value > 0));
-      const scheduledDays = Math.max(1, history.length || 7);
-      const completedDays = completedEntries.length;
-      const score = Math.min(100, Math.round((completedDays / scheduledDays) * 100));
+        const history = Array.isArray(h.history) ? h.history : [];
+        const streak = calculateStreak(h);
+        const completedEntries = history.filter((e: any) => e.status === 'done' || (e.value && e.value > 0));
+        const scheduledDays = history.length;
+        const completedDays = completedEntries.length;
+        const score = scheduledDays > 0 ? Math.min(100, Math.round((completedDays / scheduledDays) * 100)) : 100;
 
-      return {
-        habitId: h.id,
-        title: h.title,
-        type: h.type || 'habit',
-        icon: h.icon || '🏃',
-        category: h.category || 'General',
-        scheduledDays,
-        completedDays,
-        score,
-        streakCurrent: streak.current,
-        streakBest: streak.best,
-      };
-    });
+        return {
+          habitId: h.id,
+          title: h.title,
+          type: h.type || 'habit',
+          icon: h.icon || '🏃',
+          category: h.category || 'General',
+          startDate: h.startDate,
+          scheduledDays,
+          completedDays,
+          score,
+          streakCurrent: streak.current,
+          streakBest: streak.best,
+        };
+      });
 
     // Build subjects breakdown
-    const todayStr = new Date().toISOString().split('T')[0];
     const subjectMap: Record<string, { subject: string; category: string; revisionsDue: number; revisionsDone: number; revisionsMissed: number; topicsRead: number }> = {};
 
     syllabusItems.forEach((item: any) => {
@@ -255,6 +256,13 @@ export async function GET(req: Request) {
             scheduledDays,
             completedDays,
             score,
+          };
+        } else if (h.startDate && h.startDate > todayStr) {
+          return {
+            ...h,
+            scheduledDays: 0,
+            completedDays: 0,
+            score: 100,
           };
         }
         return h;

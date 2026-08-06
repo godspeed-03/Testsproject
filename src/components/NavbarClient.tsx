@@ -103,6 +103,20 @@ export default function NavbarClient({ user }: NavbarClientProps) {
                   <ListTodo size={18} strokeWidth={2.2} className="group-hover:scale-110 transition-transform" />
                 </Link>
 
+                {/* Syllabus Matrix Shortcut Icon */}
+                <Link
+                  href="/syllabus"
+                  className={`p-2.5 rounded-xl border transition-all duration-300 flex items-center justify-center shadow-xs hover:scale-105 active:scale-95 group ${
+                    pathname === '/syllabus'
+                      ? 'bg-purple-600 text-white border-transparent shadow-purple-500/20'
+                      : 'bg-purple-500/10 border-purple-500/30 dark:border-purple-400/30 text-purple-600 dark:text-purple-400 hover:border-purple-500/60 hover:bg-purple-500/20 hover:shadow-md'
+                  }`}
+                  title="Syllabus Matrix"
+                  aria-label="Syllabus Matrix"
+                >
+                  <BookOpen size={18} strokeWidth={2.2} className="group-hover:scale-110 transition-transform" />
+                </Link>
+
                 {/* Focus Timer Shortcut Icon */}
                 <Link
                   href="/tracker/focus"

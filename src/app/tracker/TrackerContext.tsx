@@ -267,6 +267,23 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'habit' | 'task' | 'event'>('task');
 
+  // Load typeFilter from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('upsc_tracker_type_filter');
+      if (saved && ['ALL', 'habit', 'task', 'event'].includes(saved)) {
+        setTypeFilter(saved as 'ALL' | 'habit' | 'task' | 'event');
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleSetTypeFilter = (val: 'ALL' | 'habit' | 'task' | 'event') => {
+    setTypeFilter(val);
+    try {
+      localStorage.setItem('upsc_tracker_type_filter', val);
+    } catch (e) {}
+  };
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createType, setCreateType] = useState<'habit' | 'task' | 'event' | 'list'>('habit');
 
@@ -1156,7 +1173,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     searchQuery,
     setSearchQuery,
     typeFilter,
-    setTypeFilter,
+    setTypeFilter: handleSetTypeFilter,
     showCreateModal,
     setShowCreateModal,
     createType,

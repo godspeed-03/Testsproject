@@ -27,6 +27,22 @@ import ActionTooltip from "@/components/ActionTooltip";
 export default function AgendaPage() {
   const [layoutMode, setLayoutMode] = React.useState<"cards" | "rows">("cards");
   const [showRestDayItems, setShowRestDayItems] = React.useState(false);
+
+  React.useEffect(() => {
+    try {
+      const savedMode = localStorage.getItem("upsc_tracker_layout_mode");
+      if (savedMode === "cards" || savedMode === "rows") {
+        setLayoutMode(savedMode);
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleSetLayoutMode = (mode: "cards" | "rows") => {
+    setLayoutMode(mode);
+    try {
+      localStorage.setItem("upsc_tracker_layout_mode", mode);
+    } catch (e) {}
+  };
   const {
     saving,
     deletingId,
@@ -88,7 +104,7 @@ export default function AgendaPage() {
             <div className="flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
               <button
                 type="button"
-                onClick={() => setLayoutMode("cards")}
+                onClick={() => handleSetLayoutMode("cards")}
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                   layoutMode === "cards"
                     ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs font-extrabold"
@@ -101,7 +117,7 @@ export default function AgendaPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setLayoutMode("rows")}
+                onClick={() => handleSetLayoutMode("rows")}
                 className={`p-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                   layoutMode === "rows"
                     ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs font-extrabold"

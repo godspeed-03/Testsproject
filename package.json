@@ -10,14 +10,14 @@
   "license": "MIT",
   "scripts": {
     "dev": "prisma generate && next dev",
-    "prebuild": "prisma db push --accept-data-loss && prisma generate",
+    "prebuild": "prisma db push  && prisma generate",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push --accept-data-loss",
-    "db:sync": "prisma db push --accept-data-loss && prisma generate",
+    "db:push": "prisma db push ",
+    "db:sync": "prisma db push  && prisma generate",
     "db:studio": "prisma studio"
   },
   "dependencies": {

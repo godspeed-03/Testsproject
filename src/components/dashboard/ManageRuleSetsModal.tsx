@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Plus, Trash2, Edit2, Check, Loader2, Settings, ShieldCheck, GripVertical } from "lucide-react";
+import { X, Plus, Trash2, Edit2, Check, Loader2, Settings, ShieldCheck, GripVertical, ListChecks, FileCode } from "lucide-react";
 import ShadcnSelect from "@/components/ui/ShadcnSelect";
 import {
   DndContext,
@@ -51,6 +51,44 @@ export default function ManageRuleSetsModal({
   const [ruleItems, setRuleItems] = useState<{ key: string; label: string; short: string }[]>([]);
   const [newRuleLabel, setNewRuleLabel] = useState("");
 
+  // JSON Array Edit mode state
+  const [viewMode, setViewMode] = useState<"visual" | "json">("visual");
+  const [jsonText, setJsonText] = useState("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
+  const syncJsonFromRuleItems = (items: { key: string; label: string; short: string }[]) => {
+    const exportData = items.map((r) => r.label);
+    setJsonText(JSON.stringify(exportData, null, 2));
+    setJsonError(null);
+  };
+
+  const parseAndApplyJson = (text: string): boolean => {
+    if (!text.trim()) {
+      setRuleItems([]);
+      setJsonError(null);
+      return true;
+    }
+    try {
+      const parsed = JSON.parse(text);
+      if (!Array.isArray(parsed)) {
+        setJsonError("JSON must be an array of string labels or step objects.");
+        return false;
+      }
+      const newItems = parsed.map((item: any, idx: number) => {
+        const label = typeof item === "string" ? item.trim() : String(item.label || item.name || item.title || `Step ${idx + 1}`).trim();
+        const key = (typeof item === "object" && item?.key) ? item.key : label.toLowerCase().replace(/[^a-z0-9]/g, "_") + "_" + idx;
+        const short = (typeof item === "object" && item?.short) ? item.short : (label.length > 6 ? label.slice(0, 4) : label);
+        return { key, label, short };
+      });
+      setRuleItems(newItems);
+      setJsonError(null);
+      return true;
+    } catch (err: any) {
+      setJsonError(`Invalid JSON Syntax: ${err.message}`);
+      return false;
+    }
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -89,18 +127,25 @@ export default function ManageRuleSetsModal({
     setEditingId("new");
     setNameInput("");
     setCategoryInput("GS");
-    setRuleItems([
-      { key: "firstRead", label: "Reading 1", short: "R1" },
-      { key: "rev1", label: "Rev 1", short: "Rv1" },
-      { key: "rev2", label: "Rev 2", short: "Rv2" },
-    ]);
+    const initItems = [
+      { key: "firstRead", label: "Lectures", short: "Lec" },
+      { key: "examples", label: "Examples PYQ", short: "Ex" },
+      { key: "pyqSheet", label: "PYQ Sheet", short: "PYQ" },
+      { key: "notesMains", label: "Notes Mains", short: "Notes" },
+    ];
+    setRuleItems(initItems);
+    syncJsonFromRuleItems(initItems);
+    setViewMode("visual");
   };
 
   const startEdit = (rs: any) => {
     setEditingId(rs.id);
     setNameInput(rs.name);
     setCategoryInput(rs.category || "GS");
-    setRuleItems(rs.rules || []);
+    const initItems = rs.rules || [];
+    setRuleItems(initItems);
+    syncJsonFromRuleItems(initItems);
+    setViewMode("visual");
   };
 
   const handleAddRuleItem = () => {
@@ -246,53 +291,144 @@ export default function ManageRuleSetsModal({
             </div>
 
             {/* Rules Milestone List */}
-            <div className="space-y-2 pt-2 border-t border-slate-200 dark:border-slate-800 font-bold">
-              <label className="block text-slate-700 dark:text-slate-300 text-xs font-black">
-                Milestone Steps in Order ({ruleItems.length} steps)
-              </label>
-
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <SortableContext
-                  items={ruleItems.map((r, idx) => getRuleItemId(r, idx))}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div className="space-y-2">
-                    {ruleItems.map((r, idx) => (
-                      <SortableRuleItem
-                        key={getRuleItemId(r, idx)}
-                        id={getRuleItemId(r, idx)}
-                        index={idx}
-                        item={r}
-                        onRemove={() => handleRemoveRuleItem(idx)}
-                      />
-                    ))}
-                  </div>
-                </SortableContext>
-              </DndContext>
-
-              {/* Add New Step Form */}
-              <div className="flex items-center gap-2 pt-2">
-                <input
-                  type="text"
-                  placeholder="Add new rule step (e.g. PYQ Practice, Short Notes)..."
-                  value={newRuleLabel}
-                  onChange={(e) => setNewRuleLabel(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddRuleItem();
-                    }
-                  }}
-                  className="flex-1 bg-white dark:bg-slate-900 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 outline-none border border-slate-200 dark:border-slate-800 focus:border-accent-primary"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddRuleItem}
-                  className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-sm"
-                >
-                  <Plus size={14} /> Add Step
-                </button>
+            <div className="space-y-3 pt-2 border-t border-slate-200 dark:border-slate-800 font-bold">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+                <label className="text-slate-700 dark:text-slate-300 text-xs font-black">
+                  Milestone Steps in Order ({ruleItems.length} steps)
+                </label>
+                <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-xs shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (viewMode === "json") {
+                        if (parseAndApplyJson(jsonText)) setViewMode("visual");
+                      } else {
+                        setViewMode("visual");
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-lg font-black text-2xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                      viewMode === "visual"
+                        ? "bg-amber-500 text-white shadow-xs"
+                        : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    <ListChecks size={13} />
+                    <span>Drag & Drop UI</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (viewMode === "visual") {
+                        syncJsonFromRuleItems(ruleItems);
+                        setViewMode("json");
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-lg font-black text-2xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                      viewMode === "json"
+                        ? "bg-amber-500 text-white shadow-xs"
+                        : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    <FileCode size={13} />
+                    <span>Edit JSON Array</span>
+                  </button>
+                </div>
               </div>
+
+              {viewMode === "json" ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-2xs font-extrabold text-slate-400">
+                    <span>Paste or edit JSON array directly below:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sample = [
+                          "Lectures",
+                          "Examples PYQ",
+                          "PYQ Sheet",
+                          "Notes Mains",
+                          "Rev 1",
+                          "Rev 2",
+                          "Practice 1",
+                          "Practice 2"
+                        ];
+                        const text = JSON.stringify(sample, null, 2);
+                        setJsonText(text);
+                        parseAndApplyJson(text);
+                      }}
+                      className="text-amber-500 hover:underline font-black text-2xs cursor-pointer"
+                    >
+                      Load Sample JSON
+                    </button>
+                  </div>
+
+                  <textarea
+                    value={jsonText}
+                    onChange={(e) => {
+                      setJsonText(e.target.value);
+                      parseAndApplyJson(e.target.value);
+                    }}
+                    placeholder='[\n  "Lectures",\n  "Examples PYQ",\n  "PYQ Sheet"\n]'
+                    rows={8}
+                    className="w-full font-mono text-xs p-3.5 rounded-2xl bg-slate-950 text-emerald-400 border border-slate-800 outline-none focus:border-amber-500/80 leading-relaxed shadow-inner"
+                  />
+
+                  {jsonError ? (
+                    <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-2xs font-black flex items-center justify-between">
+                      <span>⚠️ {jsonError}</span>
+                    </div>
+                  ) : (
+                    <div className="text-2xs text-emerald-500 font-extrabold flex items-center gap-1">
+                      <span>✓ Valid JSON Array ({ruleItems.length} steps parsed)</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext
+                      items={ruleItems.map((r, idx) => getRuleItemId(r, idx))}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-2 max-h-[35vh] overflow-y-auto pr-1">
+                        {ruleItems.map((r, idx) => (
+                          <SortableRuleItem
+                            key={getRuleItemId(r, idx)}
+                            id={getRuleItemId(r, idx)}
+                            index={idx}
+                            item={r}
+                            onRemove={() => handleRemoveRuleItem(idx)}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+
+                  {/* Add New Step Form */}
+                  <div className="flex items-center gap-2 pt-2">
+                    <input
+                      type="text"
+                      placeholder="Add new rule step (e.g. PYQ Practice, Short Notes)..."
+                      value={newRuleLabel}
+                      onChange={(e) => setNewRuleLabel(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAddRuleItem();
+                        }
+                      }}
+                      className="flex-1 bg-white dark:bg-slate-900 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 dark:text-slate-100 outline-none border border-slate-200 dark:border-slate-800 focus:border-accent-primary"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddRuleItem}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 shadow-sm"
+                    >
+                      <Plus size={14} /> Add Step
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-3 font-black">
@@ -389,16 +525,6 @@ export default function ManageRuleSetsModal({
             )}
           </div>
         )}
-
-        <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-black rounded-xl cursor-pointer active:scale-95 transition-all"
-          >
-            Close Window
-          </button>
-        </div>
       </div>
     </div>
   );

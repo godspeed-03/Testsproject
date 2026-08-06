@@ -26,6 +26,7 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { ISyllabusRuleState } from "@/types";
+import ActionTooltip from "@/components/ActionTooltip";
 
 interface StatusStage {
   value: string;
@@ -419,25 +420,25 @@ export default function SyllabusPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      <div className="max-w-[1540px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6">
+      <div className="max-w-[1540px] mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-5 space-y-4">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className={`text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight ${textTitle}`}>
+            <h1 className={`text-xl sm:text-2xl lg:text-3xl font-black tracking-tight ${textTitle}`}>
               Syllabus Matrix
             </h1>
-            <p className={`text-xs sm:text-sm ${textMuted} mt-1 font-medium`}>
+            <p className={`text-xs ${textMuted} mt-0.5 font-medium`}>
               Track subject-wise coverage across dynamic milestone rules stored in Database.
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={() => setShowRulesetsModal(true)}
-              className="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs sm:text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 border border-slate-300 dark:border-slate-700 shadow-sm transition-all cursor-pointer"
+              className="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border border-slate-300 dark:border-slate-700 shadow-xs transition-all cursor-pointer"
             >
-              <Settings size={16} className="text-amber-500" />
+              <Settings size={15} className="text-amber-500" />
               <span>Ruleset Templates</span>
             </button>
 
@@ -449,40 +450,40 @@ export default function SyllabusPage() {
                 }
                 setShowBulkAddPanel((current) => !current);
               }}
-              className={`font-extrabold text-xs sm:text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 border shadow-sm transition-all cursor-pointer ${
+              className={`font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 border shadow-xs transition-all cursor-pointer ${
                 showBulkAddPanel
                   ? "bg-indigo-600 text-white border-indigo-500 shadow-indigo-600/20"
                   : "bg-cyan-600 hover:bg-cyan-500 text-white border-cyan-500 shadow-cyan-600/20"
               }`}
             >
-              <Sparkles size={16} className="text-amber-300" />
+              <Sparkles size={15} className="text-amber-300" />
               <span>Bulk Add</span>
             </button>
 
             <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs sm:text-sm px-4.5 py-2.5 rounded-xl flex items-center gap-2 shadow-lg transition-all shrink-0 active:scale-95 cursor-pointer"
+              className="bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-md transition-all shrink-0 active:scale-95 cursor-pointer"
             >
-              <Plus size={18} /> Add Subject
+              <Plus size={16} /> Add Subject
             </button>
           </div>
         </div>
 
         {/* Filter Bar & View Control */}
-        <div className={`p-4 rounded-2xl border ${cardBg} shadow-xs`}>
-          <div className="flex flex-col gap-3.5">
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 -mb-1 scrollbar-none">
-                <Filter size={15} className="text-slate-400 shrink-0 hidden sm:block mr-1" />
+        <div className={`p-3 rounded-2xl border ${cardBg} shadow-xs space-y-2.5`}>
+          <div className="flex flex-col gap-2.5">
+            <div className="flex items-center justify-between gap-2.5 flex-wrap">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mb-1 scrollbar-none">
+                <Filter size={14} className="text-slate-400 shrink-0 hidden sm:block mr-1" />
                 {categories.map((cat) => (
                   <button
                     key={cat.value}
                     type="button"
                     onClick={() => setCategoryFilter(cat.value)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all border whitespace-nowrap shrink-0 cursor-pointer ${
+                    className={`px-3 py-1 rounded-lg text-xs font-black transition-all border whitespace-nowrap shrink-0 cursor-pointer ${
                       categoryFilter === cat.value
-                        ? "bg-accent-gradient text-white border-transparent shadow-md"
+                        ? "bg-accent-gradient text-white border-transparent shadow-sm"
                         : "bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-indigo-500/50"
                     }`}
                   >
@@ -496,40 +497,40 @@ export default function SyllabusPage() {
                 <button
                   type="button"
                   onClick={() => setViewMode("grid")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
                     viewMode === "grid"
                       ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs"
                       : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                   title="Grid Card View"
                 >
-                  <LayoutGrid size={15} />
+                  <LayoutGrid size={14} />
                   <span>Cards</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode("table")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
                     viewMode === "table"
                       ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs"
                       : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                   title="Table View"
                 >
-                  <Table size={15} />
+                  <Table size={14} />
                   <span>Table</span>
                 </button>
               </div>
             </div>
 
             <div className="relative">
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search subject by title or source..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-100 dark:bg-slate-950 text-xs sm:text-sm px-4 py-2.5 pl-10 rounded-xl outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-indigo-500 transition-colors"
+                className="w-full bg-slate-100 dark:bg-slate-950 text-xs px-3.5 py-2 pl-9 rounded-xl outline-none font-bold border border-slate-200 dark:border-slate-800 focus:border-indigo-500 transition-colors"
               />
             </div>
           </div>
@@ -622,7 +623,7 @@ export default function SyllabusPage() {
           </div>
         ) : viewMode === "grid" ? (
           /* GRID PATTERN CARDS VIEW */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
             {filteredSubjects.map((s) => {
               const rulesList: ISyllabusRuleState[] = s.rules || [];
               const subTopicsCount = topicRevisions.filter(
@@ -651,37 +652,37 @@ export default function SyllabusPage() {
               return (
                 <div
                   key={s.id}
-                  className={`relative rounded-2xl border ${cardBg} p-5 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between space-y-4 group overflow-hidden ${
+                  className={`relative rounded-2xl border ${cardBg} p-3.5 sm:p-4 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-3 group overflow-hidden ${
                     isSelected ? "ring-2 ring-indigo-500 bg-indigo-50/20 dark:bg-indigo-950/20" : ""
                   }`}
                 >
                   {/* Top Color Accent Line */}
                   <div
-                    className="absolute top-0 left-0 right-0 h-1.5 transition-all"
+                    className="absolute top-0 left-0 right-0 h-1 transition-all"
                     style={{ backgroundColor: themeColor }}
                   />
 
                   {/* Card Header & Title */}
-                  <div className="space-y-3 pt-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3 min-w-0">
+                  <div className="space-y-2.5 pt-0.5">
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-start gap-2.5 min-w-0">
                         {showBulkAddPanel && (
                           <button
                             type="button"
                             onClick={() => toggleSubjectSelection(s.id)}
-                            className="text-slate-400 hover:text-indigo-600 cursor-pointer mt-1"
+                            className="text-slate-400 hover:text-indigo-600 cursor-pointer mt-0.5"
                           >
                             {isSelected ? (
-                              <CheckSquare size={18} className="text-indigo-600" />
+                              <CheckSquare size={16} className="text-indigo-600" />
                             ) : (
-                              <Square size={18} />
+                              <Square size={16} />
                             )}
                           </button>
                         )}
 
                         {(s.icon || s.color) ? (
                           <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 shadow-xs border border-black/10 dark:border-white/10"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0 shadow-xs border border-black/10 dark:border-white/10"
                             style={{
                               backgroundColor: s.color ? `${s.color}22` : 'transparent',
                               borderColor: s.color ? `${s.color}44` : undefined,
@@ -691,7 +692,7 @@ export default function SyllabusPage() {
                           </div>
                         ) : (
                           <div
-                            className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 text-white shadow-xs"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shrink-0 text-white shadow-xs"
                             style={{ backgroundColor: themeColor }}
                           >
                             {s.subject ? s.subject.substring(0, 2).toUpperCase() : "SB"}
@@ -701,13 +702,13 @@ export default function SyllabusPage() {
                         <div className="min-w-0 flex-1">
                           <h3
                             onClick={() => setSelectedSubjectModal(s)}
-                            className="font-black text-base sm:text-lg text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors leading-snug truncate"
+                            className="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 hover:text-indigo-600 dark:hover:text-indigo-400 cursor-pointer transition-colors leading-snug truncate"
                             title={s.subject}
                           >
                             {s.subject}
                           </h3>
                           {s.source && (
-                            <p className="text-xs text-slate-400 font-medium truncate mt-0.5">
+                            <p className="text-[11px] text-slate-400 font-medium truncate mt-0.5">
                               Source: {s.source}
                             </p>
                           )}
@@ -715,15 +716,15 @@ export default function SyllabusPage() {
                       </div>
 
                       <span
-                        className={`px-2.5 py-1 rounded-lg text-xs font-black border inline-block whitespace-nowrap shrink-0 ${getCategoryBadge(s.category)}`}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-black border inline-block whitespace-nowrap shrink-0 ${getCategoryBadge(s.category)}`}
                       >
                         {s.category}
                       </span>
                     </div>
 
                     {/* Status Dropdown Row */}
-                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800/60">
-                      <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Status Stage</span>
+                    <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Status Stage</span>
                       <ShadcnStatusDropdown
                         currentStatus={currentStatus}
                         onSelectStatus={(nextStatus) => handleUpdateStatus(s, nextStatus)}
@@ -733,18 +734,18 @@ export default function SyllabusPage() {
                   </div>
 
                   {/* Progress Pipeline & Rules Grid */}
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs font-bold">
-                      <span className="text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[11px] font-black">
+                      <span className="text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px] font-black">
                         Progress Pipeline
                       </span>
-                      <span className="text-slate-700 dark:text-slate-300 font-black">
+                      <span className="text-slate-700 dark:text-slate-300 text-xs font-black">
                         {completedCount}/{rulesList.length} ({progressPercent}%)
                       </span>
                     </div>
 
                     {/* Dynamic Gradient Progress Bar */}
-                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                    <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all duration-300 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500"
                         style={{ width: `${progressPercent}%` }}
@@ -752,7 +753,7 @@ export default function SyllabusPage() {
                     </div>
 
                     {/* Milestone Rules Buttons Grid */}
-                    <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
+                    <div className="flex flex-wrap gap-1 pt-0.5">
                       {visibleRules.map((m) => {
                         const isDone = !!m.completed;
                         const isToggling = togglingKey === `${s.id}_${m.key}`;
@@ -764,18 +765,18 @@ export default function SyllabusPage() {
                             type="button"
                             disabled={isToggling}
                             onClick={() => handleToggleRule(s, m.key)}
-                            className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                            className={`px-2 py-0.5 rounded-lg text-[11px] font-bold border transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap ${
                               isDone
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800 shadow-2xs"
                                 : "bg-slate-50 text-slate-600 border-slate-200/90 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-700 hover:border-indigo-400"
                             }`}
                           >
                             {isToggling ? (
-                              <Loader2 size={12} className="animate-spin text-indigo-500 shrink-0" />
+                              <Loader2 size={11} className="animate-spin text-indigo-500 shrink-0" />
                             ) : isDone ? (
-                              <CheckCircle2 size={13} className="text-emerald-500 shrink-0" />
+                              <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
                             ) : (
-                              <Circle size={13} className="text-slate-300 dark:text-slate-600 shrink-0" />
+                              <Circle size={11} className="text-slate-300 dark:text-slate-600 shrink-0" />
                             )}
                             <span>{displayLabel}</span>
                           </button>
@@ -786,17 +787,17 @@ export default function SyllabusPage() {
                         <button
                           type="button"
                           onClick={() => toggleExpandSubject(s.id)}
-                          className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-xs font-black border transition-all flex items-center gap-1 cursor-pointer bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-400 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 whitespace-nowrap"
+                          className="px-2 py-0.5 rounded-lg text-[11px] font-black border transition-all flex items-center gap-1 cursor-pointer bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/60 dark:text-indigo-400 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 whitespace-nowrap"
                         >
                           {isExpanded ? (
                             <>
                               <span>Show Less</span>
-                              <ChevronUp size={14} className="shrink-0" />
+                              <ChevronUp size={12} className="shrink-0" />
                             </>
                           ) : (
                             <>
                               <span>+{hiddenCount} More</span>
-                              <ChevronDown size={14} className="shrink-0" />
+                              <ChevronDown size={12} className="shrink-0" />
                             </>
                           )}
                         </button>
@@ -805,41 +806,44 @@ export default function SyllabusPage() {
                   </div>
 
                   {/* Card Actions Footer */}
-                  <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedSubjectModal(s)}
-                        className="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs rounded-xl font-extrabold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
-                        title="View Topics"
-                      >
-                        <Table size={13} />
-                        <span>({subTopicsCount})</span>
-                      </button>
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <ActionTooltip label="View Topics">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedSubjectModal(s)}
+                          className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-[11px] rounded-lg font-extrabold flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap"
+                        >
+                          <Table size={12} />
+                          <span>({subTopicsCount})</span>
+                        </button>
+                      </ActionTooltip>
 
-                      <button
-                        type="button"
-                        onClick={() => setEditingSubjectRules(s)}
-                        className="px-2.5 py-1.5 rounded-xl text-xs bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-extrabold border border-slate-200 dark:border-slate-700 transition-all cursor-pointer whitespace-nowrap"
-                        title="Customize rules for this subject"
-                      >
-                        <Plus size={12} className="inline mr-0.5" /> Rules
-                      </button>
+                      <ActionTooltip label="Customize rules for this subject">
+                        <button
+                          type="button"
+                          onClick={() => setEditingSubjectRules(s)}
+                          className="px-2.5 py-1 rounded-lg text-[11px] bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-extrabold border border-slate-200 dark:border-slate-700 transition-all cursor-pointer whitespace-nowrap"
+                        >
+                          <Plus size={11} className="inline mr-0.5" /> Rules
+                        </button>
+                      </ActionTooltip>
                     </div>
 
-                    <button
-                      type="button"
-                      disabled={deletingId === s.id}
-                      onClick={() => handleDeleteSubject(s.id)}
-                      className="p-1.5 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
-                      title="Delete Subject"
-                    >
-                      {deletingId === s.id ? (
-                        <Loader2 size={14} className="animate-spin text-rose-500" />
-                      ) : (
-                        <Trash2 size={14} />
-                      )}
-                    </button>
+                    <ActionTooltip label="Delete Subject">
+                      <button
+                        type="button"
+                        disabled={deletingId === s.id}
+                        onClick={() => handleDeleteSubject(s.id)}
+                        className="p-1 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
+                      >
+                        {deletingId === s.id ? (
+                          <Loader2 size={13} className="animate-spin text-rose-500" />
+                        ) : (
+                          <Trash2 size={13} />
+                        )}
+                      </button>
+                    </ActionTooltip>
                   </div>
                 </div>
               );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { X, Plus, Trash2, Check, Loader2, ListChecks, Zap, GripVertical, Palette } from "lucide-react";
+import { X, Plus, Trash2, Check, Loader2, ListChecks, Zap, GripVertical, Palette, FileCode } from "lucide-react";
 import ShadcnSelect from "@/components/ui/ShadcnSelect";
 import { ISyllabusRuleState } from "@/types";
 import {
@@ -63,6 +63,11 @@ export default function EditSubjectRulesModal({
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // JSON Array Edit mode state
+  const [viewMode, setViewMode] = useState<"visual" | "json">("visual");
+  const [jsonText, setJsonText] = useState("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
+
   const usedColors = useMemo(() => {
     const set = new Set<string>();
     (existingSubjects || []).forEach((s) => {
@@ -94,9 +99,67 @@ export default function EditSubjectRulesModal({
     }),
   );
 
+  const syncJsonFromRules = (currentRules: ISyllabusRuleState[]) => {
+    const exportData = currentRules.map((r) => ({
+      label: r.label,
+      completed: !!r.completed,
+    }));
+    setJsonText(JSON.stringify(exportData, null, 2));
+    setJsonError(null);
+  };
+
+  const parseAndApplyJson = (text: string): boolean => {
+    if (!text.trim()) {
+      setRules([]);
+      setJsonError(null);
+      return true;
+    }
+    try {
+      const parsed = JSON.parse(text);
+      if (!Array.isArray(parsed)) {
+        setJsonError("JSON must be an array of objects or string labels.");
+        return false;
+      }
+      const newRules: ISyllabusRuleState[] = parsed.map((item: any, idx: number) => {
+        if (typeof item === "string") {
+          const label = item.trim();
+          return {
+            key: label.toLowerCase().replace(/[^a-z0-9]/g, "_") + "_" + idx + "_" + Date.now(),
+            label,
+            short: label.length > 7 ? label.slice(0, 5) : label,
+            completed: false,
+          };
+        } else if (typeof item === "object" && item !== null) {
+          const label = String(item.label || item.name || item.title || `Step ${idx + 1}`).trim();
+          return {
+            key: item.key || label.toLowerCase().replace(/[^a-z0-9]/g, "_") + "_" + idx + "_" + Date.now(),
+            label,
+            short: item.short || (label.length > 7 ? label.slice(0, 5) : label),
+            completed: Boolean(item.completed),
+          };
+        }
+        return {
+          key: `step_${idx}_${Date.now()}`,
+          label: `Step ${idx + 1}`,
+          short: `Step ${idx + 1}`,
+          completed: false,
+        };
+      });
+      setRules(newRules);
+      setJsonError(null);
+      return true;
+    } catch (err: any) {
+      setJsonError(`Invalid JSON Syntax: ${err.message}`);
+      return false;
+    }
+  };
+
   useEffect(() => {
     if (isOpen && subjectItem) {
-      setRules(subjectItem.rules || []);
+      const initRules = subjectItem.rules || [];
+      setRules(initRules);
+      syncJsonFromRules(initRules);
+      setViewMode("visual");
       const matchedTheme = getSubjectTheme(subjectItem.subject);
       setColor(subjectItem.color || matchedTheme?.color || "#6366F1");
       setIcon(subjectItem.icon || matchedTheme?.icon || "📚");
@@ -304,132 +367,184 @@ export default function EditSubjectRulesModal({
               <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">Customize milestone sequence steps & theme</p>
             </div>
           </div>
-          
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-rose-500/10 hover:text-rose-500 text-slate-400 flex items-center justify-center transition-all cursor-pointer border border-slate-200 dark:border-slate-700/60 active:scale-95"
-          >
-            <X size={18} />
-          </button>
-        </div>
 
-        {/* Dedicated Subject Icon & Color Customization Trigger Bar */}
-        <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <span
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-lg shrink-0 shadow-xs"
-              style={{ backgroundColor: `${color}30`, color }}
-            >
-              {icon}
-            </span>
-            <div>
-              <span className="block text-xs font-black text-slate-800 dark:text-slate-200">Subject Theme Color & Icon</span>
-              <span className="block text-[10px] text-slate-500 dark:text-slate-400 font-bold">Click button to change icon and color</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-black transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-          >
-            <Palette size={14} />
-            <span>Edit Icon & Theme Color</span>
-          </button>
-        </div>
-
-        {/* Dynamic DB Rule Set Presets */}
-        {ruleTemplates.length > 0 ? (
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2">
-            <div className="text-xs font-black text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <Zap size={14} className="text-amber-500" />
-              Load Ruleset Preset:
-            </div>
-            <div className="flex items-center gap-2">
+          {/* Preset loader in header */}
+          {ruleTemplates.length > 0 && (
+            <div className="flex items-center gap-1.5 shrink-0">
               <ShadcnSelect
                 value={selectedTemplateId}
-                onChange={setSelectedTemplateId}
-                placeholder="Choose a DB preset"
-                className="flex-1 min-w-0"
+                onChange={(val) => {
+                  setSelectedTemplateId(val);
+                  // Auto-apply on selection
+                  const t = ruleTemplates.find((rs: any) => rs.id === val);
+                  if (t && Array.isArray(t.rules)) {
+                    const appliedRules: ISyllabusRuleState[] = t.rules.map((r: any) => ({
+                      key: r.key || r.label.toLowerCase().replace(/\s+/g, "_"),
+                      label: r.label,
+                      short: r.short || r.label,
+                      completed: false,
+                    }));
+                    setRules(appliedRules);
+                  }
+                }}
+                placeholder="Load preset..."
+                className="min-w-[140px]"
                 options={ruleTemplates.map((t) => ({
                   value: t.id,
                   label: t.name,
                   sublabel: `${t.rules?.length || 0} steps`,
                 }))}
               />
+            </div>
+          )}
+        </div>
+
+        {/* Current Rules list / JSON Editor */}
+        <div className="space-y-3 font-bold">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+            <label className="text-slate-700 dark:text-slate-300 text-xs font-black">
+              Subject Milestones ({rules.length} steps)
+            </label>
+            <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-xs shrink-0">
               <button
                 type="button"
-                onClick={handleLoadSelectedTemplate}
-                disabled={!selectedTemplateId}
-                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white text-xs font-black transition-all shrink-0 active:scale-95 cursor-pointer"
+                onClick={() => {
+                  if (viewMode === "json") {
+                    if (parseAndApplyJson(jsonText)) setViewMode("visual");
+                  } else {
+                    setViewMode("visual");
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-lg font-black text-2xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                  viewMode === "visual"
+                    ? "bg-amber-500 text-white shadow-xs"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+                }`}
               >
-                Load
+                <ListChecks size={13} />
+                <span>Drag & Drop UI</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (viewMode === "visual") {
+                    syncJsonFromRules(rules);
+                    setViewMode("json");
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-lg font-black text-2xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                  viewMode === "json"
+                    ? "bg-amber-500 text-white shadow-xs"
+                    : "text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+                }`}
+              >
+                <FileCode size={13} />
+                <span>Edit JSON Array</span>
               </button>
             </div>
           </div>
-        ) : (
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400">
-            No rule set templates saved yet. Add custom steps below.
-          </div>
-        )}
 
-        {/* Current Rules list */}
-        <div className="space-y-3 font-bold">
-          <label className="block text-slate-700 dark:text-slate-300 text-xs font-black">
-            Subject Milestones ({rules.length} steps) — Drag handle to reorder, click number to mark completed
-          </label>
-
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext
-              items={rules.map((rule, index) => `${rule.key || rule.label || index}`)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-2 max-h-[38vh] overflow-y-auto pr-1">
-                {rules.length === 0 ? (
-                  <p className="text-xs text-slate-400 font-bold text-center py-6">
-                    No rules added yet. Add custom rules below or click a quick preset above!
-                  </p>
-                ) : (
-                  rules.map((r, idx) => (
-                    <SortableRuleRow
-                      key={`${r.key || r.label || idx}`}
-                      id={`${r.key || r.label || idx}`}
-                      index={idx}
-                      rule={r}
-                      onToggle={() => handleToggleRule(idx)}
-                      onRemove={() => handleRemoveRule(idx)}
-                      isCompleted={r.completed}
-                    />
-                  ))
-                )}
+          {viewMode === "json" ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-2xs font-extrabold text-slate-400">
+                <span>Paste or edit JSON array directly below:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sample = [
+                      { label: "Reading 1", completed: true },
+                      { label: "NCERT 11 P1", completed: false },
+                      { label: "NCERT 11 P2", completed: false },
+                      { label: "NCERT 12 P1", completed: false },
+                      { label: "NCERT 12 P2", completed: false },
+                      { label: "Class Notes", completed: false },
+                    ];
+                    const text = JSON.stringify(sample, null, 2);
+                    setJsonText(text);
+                    parseAndApplyJson(text);
+                  }}
+                  className="text-amber-500 hover:underline font-black text-2xs cursor-pointer"
+                >
+                  Load Sample JSON
+                </button>
               </div>
-            </SortableContext>
-          </DndContext>
 
-          {/* Add custom rule input */}
-          <div className="flex items-center gap-2 pt-2">
-            <input
-              type="text"
-              placeholder="Add step directly (e.g. Rev 3, Test 1, Formula Sheet)..."
-              value={newRuleName}
-              onChange={(e) => setNewRuleName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleAddRule();
-                }
-              }}
-              className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-4 py-2.5 text-xs font-bold outline-none border border-slate-200 dark:border-slate-800 focus:border-accent-primary"
-            />
-            <button
-              type="button"
-              onClick={handleAddRule}
-              className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black flex items-center gap-1 shrink-0 shadow-md cursor-pointer active:scale-95"
-            >
-              <Plus size={14} /> Add Step
-            </button>
-          </div>
+              <textarea
+                value={jsonText}
+                onChange={(e) => {
+                  setJsonText(e.target.value);
+                  parseAndApplyJson(e.target.value);
+                }}
+                placeholder='[\n  { "label": "Reading 1", "completed": true },\n  { "label": "NCERT 11 P1", "completed": false }\n]'
+                rows={10}
+                className="w-full font-mono text-xs p-3.5 rounded-2xl bg-slate-950 text-emerald-400 border border-slate-800 outline-none focus:border-amber-500/80 leading-relaxed shadow-inner"
+              />
+
+              {jsonError ? (
+                <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-2xs font-black flex items-center justify-between">
+                  <span>⚠️ {jsonError}</span>
+                </div>
+              ) : (
+                <div className="text-2xs text-emerald-500 font-extrabold flex items-center gap-1">
+                  <span>✓ Valid JSON Array ({rules.length} milestone steps parsed)</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext
+                  items={rules.map((rule, index) => `${rule.key || rule.label || index}`)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2 max-h-[38vh] overflow-y-auto pr-1">
+                    {rules.length === 0 ? (
+                      <p className="text-xs text-slate-400 font-bold text-center py-6">
+                        No rules added yet. Add custom rules below, load a preset, or switch to JSON mode!
+                      </p>
+                    ) : (
+                      rules.map((r, idx) => (
+                        <SortableRuleRow
+                          key={`${r.key || r.label || idx}`}
+                          id={`${r.key || r.label || idx}`}
+                          index={idx}
+                          rule={r}
+                          onToggle={() => handleToggleRule(idx)}
+                          onRemove={() => handleRemoveRule(idx)}
+                          isCompleted={r.completed}
+                          accentColor={color}
+                        />
+                      ))
+                    )}
+                  </div>
+                </SortableContext>
+              </DndContext>
+
+              {/* Add custom rule input */}
+              <div className="flex items-center gap-2 pt-2">
+                <input
+                  type="text"
+                  placeholder="Add step directly (e.g. Rev 3, Test 1, Formula Sheet)..."
+                  value={newRuleName}
+                  onChange={(e) => setNewRuleName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddRule();
+                    }
+                  }}
+                  className="flex-1 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-2xl px-4 py-2.5 text-xs font-bold outline-none border border-slate-200 dark:border-slate-800 focus:border-accent-primary"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddRule}
+                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black flex items-center gap-1 shrink-0 shadow-md cursor-pointer active:scale-95"
+                >
+                  <Plus size={14} /> Add Step
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800 font-black">
@@ -462,6 +577,7 @@ function SortableRuleRow({
   onToggle,
   onRemove,
   isCompleted,
+  accentColor = "#6366F1",
 }: {
   id: string;
   index: number;
@@ -469,6 +585,7 @@ function SortableRuleRow({
   onToggle: () => void;
   onRemove: () => void;
   isCompleted: boolean;
+  accentColor?: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
 
@@ -476,44 +593,39 @@ function SortableRuleRow({
     <div
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`p-3.5 rounded-2xl border flex items-center justify-between gap-2 transition-all font-black text-xs ${
+      className={`px-3 py-2.5 rounded-xl border flex items-center gap-2 transition-all font-black text-xs group ${
         isCompleted
-          ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
-          : "bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100"
-      } ${isDragging ? "ring-2 ring-accent-primary opacity-70" : ""}`}
+          ? "bg-emerald-500/10 border-emerald-500/25 text-emerald-700 dark:text-emerald-300"
+          : "bg-slate-50/80 dark:bg-slate-950/80 border-slate-200/80 dark:border-slate-800/80 text-slate-900 dark:text-slate-100"
+      } ${isDragging ? "ring-2 ring-accent-primary opacity-70 shadow-lg" : "hover:border-slate-300 dark:hover:border-slate-700"}`}
     >
-      <div className="flex items-center gap-2.5 flex-1 min-w-0">
-        <button
-          type="button"
-          className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 hover:bg-slate-200/70 dark:hover:bg-slate-800 cursor-grab active:cursor-grabbing shrink-0 touch-none"
-          title="Drag to reorder"
-          aria-label="Drag to reorder"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical size={16} />
-        </button>
-        <button
-          type="button"
-          onClick={onToggle}
-          className={`w-6 h-6 rounded-lg flex items-center justify-center font-black text-xs transition-colors shrink-0 ${
-            isCompleted
-              ? "bg-emerald-500 text-white"
-              : "bg-slate-200 dark:bg-slate-800 text-slate-500 hover:bg-slate-300"
-          }`}
-        >
-          {isCompleted ? <Check size={14} className="stroke-3" /> : index + 1}
-        </button>
-        <span className="font-black text-xs sm:text-sm truncate">{rule.label}</span>
-      </div>
+      <button
+        type="button"
+        className="p-1 rounded-md text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 cursor-grab active:cursor-grabbing shrink-0 touch-none opacity-0 group-hover:opacity-100 transition-opacity"
+        title="Drag to reorder"
+        aria-label="Drag to reorder"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical size={14} />
+      </button>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-6 h-6 rounded-md flex items-center justify-center font-black text-[10px] transition-all shrink-0 cursor-pointer active:scale-90"
+        style={isCompleted ? { backgroundColor: '#10B981', color: '#fff' } : { backgroundColor: `${accentColor}20`, color: accentColor, borderWidth: 1, borderColor: `${accentColor}40` }}
+      >
+        {isCompleted ? <Check size={13} className="stroke-[3]" /> : index + 1}
+      </button>
+      <span className="font-bold text-xs flex-1 min-w-0 truncate">{rule.label}</span>
 
       <button
         type="button"
         onClick={onRemove}
-        className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors shrink-0 cursor-pointer"
+        className="p-1 text-slate-300 dark:text-slate-600 hover:text-rose-500 rounded-md transition-colors shrink-0 cursor-pointer opacity-0 group-hover:opacity-100"
         title="Delete step"
       >
-        <Trash2 size={15} />
+        <Trash2 size={14} />
       </button>
     </div>
   );

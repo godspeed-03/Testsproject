@@ -21,15 +21,17 @@ import {
   Area,
   XAxis,
   YAxis,
+  Label,
   Tooltip as RechartsTooltip,
   CartesianGrid,
   ReferenceLine
 } from 'recharts';
-import { useTracker, calculateHabitStreak, isHabitScheduledForDate } from '../TrackerContext';
+import { useTracker, calculateHabitStreak, isHabitScheduledForDate, getTodayIso, getHabitProgressColor } from '../TrackerContext';
+import HabitCellTooltip from '@/components/HabitCellTooltip';
 
 export default function CalendarPage() {
   const { habits } = useTracker();
-  const [viewMode, setViewMode] = useState<'calendar' | 'graph'>('calendar');
+  const [viewMode, setViewMode] = useState<'calendar' | 'graph'>('graph');
   const [activeHabitId, setActiveHabitId] = useState<string>('all');
   const [monthOffset, setMonthOffset] = useState<number>(0);
   const [isMounted, setIsMounted] = useState(false);
@@ -42,7 +44,7 @@ export default function CalendarPage() {
   const textTitle = 'text-slate-900 dark:text-slate-100';
   const textMuted = 'text-slate-500 dark:text-slate-400';
 
-  const todayIso = new Date().toISOString().split('T')[0];
+  const todayIso = getTodayIso();
   const habitList = habits.filter((h: any) => h.type === 'habit');
   const isAllView = activeHabitId === 'all';
   const activeHabit = isAllView
@@ -105,26 +107,97 @@ export default function CalendarPage() {
   const totalDoneMonth = dailyStats.reduce((acc, curr) => acc + curr.doneCount, 0);
   const monthOverallPct = totalScheduledMonth > 0 ? Math.round((totalDoneMonth / totalScheduledMonth) * 100) : 0;
 
-  // Chart Data for Recharts
-  const chartData = dailyStats.map((stat) => ({
-    dayLabel: String(stat.dayNum),
-    iso: stat.iso,
-    percentage: stat.pct,
-    done: stat.doneCount,
-    total: stat.totalSched,
-  }));
+  // Chart Data for 2-Line Recharts (Green: Completed / Achieved, Red: Total Scheduled Target)
+  // Omit unscheduled dates (total === 0) so non-scheduled days are not plotted on the trend line
+  const rawChartData = monthDays.map((d) => {
+    if (isAllView) {
+      const scheduledItems = habitList.filter((h: any) => isHabitScheduledForDate(h, d.iso));
+      const totalSched = scheduledItems.length;
+
+      const doneCount = scheduledItems.filter((h: any) =>
+        (h.history || []).some((entry: any) => entry.date === d.iso && entry.status === 'done')
+      ).length;
+
+      return {
+        dayLabel: String(d.dayNum),
+        iso: d.iso,
+        done: doneCount,
+        total: totalSched,
+        unitStr: 'items',
+      };
+    } else {
+      const scheduled = isHabitScheduledForDate(activeHabit, d.iso);
+      const rawUnit = (activeHabit?.target?.unit || 'yes_no').toLowerCase().trim();
+      const rawTarget = activeHabit?.target?.value || 1;
+      const isYesNo = rawUnit === 'yes_no' || rawUnit === 'boolean' || rawUnit === 'mark_done';
+      const isTime = ['hours', 'hrs', 'hour'].includes(rawUnit);
+
+      let targetVal = rawTarget;
+      let unitStr = rawUnit;
+
+      if (isYesNo) {
+        targetVal = 1;
+        unitStr = '';
+      } else if (isTime) {
+        unitStr = 'hrs';
+      }
+
+      if (!scheduled) {
+        return {
+          dayLabel: String(d.dayNum),
+          iso: d.iso,
+          done: 0,
+          total: 0,
+          unitStr,
+        };
+      }
+
+      const hist = (activeHabit?.history || []).find((entry: any) => entry.date === d.iso);
+      let doneVal = 0;
+
+      if (hist && hist.value > 0) {
+        if (isTime && hist.value > 24 && rawTarget <= 24) {
+          doneVal = Math.round((hist.value / 60) * 100) / 100;
+        } else {
+          doneVal = hist.value;
+        }
+      } else if (hist?.status === 'done') {
+        doneVal = targetVal;
+      }
+
+      return {
+        dayLabel: String(d.dayNum),
+        iso: d.iso,
+        done: doneVal,
+        total: targetVal,
+        unitStr,
+      };
+    }
+  });
+
+  const chartData = rawChartData.filter((item) => item.total > 0);
 
   const CustomGraphTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="p-3 bg-slate-900/95 backdrop-blur-md text-white text-xs font-bold rounded-xl shadow-xl border border-slate-700 space-y-1">
-          <div className="text-slate-400 text-3xs uppercase tracking-wider">{data.iso}</div>
-          <div className="flex items-center gap-2 text-sm font-black text-indigo-400">
-            <span>{data.percentage}% Completed</span>
+        <div className="p-3.5 bg-slate-900/95 backdrop-blur-md text-white text-xs font-bold rounded-2xl shadow-xl border border-slate-700 space-y-2 min-w-[180px]">
+          <div className="text-slate-400 text-3xs uppercase tracking-wider font-extrabold border-b border-slate-800 pb-1">
+            {monthName} {data.dayLabel}, {year} ({data.iso})
           </div>
-          <div className="text-2xs text-slate-300">
-            {data.done} of {data.total} tasks/habits completed
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-emerald-400 font-black">
+              <span className="flex items-center gap-1">🟢 Completed:</span>
+              <span>{data.done} {data.unitStr}</span>
+            </div>
+            <div className="flex items-center justify-between text-rose-400 font-black">
+              <span className="flex items-center gap-1">🔴 Target:</span>
+              <span>{data.total} {data.unitStr}</span>
+            </div>
+          </div>
+          <div className="text-[11px] text-slate-300 font-extrabold pt-1 border-t border-slate-800 flex items-center justify-between">
+            <span>Completion Rate:</span>
+            <span className="text-indigo-400">{data.total > 0 ? Math.round((data.done / data.total) * 100) : 0}%</span>
           </div>
         </div>
       );
@@ -177,19 +250,19 @@ export default function CalendarPage() {
           <p className={`text-xs ${textMuted}`}>Create habits in the Habits tab to view monthly statistics.</p>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {/* Habit Filter Selector Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             <button
               type="button"
               onClick={() => setActiveHabitId('all')}
-              className={`px-4 py-2.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-2 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-1.5 ${
                 isAllView
                   ? 'bg-accent-gradient shadow-neon-glow ring-2 ring-accent-primary/50 text-white'
                   : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800'
               }`}
             >
-              <Layers size={15} />
+              <Layers size={14} />
               <span>All Habits Combined</span>
             </button>
 
@@ -201,7 +274,7 @@ export default function CalendarPage() {
                   key={hId}
                   type="button"
                   onClick={() => setActiveHabitId(hId)}
-                  className={`px-4 py-2.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-2 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all flex items-center gap-1.5 ${
                     activeHabitId === hId
                       ? `${pillTheme} text-white shadow-md`
                       : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-800'
@@ -214,22 +287,22 @@ export default function CalendarPage() {
             })}
           </div>
 
-          <div className={`p-6 rounded-2xl border ${cardBg} space-y-6 shadow-xs`}>
+          <div className={`p-4 sm:p-5 rounded-2xl border ${cardBg} space-y-4 shadow-xs`}>
             {/* Header Info & Month Navigation */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
                 <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 shadow-inner"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 shadow-inner"
                   style={{
                     backgroundColor: isAllView ? 'var(--accent-glow)' : `${activeHabit?.color || 'var(--accent)'}20`,
                     color: isAllView ? 'var(--accent)' : activeHabit?.color || 'var(--accent)',
                     border: `1px solid ${isAllView ? 'var(--accent)' : `${activeHabit?.color || 'var(--accent)'}40`}`
                   }}
                 >
-                  {isAllView ? <Layers size={22} /> : activeHabit?.icon || '🏃'}
+                  {isAllView ? <Layers size={18} /> : activeHabit?.icon || '🏃'}
                 </div>
                 <div>
-                  <h3 className={`font-black text-base sm:text-lg ${textTitle}`}>
+                  <h3 className={`font-black text-sm sm:text-base ${textTitle}`}>
                     {isAllView ? 'All Habits Combined' : activeHabit?.title}
                   </h3>
                   <p className={`text-xs ${textMuted}`}>
@@ -297,8 +370,12 @@ export default function CalendarPage() {
                     <span className="text-rose-600 dark:text-rose-400">Missed Dot (Red)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-3.5 h-3.5 rounded-md bg-emerald-50 border border-emerald-400 text-emerald-800" />
-                    <span className="text-slate-600 dark:text-slate-300">Light Pastel Background Shading</span>
+                    <span className="w-3.5 h-3.5 rounded-md bg-emerald-950 border border-emerald-500/50" />
+                    <span className="text-slate-600 dark:text-slate-300">100% Tier Shading</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded-md bg-rose-950 border border-rose-500/50" />
+                    <span className="text-slate-600 dark:text-slate-300">Low / Missed Shading</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3.5 h-3.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-dashed border-slate-300" />
@@ -341,26 +418,26 @@ export default function CalendarPage() {
                           }
                         }
 
-                        const hue = Math.round((percent / 100) * 120);
-
-                        let cellStyle: React.CSSProperties = {};
                         let cellClass = 'p-2.5 sm:p-3 rounded-xl text-center flex flex-col items-center justify-between min-h-[72px] border transition-all';
 
                         if (totalSched === 0) {
                           cellClass += ' bg-slate-100/50 dark:bg-slate-950/30 text-slate-400 border-dashed border-slate-200 dark:border-slate-800 opacity-50';
-                        } else if (isPast || isToday || doneCount > 0) {
-                          cellStyle = {
-                            backgroundColor: `hsl(${hue}, 85%, 93%)`,
-                            borderColor: `hsl(${hue}, 70%, 48%)`,
-                            color: `hsl(${hue}, 90%, 20%)`
-                          };
-                          cellClass += ' shadow-xs font-black';
+                        } else if (percent === 100) {
+                          cellClass += ' bg-emerald-950/80 dark:bg-emerald-950/90 text-emerald-300 border-emerald-500/50 shadow-md shadow-emerald-950/50 font-black';
+                        } else if (percent >= 75) {
+                          cellClass += ' bg-lime-950/80 dark:bg-lime-950/90 text-lime-300 border-lime-500/50 shadow-md shadow-lime-950/50 font-black';
+                        } else if (percent >= 50) {
+                          cellClass += ' bg-amber-950/80 dark:bg-amber-950/90 text-amber-300 border-amber-500/50 shadow-md shadow-amber-950/50 font-black';
+                        } else if (percent > 0) {
+                          cellClass += ' bg-rose-950/80 dark:bg-rose-950/90 text-rose-300 border-rose-500/50 shadow-md shadow-rose-950/50 font-black';
+                        } else if (isPast) {
+                          cellClass += ' bg-slate-900/90 dark:bg-slate-950 text-slate-400 border-slate-800/80 font-black';
                         } else {
                           cellClass += ' bg-slate-100 dark:bg-slate-950 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800';
                         }
 
                         return (
-                          <div key={d.iso} style={cellStyle} className={cellClass}>
+                          <div key={d.iso} className={cellClass}>
                             <div className="flex items-center justify-between w-full">
                               <span className="text-xs font-black">{d.dayNum}</span>
                               {totalSched > 0 && <span className="text-[10px] font-extrabold opacity-80">{percent}%</span>}
@@ -379,13 +456,24 @@ export default function CalendarPage() {
                         const scheduled = isHabitScheduledForDate(activeHabit, d.iso);
                         const hist = (activeHabit?.history || []).find((entry: any) => entry.date === d.iso);
                         const isDone = hist?.status === 'done';
+                        const isFailed = hist?.status === 'failed' || hist?.status === 'false';
+                        const val = hist ? (hist.value || 0) : 0;
+                        const pTier = getHabitProgressColor(val, activeHabit?.target?.value || 1, activeHabit?.target?.unit, hist?.status);
 
                         let cellStyle = '';
 
                         if (!scheduled) {
                           cellStyle = 'bg-slate-100/50 dark:bg-slate-950/30 text-slate-300 dark:text-slate-700 border border-dashed border-slate-200 dark:border-slate-800 opacity-50';
-                        } else if (isDone) {
+                        } else if (isDone || pTier === 'done') {
                           cellStyle = 'bg-emerald-500 text-white font-black shadow-md shadow-emerald-500/20 border border-emerald-400';
+                        } else if (pTier === 'p75') {
+                          cellStyle = 'bg-lime-500 text-slate-950 font-black shadow-md shadow-lime-500/20 border border-lime-400';
+                        } else if (pTier === 'p50') {
+                          cellStyle = 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20 border border-amber-400';
+                        } else if (pTier === 'p25') {
+                          cellStyle = 'bg-orange-500 text-slate-950 font-black shadow-md shadow-orange-500/20 border border-orange-400';
+                        } else if (isFailed) {
+                          cellStyle = 'bg-rose-500 text-white font-black shadow-md shadow-rose-500/20 border border-rose-400';
                         } else if (isPast) {
                           cellStyle = 'bg-rose-500 text-white font-black shadow-md shadow-rose-500/20 border border-rose-400';
                         } else if (isToday) {
@@ -395,12 +483,22 @@ export default function CalendarPage() {
                         }
 
                         return (
-                          <div
+                          <HabitCellTooltip
                             key={d.iso}
-                            className={`p-3 rounded-xl text-center flex items-center justify-center min-h-[56px] transition-all ${cellStyle}`}
+                            dateIso={d.iso}
+                            habit={activeHabit}
+                            hist={hist}
+                            scheduled={scheduled}
+                            isDone={isDone}
+                            isFailed={isFailed}
+                            isPast={isPast}
                           >
-                            <span className="text-sm font-black">{d.dayNum}</span>
-                          </div>
+                            <div
+                              className={`p-3 rounded-xl text-center flex items-center justify-center min-h-[56px] transition-all cursor-pointer ${cellStyle}`}
+                            >
+                              <span className="text-sm font-black">{d.dayNum}</span>
+                            </div>
+                          </HabitCellTooltip>
                         );
                       }
                     })}
@@ -409,68 +507,111 @@ export default function CalendarPage() {
               </div>
             )}
 
-            {/* VIEW MODE 2: RECHARTS SMOOTH LINE / AREA GRAPH & 0/1 BOOLEAN VIEW */}
-            {viewMode === 'graph' && (
-              <div className="space-y-8">
-                {/* 1. Recharts Smooth Line / Area Chart */}
-                <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                        <TrendingUp size={16} className="text-accent-primary" />
-                        Habit Completion % Line & Area Trend Graph
-                      </h4>
-                      <p className="text-2xs text-slate-500">Smooth trend line of daily habit completions for {monthName} {year}.</p>
-                    </div>
-                    <span className="text-xs font-black text-accent-primary bg-accent-light px-3 py-1 rounded-xl border border-accent-primary/20">
-                      Month Average: {monthOverallPct}%
-                    </span>
-                  </div>
+            {/* VIEW MODE 2: RECHARTS SMOOTH LINE / AREA GRAPH (TARGET VS DONE) */}
+            {viewMode === 'graph' && (() => {
+              const activeUnitRaw = (activeHabit?.target?.unit || 'yes_no').toLowerCase().trim();
+              const yAxisLabelText = isAllView
+                ? 'Tasks Count'
+                : ['yes_no', 'boolean', 'mark_done'].includes(activeUnitRaw)
+                ? 'Status (0 or 1)'
+                : ['hours', 'hrs', 'hour'].includes(activeUnitRaw)
+                ? 'Hours (hrs)'
+                : activeHabit?.target?.unit || 'Units';
 
-                  {/* Line Chart Container */}
-                  <div className="w-full h-72 pt-4">
-                    {isMounted && (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                          <defs>
-                            <linearGradient id="completionGradient" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.4} />
-                              <stop offset="95%" stopColor="var(--accent)" stopOpacity={0.0} />
-                            </linearGradient>
-                          </defs>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#33415520" />
-                          <XAxis
-                            dataKey="dayLabel"
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 11, fill: '#94A3B8', fontWeight: 700 }}
-                          />
-                          <YAxis
-                            domain={[0, 100]}
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fontSize: 11, fill: '#94A3B8', fontWeight: 700 }}
-                            tickFormatter={(val) => `${val}%`}
-                          />
-                          <RechartsTooltip content={<CustomGraphTooltip />} />
-                          <ReferenceLine y={50} stroke="var(--accent)" strokeDasharray="3 3" opacity={0.3} />
-                          <Area
-                            type="monotone"
-                            dataKey="percentage"
-                            stroke="var(--accent)"
-                            strokeWidth={3}
-                            fillOpacity={1}
-                            fill="url(#completionGradient)"
-                            dot={{ r: 4, fill: 'var(--accent)', strokeWidth: 2, stroke: '#ffffff' }}
-                            activeDot={{ r: 7, fill: 'var(--accent)', strokeWidth: 3, stroke: '#ffffff' }}
-                          />
-                        </AreaChart>
-                      </ResponsiveContainer>
-                    )}
+              return (
+                <div className="space-y-8">
+                  {/* 1. Recharts Smooth Line / Area Chart */}
+                  <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 space-y-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <h4 className="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <TrendingUp size={16} className="text-emerald-400" />
+                        Scheduled Target vs. Achieved Trend Graph
+                      </h4>
+                    </div>
+
+                    {/* Line Chart Container */}
+                    <div className="w-full h-80 pt-2 pb-2">
+                      {isMounted && chartData.length > 0 ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={chartData} margin={{ top: 15, right: 15, left: 10, bottom: 20 }}>
+                            <defs>
+                              <linearGradient id="greenGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#10B981" stopOpacity={0.35} />
+                                <stop offset="95%" stopColor="#10B981" stopOpacity={0.0} />
+                              </linearGradient>
+                              <linearGradient id="redGradient" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#F43F5E" stopOpacity={0.15} />
+                                <stop offset="95%" stopColor="#F43F5E" stopOpacity={0.0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#33415525" />
+                            <XAxis
+                              dataKey="dayLabel"
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 11, fill: '#94A3B8', fontWeight: 700 }}
+                            >
+                              <Label
+                                value={`Day of ${monthName}`}
+                                position="insideBottom"
+                                offset={-12}
+                                style={{ fill: '#64748B', fontSize: 10, fontWeight: 800, letterSpacing: '0.05em' }}
+                              />
+                            </XAxis>
+                            <YAxis
+                              domain={[0, (dataMax: number) => Math.max(dataMax, 1)]}
+                              allowDecimals={false}
+                              axisLine={false}
+                              tickLine={false}
+                              tick={{ fontSize: 11, fill: '#94A3B8', fontWeight: 700 }}
+                            >
+                              <Label
+                                value={yAxisLabelText}
+                                angle={-90}
+                                position="insideLeft"
+                                offset={-5}
+                                style={{ fill: '#64748B', fontSize: 10, fontWeight: 800, textAnchor: 'middle', letterSpacing: '0.05em' }}
+                              />
+                            </YAxis>
+                            <RechartsTooltip content={<CustomGraphTooltip />} />
+
+                            {/* Red Line: Scheduled Target */}
+                            <Area
+                              type="monotone"
+                              dataKey="total"
+                              name="Total Target"
+                              stroke="#F43F5E"
+                              strokeWidth={2}
+                              strokeDasharray="4 4"
+                              fillOpacity={1}
+                              fill="url(#redGradient)"
+                              dot={{ r: 3.5, fill: '#F43F5E', strokeWidth: 1, stroke: '#ffffff' }}
+                            />
+
+                            {/* Green Line: Completed / Achieved */}
+                            <Area
+                              type="monotone"
+                              dataKey="done"
+                              name="Completed / Achieved"
+                              stroke="#10B981"
+                              strokeWidth={3}
+                              fillOpacity={1}
+                              fill="url(#greenGradient)"
+                              dot={{ r: 4, fill: '#10B981', strokeWidth: 2, stroke: '#ffffff' }}
+                              activeDot={{ r: 7, fill: '#10B981', strokeWidth: 3, stroke: '#ffffff' }}
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full text-slate-400 text-xs font-bold space-y-1">
+                          <span>No scheduled dates found for {monthName} {year}.</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       )}

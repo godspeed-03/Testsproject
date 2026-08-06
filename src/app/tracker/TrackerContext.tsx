@@ -4,8 +4,41 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getSubjectTheme } from '@/lib/subjectThemeMap';
 import BatchRevisionCompletionModal from '@/components/dashboard/BatchRevisionCompletionModal';
 
+export const getTodayIso = (): string => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+export const getHabitProgressColor = (loggedVal: number, targetVal: number, unitStr: string, status?: string) => {
+  if (status === 'done') return 'done';
+  if (status === 'failed' || status === 'false') return 'failed';
+  if (!loggedVal || loggedVal <= 0) return 'none';
+
+  let normLogged = loggedVal;
+  let normTarget = targetVal || 1;
+
+  const unit = (unitStr || '').toLowerCase().trim();
+  if (['hours', 'hrs', 'hour'].includes(unit)) {
+    if (normLogged <= 24 && normTarget <= 24) {
+      normLogged = loggedVal * 60;
+      normTarget = (targetVal || 1) * 60;
+    }
+  }
+
+  const pct = Math.round((normLogged / normTarget) * 100);
+
+  if (pct >= 100) return 'done';
+  if (pct >= 75) return 'p75';
+  if (pct >= 50) return 'p50';
+  if (pct >= 25) return 'p25';
+  return 'p0';
+};
+
 export const calculateHabitStreak = (h: any) => {
-  if (!h || !h.history) return { current: 0, best: 0 };
+  if (!h || !h.history || h.type !== 'habit') return { current: 0, best: 0 };
 
   const doneDatesArr: string[] = Array.from(
     new Set<string>(
@@ -20,6 +53,9 @@ export const calculateHabitStreak = (h: any) => {
   }
 
   const doneDatesSet = new Set(doneDatesArr);
+  const skippedDatesSet = new Set<string>(
+    (h.history || []).filter((e: any) => e.status === "skipped" || e.status === "rest").map((e: any) => String(e.date))
+  );
 
   const formatDateStr = (d: Date) => {
     const y = d.getFullYear();
@@ -29,14 +65,16 @@ export const calculateHabitStreak = (h: any) => {
   };
 
   const isScheduledForIso = (dateIso: string): boolean => {
-    if (h.startDate && h.startDate > dateIso) return false;
-    if (h.endDate && h.endDate < dateIso) return false;
+    const startIso = h.startDate ? String(h.startDate).split("T")[0] : null;
+    const endIso = h.endDate ? String(h.endDate).split("T")[0] : null;
+    if (startIso && startIso > dateIso) return false;
+    if (endIso && endIso < dateIso) return false;
 
     const mode = h.frequency?.mode || h.recurrence || 'daily';
     if (mode === 'daily') return true;
 
     if (mode === 'once') {
-      return h.startDate === dateIso;
+      return startIso === dateIso;
     }
 
     if (mode === 'specific_days' || mode === 'weekly') {
@@ -88,6 +126,8 @@ export const calculateHabitStreak = (h: any) => {
         if (doneDatesSet.has(currentIso)) {
           chain++;
           evaluatedDates.add(currentIso);
+        } else if (skippedDatesSet.has(currentIso)) {
+          // Rest Day: preserve streak
         } else {
           break;
         }
@@ -110,9 +150,10 @@ export const calculateHabitStreak = (h: any) => {
   const cursor = new Date(startCheckIso + 'T00:00:00');
 
   const isStartDone = doneDatesSet.has(startCheckIso);
+  const isStartSkipped = skippedDatesSet.has(startCheckIso);
   const isStartScheduled = isScheduledForIso(startCheckIso);
 
-  if (!isStartDone && isStartScheduled) {
+  if (!isStartDone && !isStartSkipped && isStartScheduled) {
     cursor.setDate(cursor.getDate() - 1);
   }
 
@@ -123,6 +164,8 @@ export const calculateHabitStreak = (h: any) => {
     if (scheduled) {
       if (doneDatesSet.has(currentIso)) {
         currentStreak++;
+      } else if (skippedDatesSet.has(currentIso)) {
+        // Rest Day: preserve streak
       } else {
         break;
       }
@@ -179,10 +222,28 @@ export const isHabitScheduledForDate = (h: any, dateIso: string): boolean => {
 
 export const getTargetGoalLabel = (h: any) => {
   const val = h.target?.value || 1;
-  const unit = h.target?.unit || 'times';
+  const unit = (h.target?.unit || 'times').toLowerCase().trim();
   if (unit === 'yes_no' || unit === 'boolean') return 'Mark Done';
-  if (unit !== 'times' && unit !== 'yes_no' && unit !== 'boolean') {
-    return `${val} ${unit}`;
+
+  if (['mins', 'minutes', 'min', 'minute'].includes(unit)) {
+    if (val < 60) return `${val} mins`;
+    const hrs = Math.floor(val / 60);
+    const mins = val % 60;
+    if (hrs > 0 && mins > 0) return `${hrs} hr ${mins} mins`;
+    return `${hrs} hr${hrs > 1 ? 's' : ''}`;
+  }
+
+  if (['hours', 'hrs', 'hour'].includes(unit)) {
+    const totalMins = Math.round(val * 60);
+    if (totalMins < 60) return `${totalMins} mins`;
+    const hrs = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    if (hrs > 0 && mins > 0) return `${hrs} hr ${mins} mins`;
+    return `${hrs} hr${hrs > 1 ? 's' : ''}`;
+  }
+
+  if (unit !== 'times') {
+    return `${val} ${h.target?.unit || unit}`;
   }
   if (h.type === 'task' || h.type === 'event') {
     if (val > 1) return `One-time Task (${val} ${unit})`;
@@ -201,7 +262,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayIso());
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'habit' | 'task' | 'event'>('ALL');
@@ -220,7 +281,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [formCustomUnit, setFormCustomUnit] = useState('');
   const [formEnableReminder, setFormEnableReminder] = useState(false);
   const [formReminderTime, setFormReminderTime] = useState('08:00');
-  const [formStartDate, setFormStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [formStartDate, setFormStartDate] = useState(getTodayIso());
   const [formEndDate, setFormEndDate] = useState('');
   const [formIcon, setFormIcon] = useState('🏃');
   const [formColor, setFormColor] = useState('#6366F1');
@@ -402,6 +463,21 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     fetchTrackerData();
   }, []);
 
+  // Midnight 12:00 AM Date Rollover Interval
+  // Automatically switches to the new date and refreshes agenda when midnight (00:00:00) strikes
+  useEffect(() => {
+    let lastDate = getTodayIso();
+    const interval = setInterval(() => {
+      const currentDate = getTodayIso();
+      if (currentDate !== lastDate) {
+        lastDate = currentDate;
+        setSelectedDate(currentDate);
+        fetchTrackerData();
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   const fetchTrackerData = async () => {
     setLoading(true);
     try {
@@ -439,9 +515,18 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormFrequencyMode(item.frequency?.mode || 'daily');
     setFormFrequencyDays(item.frequency?.days || []);
     setFormMonthlyDay(item.frequency?.monthlyDay || 1);
-    setFormTargetVal(item.target?.value || 1);
-    const knownUnits = ['yes_no', 'hours', 'times', 'pages', 'answers', 'Liters', 'km'];
-    const u = item.target?.unit || 'times';
+    const rawVal = item.target?.value || 1;
+    const rawUnit = (item.target?.unit || 'yes_no').toLowerCase().trim();
+
+    let u = item.target?.unit || 'yes_no';
+    let val = rawVal;
+    if (['hours', 'hrs', 'hour'].includes(rawUnit)) {
+      u = 'minutes';
+      val = Math.round(rawVal * 60);
+    }
+
+    setFormTargetVal(val);
+    const knownUnits = ['yes_no', 'minutes', 'mins', 'min', 'minute', 'lectures', 'times', 'pages', 'answers', 'Liters', 'km'];
     if (knownUnits.includes(u)) {
       setFormTargetUnit(u);
       setFormCustomUnit('');
@@ -485,8 +570,8 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setFormFrequencyMode(type === 'task' ? 'once' : 'daily');
     setFormFrequencyDays(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
     setFormMonthlyDay(1);
-    setFormTargetVal(type === 'task' ? 3 : 1);
-    setFormTargetUnit(type === 'task' ? 'hours' : 'times');
+    setFormTargetVal(1);
+    setFormTargetUnit('yes_no');
     setFormCustomUnit('');
     setFormEnableReminder(false);
     setFormReminderTime('09:00');
@@ -530,7 +615,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     increment: boolean = false,
     completedTopics?: string[]
   ) => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayIso();
     if (date < todayStr) {
       alert('Backdating is disabled: You cannot edit or log completion for past dates.');
       return;
@@ -556,7 +641,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   };
 
   const handleItemClick = (h: any, date: string) => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayIso();
     if (date < todayStr) {
       alert('Backdating is disabled: You cannot edit or log completion for past dates.');
       return;
@@ -581,9 +666,10 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     }
 
     const isRevision = typeof h.title === 'string' && /^\[R[123]\s+Revision\]/i.test(h.title);
-    const isYesNoUnit = h.target?.unit === 'yes_no' || h.target?.unit === 'boolean';
+    const unitStr = (h.target?.unit || '').toLowerCase().trim();
+    const isTimeGoal = ['mins', 'minutes', 'min', 'minute', 'hours', 'hrs', 'hour'].includes(unitStr);
     
-    if (isRevision || isYesNoUnit || h.type === 'event') {
+    if (isRevision || !isTimeGoal || h.type === 'event') {
       handleToggleLog(h.id || h._id, date, 'toggle');
     } else {
       const existing = (h.history || []).find((hist: any) => hist.date === date);
@@ -592,7 +678,9 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       setProgressModalHabit(h);
       setProgressModalDate(date);
       setProgressModalMode(existingVal > 0 ? 'add' : 'replace');
-      setProgressModalValue(1);
+      const unitStr = (h.target?.unit || '').toLowerCase().trim();
+      const isTimeGoal = ['mins', 'minutes', 'min', 'minute', 'hours', 'hrs', 'hour'].includes(unitStr);
+      setProgressModalValue(isTimeGoal ? 0 : 1);
       setShowProgressModal(true);
     }
   };
@@ -616,9 +704,18 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setTogglingId(`${habitId}_${progressModalDate}`);
     const inputVal = valToSave !== undefined ? valToSave : progressModalValue;
     const existingVal = existingModalVal || 0;
-    const finalVal = progressModalMode === 'add'
-      ? Number((existingVal + inputVal).toFixed(2))
-      : Number(inputVal.toFixed(2));
+    const unitStr = (progressModalHabit.target?.unit || '').toLowerCase().trim();
+    const isMinsUnit = ['mins', 'minutes', 'min', 'minute'].includes(unitStr);
+
+    let finalVal: number;
+    if (isMinsUnit) {
+      const inputMins = Math.round(inputVal * 60);
+      finalVal = progressModalMode === 'add' ? existingVal + inputMins : inputMins;
+    } else {
+      finalVal = progressModalMode === 'add'
+        ? Number((existingVal + inputVal).toFixed(2))
+        : Number(inputVal.toFixed(2));
+    }
 
     const targetVal = progressModalHabit.target?.value || 1;
     const finalStatus = finalVal >= targetVal ? 'done' : (finalVal > 0 ? 'pending' : 'pending');
@@ -755,6 +852,27 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       }
     } catch (e) {
       console.error('Failed to create/update habit', e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleMarkRestDay = async (dateStr?: string) => {
+    const targetDate = dateStr || selectedDate || getTodayIso();
+    setSaving(true);
+    try {
+      const res = await fetch('/api/tracker/habits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'mark_rest_day', date: targetDate }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setHabits(data.habits);
+        await fetchTrackerData();
+      }
+    } catch (e) {
+      console.error('Failed to mark rest day', e);
     } finally {
       setSaving(false);
     }
@@ -1037,6 +1155,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     fetchTrackerData,
     handleToggleLog,
     handleItemClick,
+    handleMarkRestDay,
     handleSaveHabitProgress,
     handleDeleteHabit,
     handleCreateSubmit,

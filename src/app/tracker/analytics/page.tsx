@@ -17,6 +17,8 @@ import {
   PieChart,
   Activity,
   CheckCircle,
+  Check,
+  Calendar,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -265,6 +267,26 @@ export default function AnalyticsPage() {
   const textTitle = "text-slate-900 dark:text-slate-100";
   const textMuted = "text-slate-500 dark:text-slate-400";
 
+  // Week Navigation Offset State (0 = Current Week, -1 = Last Week, etc.)
+  const [weekOffset, setWeekOffset] = useState<number>(0);
+  const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState<boolean>(false);
+  const weekDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside listener for custom week dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        event.target instanceof Node &&
+        weekDropdownRef.current &&
+        !weekDropdownRef.current.contains(event.target)
+      ) {
+        setIsWeekDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // DB Values & Breakdown Extraction
   const bd = (weeklyDoc?.breakdown as any) || weeklyDoc || {};
   const weeklyData = bd.weeklyData || weeklyDoc?.weeklyData || [];
@@ -274,12 +296,14 @@ export default function AnalyticsPage() {
   const displayDailyAverageHours = bd.dailyAverageHours ?? weeklyDoc?.dailyAverageHours ?? (displayWeeklyTotalHours > 0 ? Number((displayWeeklyTotalHours / 7).toFixed(1)) : 0);
   const displayConsistencyPct = bd.consistencyPct ?? weeklyDoc?.consistencyPct ?? weeklyDoc?.weeklyScore ?? 0;
   const displayTotalTasksDone = bd.totalTasksDone ?? weeklyDoc?.totalTasksDone ?? weeklyDoc?.completedTopicsCount ?? 0;
+  const displayTotalPointsEarned = bd.totalPointsEarned ?? weeklyDoc?.totalPointsEarned;
+  const displayTotalPossiblePoints = bd.totalPossiblePoints ?? weeklyDoc?.totalPossiblePoints;
 
-  // Fetch Weekly Analytics Data (Separate API)
-  const fetchWeeklyData = async () => {
+  // Fetch Weekly Analytics Data (Separate API with weekOffset)
+  const fetchWeeklyData = async (offset = weekOffset) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/tracker/weekly-analytics");
+      const res = await fetch(`/api/tracker/weekly-analytics?weekOffset=${offset}`);
       if (res.ok) {
         const json = await res.json();
         setWeeklyDoc(json);
@@ -323,11 +347,11 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (activeTab === "velocity") {
-      fetchWeeklyData();
+      fetchWeeklyData(weekOffset);
     } else {
       fetchData();
     }
-  }, [activeTab]);
+  }, [activeTab, weekOffset]);
 
   useEffect(() => {
     if (activeTab === "consistency") {
@@ -340,7 +364,11 @@ export default function AnalyticsPage() {
     setRecalculating(true);
     try {
       if (activeTab === "velocity") {
-        const res = await fetch("/api/tracker/weekly-analytics", { method: "POST" });
+        const res = await fetch("/api/tracker/weekly-analytics", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ weekOffset }),
+        });
         if (res.ok) {
           const json = await res.json();
           const calculatedAt =
@@ -348,7 +376,7 @@ export default function AnalyticsPage() {
             json.calculatedAt ||
             new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
           setToastMessage(`Recalculated & saved Weekly Velocity as of ${calculatedAt}`);
-          await fetchWeeklyData();
+          await fetchWeeklyData(weekOffset);
         }
       } else {
         const res = await fetch("/api/tracker/consistency/recalculate", {
@@ -586,13 +614,17 @@ export default function AnalyticsPage() {
 
             <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-emerald-500/50 transition-all">
               <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400">
-                <span className="text-xs font-extrabold uppercase tracking-wider">Consistency</span>
+                <span className="text-xs font-extrabold uppercase tracking-wider">Weekly Score</span>
                 <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center">
                   <Award size={15} />
                 </div>
               </div>
               <p className={`text-2xl sm:text-3xl font-black font-display ${textTitle}`}>{displayConsistencyPct}%</p>
-              <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">2+ Day Habit Velocity 🔥</p>
+              <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                {displayTotalPointsEarned !== undefined && displayTotalPossiblePoints !== undefined
+                  ? `${displayTotalPointsEarned} / ${displayTotalPossiblePoints} pts earned 🎯`
+                  : 'Weighted Target Completion 🎯'}
+              </p>
             </div>
 
             <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 shadow-xs space-y-1 hover:border-accent-secondary/50 transition-all">
@@ -613,46 +645,131 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 7-Day Velocity Chart (Theme Adaptive Light / Dark) */}
             <div className={`lg:col-span-2 p-5 sm:p-6 rounded-3xl ${cardBg} space-y-5 shadow-xs`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className={`font-black text-lg ${textTitle}`}>7-Day Study Velocity Chart</h3>
-                  <p className={`text-xs ${textMuted} font-bold`}>
-                    {velocityMetric === "hours"
-                      ? "Daily Study Hours vs 8.0 hr Benchmark Target"
-                      : "Completed Tasks & Revisions per Day"}
-                  </p>
+              {/* Row 1: Header Title & Subtitle */}
+              <div>
+                <h3 className={`font-black text-lg sm:text-xl ${textTitle}`}>7-Day Study Velocity Chart</h3>
+                <p className={`text-xs ${textMuted} font-bold`}>
+                  {velocityMetric === "hours"
+                    ? "Daily Study Hours vs 8.0 hr Benchmark Target"
+                    : "Completed Tasks & Revisions per Day"}
+                </p>
+              </div>
+
+              {/* Row 2: All Controls (Metric Toggle + Week Selector) */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                {/* Left: Metric Toggle (Hours vs Tasks) */}
+                <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setVelocityMetric("hours")}
+                    className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                      velocityMetric === "hours"
+                        ? "bg-accent-secondary text-white shadow-2xs"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    Hours (hrs)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVelocityMetric("tasks")}
+                    className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                      velocityMetric === "tasks"
+                        ? "bg-accent-secondary text-white shadow-2xs"
+                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                    }`}
+                  >
+                    Tasks (count)
+                  </button>
                 </div>
 
-                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                  {/* Metric Toggle: Hours vs Tasks */}
-                  <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shrink-0">
+                {/* Right: Interactive Week Switcher Controls */}
+                <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap shrink-0">
+                  {weekOffset !== 0 && (
                     <button
                       type="button"
-                      onClick={() => setVelocityMetric("hours")}
-                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                        velocityMetric === "hours"
-                          ? "bg-accent-secondary text-white shadow-2xs"
-                          : "text-slate-500 dark:text-slate-400"
-                      }`}
+                      onClick={() => setWeekOffset(0)}
+                      className="px-2.5 py-1.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-black hover:bg-rose-500/20 transition-all cursor-pointer whitespace-nowrap"
                     >
-                      Hours (hrs)
+                      This Week
                     </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setWeekOffset((prev) => prev - 1)}
+                    className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer border border-slate-200/80 dark:border-slate-700/80"
+                    title="Previous Week"
+                  >
+                    <ChevronLeft size={15} />
+                  </button>
+
+                  {/* Custom Glassmorphism Week Dropdown Popover */}
+                  <div className="relative" ref={weekDropdownRef}>
                     <button
                       type="button"
-                      onClick={() => setVelocityMetric("tasks")}
-                      className={`px-3 py-1 rounded-lg text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                        velocityMetric === "tasks"
-                          ? "bg-accent-secondary text-white shadow-2xs"
-                          : "text-slate-500 dark:text-slate-400"
-                      }`}
+                      onClick={() => setIsWeekDropdownOpen((prev) => !prev)}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-extrabold text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs"
                     >
-                      Tasks (count)
+                      <Calendar size={13} className="text-accent-secondary shrink-0" />
+                      <span className="max-w-[170px] sm:max-w-[200px] truncate">
+                        {(weeklyDoc?.availableWeeks || []).find((w: any) => w.weekKey === weeklyDoc?.weekKey)?.label || "Select Week"}
+                      </span>
+                      <ChevronDown size={13} className={`text-slate-400 shrink-0 transition-transform duration-200 ${isWeekDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
+
+                    {isWeekDropdownOpen && (
+                      <div className="absolute right-0 sm:right-auto sm:left-0 top-full mt-2 w-64 p-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl z-50 animate-in fade-in-50 zoom-in-95">
+                        <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 px-2 py-1.5 mb-1 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                          <span>Select Week Range</span>
+                          <span className="text-[9px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 font-bold">
+                            {(weeklyDoc?.availableWeeks || []).length} Weeks
+                          </span>
+                        </div>
+                        <div className="max-h-60 overflow-y-auto space-y-1 pr-1 custom-scrollbar">
+                          {(weeklyDoc?.availableWeeks || []).map((w: any) => {
+                            const isSelected = w.weekKey === weeklyDoc?.weekKey;
+                            return (
+                              <button
+                                key={w.weekKey}
+                                type="button"
+                                onClick={() => {
+                                  const avail = weeklyDoc?.availableWeeks || [];
+                                  const idx = avail.findIndex((item: any) => item.weekKey === w.weekKey);
+                                  if (idx !== -1) {
+                                    const currentIdx = avail.findIndex((item: any) => item.isCurrent);
+                                    const baseIdx = currentIdx !== -1 ? currentIdx : 0;
+                                    setWeekOffset(baseIdx - idx);
+                                  }
+                                  setIsWeekDropdownOpen(false);
+                                }}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold transition-all text-left cursor-pointer ${
+                                  isSelected
+                                    ? "bg-accent-secondary/15 text-accent-secondary font-black dark:bg-accent-secondary/20"
+                                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80"
+                                }`}
+                              >
+                                <span className="truncate">{w.label}</span>
+                                {isSelected && <Check size={14} className="text-accent-secondary shrink-0 ml-1.5" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  <span className="hidden sm:inline-block px-3 py-1 rounded-full bg-accent-tertiary text-white border border-accent-tertiary/30 text-xs font-black whitespace-nowrap shrink-0">
-                    Past 7 Days
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setWeekOffset((prev) => Math.min(0, prev + 1))}
+                    disabled={weekOffset >= 0}
+                    className={`p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/80 transition-all ${
+                      weekOffset >= 0 ? 'opacity-40 cursor-not-allowed' : 'hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer'
+                    }`}
+                    title="Next Week"
+                  >
+                    <ChevronRight size={15} />
+                  </button>
                 </div>
               </div>
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Clock, Play, Pause, RotateCcw, CheckCircle2, Flag, Zap, BookOpen, ListOrdered, Plus, Loader2 } from "lucide-react";
-import { useTracker } from "../TrackerContext";
+import { useTracker, getTodayIso } from "../TrackerContext";
 import ShadcnSelect from "@/components/ui/ShadcnSelect";
 
 interface SessionLap {
@@ -36,7 +36,7 @@ export default function FocusPage() {
   const textTitle = "text-slate-900 dark:text-slate-100";
   const textMuted = "text-slate-500 dark:text-slate-400";
 
-  const todayStr = new Date().toISOString().split("T")[0];
+  const todayStr = getTodayIso();
 
   // Helper to check if a habit is scheduled on today's agenda
   const isScheduledForToday = (h: any): boolean => {

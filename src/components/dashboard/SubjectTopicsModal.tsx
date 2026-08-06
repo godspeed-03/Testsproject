@@ -271,16 +271,7 @@ export default function SubjectTopicsModal({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex justify-end pt-3 border-t border-slate-200 dark:border-slate-800">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-black rounded-xl border border-slate-200 dark:border-slate-700 transition-all cursor-pointer active:scale-95"
-          >
-            Close Window
-          </button>
-        </div>
+
       </div>
     </div>
   );

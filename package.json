@@ -27,6 +27,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@radix-ui/react-tooltip": "^1.2.16",
     "@tailwindcss/typography": "^0.5.19",
     "apexcharts": "^5.13.0",
     "bcryptjs": "^3.0.3",

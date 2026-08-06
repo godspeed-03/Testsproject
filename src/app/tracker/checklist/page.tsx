@@ -56,12 +56,16 @@ export default function ChecklistPage() {
           {lists.map((list: any) => {
             const items = list.items || [];
             const completedCount = items.filter((i: any) => i.completed).length;
+            const isListFullyDone = items.length > 0 && completedCount === items.length;
+            const listCardBg = isListFullyDone
+              ? 'bg-emerald-500/10 border-emerald-500/40 dark:bg-emerald-950/30 dark:border-emerald-500/40'
+              : cardBg;
 
             return (
-              <div key={list._id} className={`p-5 rounded-2xl border ${cardBg} space-y-4 shadow-xs`}>
+              <div key={list._id} className={`p-5 rounded-2xl border ${listCardBg} space-y-4 shadow-xs transition-all`}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className={`font-black text-base ${textTitle}`}>{list.title}</h3>
+                    <h3 className={`font-black text-base ${isListFullyDone ? 'line-through text-emerald-700 dark:text-emerald-400' : textTitle}`}>{list.title}</h3>
                     <p className={`text-xs ${textMuted} font-bold mt-0.5`}>
                       {completedCount} of {items.length} items completed
                     </p>
@@ -86,7 +90,7 @@ export default function ChecklistPage() {
                       onClick={() => handleToggleListItem(list._id, item._id)}
                       className={`p-2.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${
                         item.completed
-                          ? 'bg-slate-100/50 dark:bg-slate-950/50 border-slate-200/50 dark:border-slate-800/50 opacity-60'
+                          ? 'bg-emerald-500/10 dark:bg-emerald-950/30 border-emerald-500/40'
                           : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-accent-primary/50'
                       }`}
                     >
@@ -95,7 +99,7 @@ export default function ChecklistPage() {
                       ) : (
                         <Square size={16} className="text-slate-400 shrink-0" />
                       )}
-                      <span className={`text-xs font-bold ${item.completed ? 'line-through text-slate-400' : textTitle}`}>
+                      <span className={`text-xs font-bold ${item.completed ? 'line-through text-emerald-700 dark:text-emerald-400' : textTitle}`}>
                         {item.text}
                       </span>
                     </div>

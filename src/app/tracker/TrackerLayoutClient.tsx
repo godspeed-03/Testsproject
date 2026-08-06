@@ -252,43 +252,42 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     { href: '/tracker/habits', label: 'Habits & Streaks', icon: Flame, badge: habits.filter((h: any) => h.type === 'habit').length },
     { href: '/tracker/calendar', label: 'Month Calendar', icon: CalendarIcon },
     { href: '/tracker/analytics', label: 'Analytics & Scores', icon: BarChart3 },
-    { href: '/tracker/checklist', label: 'Checklists', icon: ListTodo, badge: lists.length },
     { href: '/tracker/focus', label: 'Focus Timer', icon: TimerIcon }
   ];
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
-      <div className="max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <div className="max-w-[1480px] mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-5 space-y-4">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h1 className={`text-xl sm:text-3xl font-black font-display tracking-tight ${textTitle}`}>
+            <h1 className={`text-lg sm:text-2xl font-black font-display tracking-tight ${textTitle}`}>
               Habit & Task Module
             </h1>
-            <p className={`text-xs sm:text-sm ${textMuted} mt-0.5`}>
+            <p className={`text-xs ${textMuted} mt-0.5`}>
               Track events, to-dos, recurring habits, streaks, and focus timers seamlessly in one place.
             </p>
           </div>
 
           <div className="flex items-center gap-2.5">
             {saving && (
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-500/10 dark:bg-indigo-950/60 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 text-xs font-extrabold animate-pulse shadow-xs shrink-0">
-                <Loader2 size={14} className="animate-spin text-indigo-500 shrink-0" />
-                <span>Syncing to DB...</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-500/10 dark:bg-indigo-950/60 border border-indigo-500/30 text-indigo-600 dark:text-indigo-400 text-xs font-extrabold animate-pulse shadow-xs shrink-0">
+                <Loader2 size={13} className="animate-spin text-indigo-500 shrink-0" />
+                <span>Syncing DB...</span>
               </div>
             )}
             <button
               type="button"
               onClick={() => handleOpenCreateModal('task')}
-              className="w-full sm:w-auto bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs sm:text-sm px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all shrink-0 active:scale-95 cursor-pointer"
+              className="w-full sm:w-auto bg-accent-gradient hover:opacity-90 text-white font-extrabold text-xs sm:text-xs px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl flex items-center justify-center gap-1.5 shadow-md transition-all shrink-0 active:scale-95 cursor-pointer"
             >
-              <Plus size={16} /> New Habit or Task
+              <Plus size={15} /> New Habit or Task
             </button>
           </div>
         </div>
 
         {/* Mobile Horizontal Pill Navigation Bar (<768px) with Touch Snap & Sticky Header */}
-        <div className="md:hidden sticky top-14 z-40 backdrop-blur-md bg-slate-50/90 dark:bg-slate-950/90 overflow-x-auto flex items-center gap-2 py-2.5 scrollbar-none -mx-4 px-4 border-b border-slate-200/80 dark:border-slate-800/80 snap-x snap-mandatory shadow-xs">
+        <div className="md:hidden sticky top-14 z-40 backdrop-blur-md bg-slate-50/90 dark:bg-slate-950/90 overflow-x-auto flex items-center gap-1.5 py-2 scrollbar-none -mx-3.5 px-3.5 border-b border-slate-200/80 dark:border-slate-800/80 snap-x snap-mandatory shadow-xs">
           {navTabs.map((tab) => {
             const Icon = tab.icon;
             const active = pathname === tab.href || (pathname === '/tracker' && tab.href === '/tracker/agenda');
@@ -296,7 +295,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`shrink-0 snap-start flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black transition-all ${
+                className={`shrink-0 snap-start flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
                   active
                     ? 'bg-accent-gradient text-white shadow-neon-glow'
                     : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-800'
@@ -306,7 +305,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && (
                   <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-black font-display ${
+                    className={`px-1.5 py-0.2 rounded-full text-[10px] font-black font-display ${
                       active ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                     }`}
                   >
@@ -319,15 +318,15 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
         </div>
 
         {/* Mobile Daily Target Stats Card (<768px) */}
-        <div className="md:hidden mt-3">
+        <div className="md:hidden mt-2">
           <DailyTargetCard todayItems={todayItems} selectedDate={selectedDate} cardBg={cardBg} textMuted={textMuted} />
         </div>
 
         {/* Sidebar + Content Grid Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6 mt-4 md:mt-0">
-          <aside className="hidden md:block md:col-span-4 lg:col-span-3 space-y-4 sticky top-20 self-start">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 lg:gap-5 mt-3 md:mt-0">
+          <aside className="hidden md:block md:col-span-4 lg:col-span-3 space-y-3 sticky top-20 self-start">
             {/* Sidebar Route Tabs Navigation */}
-            <div className={`p-3 rounded-2xl border ${cardBg} space-y-1.5 shadow-xs`}>
+            <div className={`p-2.5 rounded-2xl border ${cardBg} space-y-1 shadow-xs`}>
               {navTabs.map((tab) => {
                 const Icon = tab.icon;
                 const active = pathname === tab.href || (pathname === '/tracker' && tab.href === '/tracker/agenda');
@@ -335,19 +334,19 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                   <Link
                     key={tab.href}
                     href={tab.href}
-                    className={`w-full flex items-center justify-between px-3.5 sm:px-4 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-extrabold transition-all ${
+                    className={`w-full flex items-center justify-between px-3 py-2 sm:py-2.5 rounded-xl text-xs sm:text-xs font-extrabold transition-all ${
                       active
                         ? 'bg-accent-gradient text-white shadow-neon-glow'
                         : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 sm:gap-3">
-                      <Icon size={18} />
+                    <div className="flex items-center gap-2.5">
+                      <Icon size={16} />
                       <span>{tab.label}</span>
                     </div>
                     {tab.badge !== undefined && (
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-black font-display ${
+                        className={`px-1.5 py-0.5 rounded-full text-[10px] font-black font-display ${
                           active ? 'bg-white/20 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
                         }`}
                       >
@@ -405,11 +404,10 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             </div>
 
             {/* Type Selector Segmented Tabs (One Word Each) */}
-            <div className="grid grid-cols-3 p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800 shrink-0 shadow-inner">
+            <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-950/90 border border-slate-200 dark:border-slate-800 shrink-0 shadow-inner">
               {[
                 { id: 'habit', label: 'Habit', icon: '🔥' },
-                { id: 'task', label: 'Task', icon: '📝' },
-                { id: 'list', label: 'List', icon: '📋' }
+                { id: 'task', label: 'Task', icon: '📝' }
               ].map((t) => (
                 <button
                   key={t.id}
@@ -421,11 +419,6 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       setFormIsStudyTask(true);
                     } else if (t.id === 'habit') {
                       setFormFrequencyMode('daily');
-                      setFormIsStudyTask(false);
-                      if (formTitle === formSubject || (formSubject && formTitle.startsWith(formSubject))) {
-                        setFormTitle('');
-                      }
-                    } else if (t.id === 'list') {
                       setFormIsStudyTask(false);
                       if (formTitle === formSubject || (formSubject && formTitle.startsWith(formSubject))) {
                         setFormTitle('');
@@ -1117,8 +1110,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             }}
                             options={[
                               { value: 'yes_no', label: 'Mark Done' },
-                              { value: 'hours', label: 'Hours' },
                               { value: 'minutes', label: 'Minutes' },
+                              { value: 'lectures', label: 'Lectures' },
                               { value: 'times', label: 'Times' },
                               { value: 'pages', label: 'Pages' },
                               { value: 'answers', label: 'Answers' },
@@ -1151,8 +1144,8 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                               }}
                               options={[
                                 { value: 'yes_no', label: 'Mark Done' },
-                                { value: 'hours', label: 'Hours' },
                                 { value: 'minutes', label: 'Minutes' },
+                                { value: 'lectures', label: 'Lectures' },
                                 { value: 'times', label: 'Times' },
                                 { value: 'pages', label: 'Pages' },
                                 { value: 'answers', label: 'Answers' },
@@ -1338,22 +1331,29 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
               const hoursVal = Math.floor(totalMinsVal / 60);
               const minsVal = totalMinsVal % 60;
 
+              const rawTargetVal = progressModalHabit.target?.value || 1;
+              const targetValInHours = isMinsOnly ? rawTargetVal / 60 : rawTargetVal;
+              const isTargetUnder60Mins = targetValInHours < 1;
+
               const setHours = (h: number) => {
+                if (isTargetUnder60Mins) return;
                 const newTotalMins = h * 60 + minsVal;
                 setProgressModalValue(Number((newTotalMins / 60).toFixed(4)));
               };
 
               const setMinutes = (m: number) => {
-                const newTotalMins = hoursVal * 60 + m;
+                const effectiveHours = isTargetUnder60Mins ? 0 : hoursVal;
+                const newTotalMins = effectiveHours * 60 + m;
                 setProgressModalValue(Number((newTotalMins / 60).toFixed(4)));
               };
 
-              const projectedTotal =
-                progressModalMode === 'add' && existingModalVal > 0
-                  ? Number((existingModalVal + progressModalValue).toFixed(2))
+              const existingValInHours = isMinsOnly ? (existingModalVal || 0) / 60 : (existingModalVal || 0);
+
+              const projectedTotalInHours =
+                progressModalMode === 'add' && existingValInHours > 0
+                  ? Number((existingValInHours + progressModalValue).toFixed(4))
                   : progressModalValue;
-              const targetVal = progressModalHabit.target?.value || 1;
-              const pct = Math.round((projectedTotal / targetVal) * 100);
+              const pct = Math.round((projectedTotalInHours / (targetValInHours || 1)) * 100);
               const isComplete = pct >= 100;
 
               if (isTimeBased) {
@@ -1376,8 +1376,9 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                           columnTitle="Hours"
                           unitLabel="H"
                           options={Array.from({ length: 13 }, (_, i) => i)}
-                          value={hoursVal}
+                          value={isTargetUnder60Mins ? 0 : hoursVal}
                           onChange={(h) => setHours(h)}
+                          disabled={isTargetUnder60Mins}
                         />
 
                         <div className="text-2xl font-black font-display text-slate-300 dark:text-slate-700 self-center pt-5">:</div>
@@ -1390,34 +1391,6 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                           onChange={(m) => setMinutes(m)}
                         />
                       </div>
-
-                      {/* Quick Duration Preset Chips */}
-                      <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                        {[
-                          { label: '+15m', mins: 15 },
-                          { label: '+30m', mins: 30 },
-                          { label: '+1h', mins: 60 },
-                          { label: '+2h', mins: 120 },
-                          { label: 'Reset (0m)', mins: 0, reset: true }
-                        ].map((preset) => (
-                          <button
-                            key={preset.label}
-                            type="button"
-                            onClick={() => {
-                              if (preset.reset) {
-                                setProgressModalValue(0);
-                              } else {
-                                const curMins = Math.round((progressModalValue || 0) * 60);
-                                const newMins = curMins + preset.mins;
-                                setProgressModalValue(Number((newMins / 60).toFixed(4)));
-                              }
-                            }}
-                            className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-amber-500/10 text-slate-700 dark:text-slate-300 text-xs font-black font-display transition-all active:scale-95 cursor-pointer shadow-xs border border-slate-200/60 dark:border-slate-700/60"
-                          >
-                            {preset.label}
-                          </button>
-                        ))}
-                      </div>
                     </div>
 
                     {/* Projected Progress & Total Bar */}
@@ -1425,7 +1398,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                       <div className="flex items-center justify-between text-xs font-black">
                         <span className="text-slate-500 dark:text-slate-400 font-bold">Projected Total</span>
                         <span className={`font-black font-display ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`}>
-                          {formatDuration(projectedTotal)} / {formatDuration(targetVal)} ({pct}%)
+                          {formatDuration(projectedTotalInHours)} / {formatDuration(targetValInHours)} ({pct}%)
                         </span>
                       </div>
 
@@ -1480,44 +1453,37 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                     </button>
                   </div>
 
-                  {/* Quick Add Presets */}
-                  <div className="flex items-center justify-center gap-2">
-                    {[1, 2, 3, 5].map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        onClick={() => setProgressModalValue(preset)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-black font-display border transition-all ${
-                          progressModalValue === preset
-                            ? 'bg-accent-gradient text-white border-accent-primary shadow-md shadow-accent/30 scale-105'
-                            : 'bg-slate-50 dark:bg-slate-950 border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        +{preset}
-                      </button>
-                    ))}
-                  </div>
-
                   {/* Projected Progress & Total Bar */}
-                  <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 space-y-2.5">
-                    <div className="flex items-center justify-between text-xs font-black">
-                      <span className="text-slate-500 dark:text-slate-400 font-bold">Projected Total</span>
-                      <span className={`font-black font-display ${isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
-                        {projectedTotal} / {targetVal} {progressModalHabit.target?.unit || 'times'} ({pct}%)
-                      </span>
-                    </div>
+                  {(() => {
+                    const nonTimeProjectedTotal =
+                      progressModalMode === 'add' && existingModalVal > 0
+                        ? Number((existingModalVal + progressModalValue).toFixed(2))
+                        : progressModalValue;
+                    const nonTimePct = Math.round((nonTimeProjectedTotal / (rawTargetVal || 1)) * 100);
+                    const isNonTimeComplete = nonTimePct >= 100;
 
-                    <div className="w-full bg-slate-200 dark:bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 shadow-inner">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          isComplete
-                            ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/50'
-                            : 'bg-gradient-to-r from-indigo-500 to-purple-500'
-                        }`}
-                        style={{ width: `${Math.min(100, pct)}%` }}
-                      />
-                    </div>
-                  </div>
+                    return (
+                      <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200/80 dark:border-slate-800/80 space-y-2.5">
+                        <div className="flex items-center justify-between text-xs font-black">
+                          <span className="text-slate-500 dark:text-slate-400 font-bold">Projected Total</span>
+                          <span className={`font-black font-display ${isNonTimeComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                            {nonTimeProjectedTotal} / {rawTargetVal} {progressModalHabit.target?.unit || 'times'} ({nonTimePct}%)
+                          </span>
+                        </div>
+
+                        <div className="w-full bg-slate-200 dark:bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 shadow-inner">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              isNonTimeComplete
+                                ? 'bg-gradient-to-r from-emerald-500 to-teal-400 shadow-sm shadow-emerald-500/50'
+                                : 'bg-gradient-to-r from-indigo-500 to-purple-500'
+                            }`}
+                            style={{ width: `${Math.min(100, nonTimePct)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })()}
@@ -1573,12 +1539,14 @@ function TimerWheelColumn({
   onChange,
   unitLabel,
   columnTitle,
+  disabled = false,
 }: {
   options: number[];
   value: number;
   onChange: (val: number) => void;
   unitLabel: string;
   columnTitle: string;
+  disabled?: boolean;
 }) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const isUserScrollingRef = React.useRef(false);
@@ -1610,7 +1578,7 @@ function TimerWheelColumn({
   }, [selectedIdx]);
 
   const handleScroll = () => {
-    if (!containerRef.current) return;
+    if (disabled || !containerRef.current) return;
     isUserScrollingRef.current = true;
 
     // Real-time calculation during scroll for instant feedback
@@ -1638,6 +1606,7 @@ function TimerWheelColumn({
   };
 
   const handleItemClick = (opt: number, idx: number) => {
+    if (disabled) return;
     isUserScrollingRef.current = false;
     onChange(opt);
     if (containerRef.current) {
@@ -1649,9 +1618,9 @@ function TimerWheelColumn({
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <span className="text-[10px] font-black uppercase tracking-widest font-display text-slate-400 dark:text-slate-500 mb-1.5">
-        {columnTitle}
+    <div className={`flex flex-col items-center transition-opacity ${disabled ? 'opacity-30 pointer-events-none select-none' : ''}`}>
+      <span className="text-[10px] font-black uppercase tracking-widest font-display text-slate-400 dark:text-slate-500 mb-1.5 flex items-center gap-1">
+        {columnTitle} {disabled && <span className="text-[9px] text-slate-400 font-normal">(Off)</span>}
       </span>
       <div className="relative w-24 sm:w-28 h-48 overflow-hidden">
         {/* Selection Overlay Bar */}
@@ -1672,6 +1641,7 @@ function TimerWheelColumn({
               <button
                 key={opt}
                 type="button"
+                disabled={disabled}
                 onClick={() => handleItemClick(opt, idx)}
                 className={`shrink-0 h-[44px] w-full flex items-center justify-center gap-1 transition-all duration-100 cursor-pointer ${
                   isSelected

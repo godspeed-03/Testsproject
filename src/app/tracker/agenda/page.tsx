@@ -17,6 +17,7 @@ import {
   LayoutGrid,
   List,
   Coffee,
+  Eye,
 } from "lucide-react";
 import { useTracker, getTargetGoalLabel, calculateHabitStreak, getTodayIso, getHabitProgressColor } from "../TrackerContext";
 import ShadcnDatePicker from "@/components/ui/ShadcnDatePicker";
@@ -45,6 +46,7 @@ export default function AgendaPage() {
     handleOpenEditModal,
     handleItemClick,
     handleMarkRestDay,
+    batchedRevisions,
   } = useTracker();
 
   const { isRestDayActive, completedCount, restCount } = React.useMemo(() => {
@@ -380,10 +382,49 @@ export default function AgendaPage() {
             const isTime = ['mins', 'minutes', 'min', 'minute', 'hours', 'hrs', 'hour'].includes(u);
             const loggedMins = ['hours', 'hrs', 'hour'].includes(u) ? Math.round(loggedVal * 60) : loggedVal;
             const targetMins = ['hours', 'hrs', 'hour'].includes(u) ? Math.round((h.target?.value || 1) * 60) : (h.target?.value || 1);
+            const isBatchRev = Boolean(
+              h.isBatchRevision ||
+              h.isBatchedRevision ||
+              (Array.isArray(h.selectedMicroTopicsCluster) && h.selectedMicroTopicsCluster.length > 0) ||
+              (typeof h.title === 'string' && (
+                /batch\s*revision/i.test(h.title) ||
+                /^WEEK\s+\d+/i.test(h.title.trim()) ||
+                /^\[R[123]\s+Revision\]/i.test(h.title.trim())
+              ))
+            );
+
+            let batchPct = 0;
+            if (isBatchRev) {
+              const matchedBatch = (batchedRevisions || []).find(
+                (b: any) => b.habitId === (h.id || h._id) || b.habitId === h.customId
+              );
+              const batchStatuses: any[] = matchedBatch && Array.isArray(matchedBatch.topicStatuses) ? matchedBatch.topicStatuses : [];
+              const savedCompletedArr: string[] = Array.isArray(hist?.completedTopics) ? hist.completedTopics : [];
+
+              const cluster = batchStatuses.length > 0
+                ? batchStatuses
+                : (Array.isArray(h.selectedMicroTopicsCluster) && h.selectedMicroTopicsCluster.length > 0
+                    ? h.selectedMicroTopicsCluster
+                    : []);
+
+              const totalCount = cluster.length;
+              if (totalCount > 0) {
+                const doneCount = cluster.filter((item: any) => {
+                  const topName = String(item.topic || item.topicId || "").trim().toLowerCase();
+                  if (batchStatuses.length > 0) {
+                    const found = batchStatuses.find((bt: any) => String(bt.topic || bt.topicId).trim().toLowerCase() === topName);
+                    if (found && typeof found.isDone === "boolean") return found.isDone;
+                  }
+                  return savedCompletedArr.some((sk: string) => String(sk).toLowerCase().endsWith(topName));
+                }).length;
+                batchPct = Math.round((doneCount / totalCount) * 100);
+              }
+            }
+
             const calcPct = isTime
               ? Math.round((loggedMins / Math.max(targetMins, 1)) * 100)
               : Math.round((loggedVal / Math.max(h.target?.value || 1, 1)) * 100);
-            const cardPct = isDone ? 100 : Math.min(calcPct, 100);
+            const cardPct = isBatchRev ? (isDone ? 100 : batchPct) : (isDone ? 100 : Math.min(calcPct, 100));
 
             if (layoutMode === "rows") {
               return (
@@ -405,16 +446,6 @@ export default function AgendaPage() {
                       </span>
                       {(() => {
                         const isAugmentedTask = h.isAugmentedRevision;
-                        const isBatchRev = Boolean(
-                          h.isBatchRevision ||
-                          h.isBatchedRevision ||
-                          (Array.isArray(h.selectedMicroTopicsCluster) && h.selectedMicroTopicsCluster.length > 0) ||
-                          (typeof h.title === 'string' && (
-                            /batch\s*revision/i.test(h.title) ||
-                            /^WEEK\s+\d+/i.test(h.title.trim()) ||
-                            /^\[R[123]\s+Revision\]/i.test(h.title.trim())
-                          ))
-                        );
                         if (isBatchRev) {
                           return (
                             <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/30 shrink-0 flex items-center gap-0.5">
@@ -514,20 +545,24 @@ export default function AgendaPage() {
 
                     <button
                       type="button"
-                      disabled={saving || selectedDate < getTodayIso()}
+                      disabled={saving}
                       onClick={() => handleItemClick(h, selectedDate)}
                       title={
-                        selectedDate < getTodayIso()
-                          ? "Backdate editing is disabled"
-                          : h.isBatchRevision
-                            ? "Click to Manage Batch Revision Topics"
+                        isBatchRev
+                          ? "Click to Open Batch Revision Topics Modal"
+                          : selectedDate < getTodayIso()
+                            ? "Backdate editing is disabled"
                             : isDone
                               ? "Click to Mark as False / Missed"
                               : isFailed
                                 ? "Click to Reset to None"
                                 : "Click to Mark as True / Done"
                       }
-                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${buttonStyleClass} ${selectedDate < getTodayIso() ? "cursor-not-allowed" : ""}`}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                        isBatchRev
+                          ? "bg-purple-500/15 hover:bg-purple-500/25 text-purple-600 dark:text-purple-300 border border-purple-500/30 shadow-xs cursor-pointer"
+                          : buttonStyleClass
+                      } ${selectedDate < getTodayIso() && !isBatchRev ? "cursor-not-allowed" : ""}`}
                     >
                       {togglingId === `${h.id || h._id}_${selectedDate}` ? (
                         <Loader2 size={14} className={`animate-spin ${isDone ? "text-white" : isFailed ? "text-white" : "text-indigo-600 dark:text-indigo-400"}`} />
@@ -537,6 +572,8 @@ export default function AgendaPage() {
                         <Check size={14} className="stroke-[3]" />
                       ) : isFailed ? (
                         <X size={14} className="stroke-[3]" />
+                      ) : isBatchRev ? (
+                        <Eye size={15} className="stroke-[2.5] text-purple-400" />
                       ) : pTier === "p75" || pTier === "p50" || pTier === "p25" ? (
                         <Check size={14} className="stroke-[2.5]" />
                       ) : (
@@ -564,16 +601,6 @@ export default function AgendaPage() {
                     </span>
                     {(() => {
                       const isAugmentedTask = h.isAugmentedRevision;
-                      const isBatchRev = Boolean(
-                        h.isBatchRevision ||
-                        h.isBatchedRevision ||
-                        (Array.isArray(h.selectedMicroTopicsCluster) && h.selectedMicroTopicsCluster.length > 0) ||
-                        (typeof h.title === 'string' && (
-                          /batch\s*revision/i.test(h.title) ||
-                          /^WEEK\s+\d+/i.test(h.title.trim()) ||
-                          /^\[R[123]\s+Revision\]/i.test(h.title.trim())
-                        ))
-                      );
                       if (isBatchRev) {
                         return (
                           <span
@@ -736,23 +763,27 @@ export default function AgendaPage() {
 
                   <button
                     type="button"
-                    disabled={saving || selectedDate < getTodayIso()}
+                    disabled={saving}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleItemClick(h, selectedDate);
                     }}
                     title={
-                      selectedDate < getTodayIso()
-                        ? "Backdate editing is disabled"
-                        : h.isBatchRevision
-                          ? "Click to Manage Batch Revision Topics"
+                      isBatchRev
+                        ? "Click to Open Batch Revision Topics Modal"
+                        : selectedDate < getTodayIso()
+                          ? "Backdate editing is disabled"
                           : isDone
                             ? "Click to Mark as False / Missed"
                             : isFailed
                               ? "Click to Reset to None"
                               : "Click to Mark as True / Done"
                     }
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${buttonStyleClass} ${selectedDate < getTodayIso() ? "cursor-not-allowed" : ""}`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                      isBatchRev
+                        ? "bg-purple-500/15 hover:bg-purple-500/25 text-purple-600 dark:text-purple-300 border border-purple-500/30 shadow-xs cursor-pointer"
+                        : buttonStyleClass
+                    } ${selectedDate < getTodayIso() && !isBatchRev ? "cursor-not-allowed" : ""}`}
                   >
                     {togglingId === `${h.id || h._id}_${selectedDate}` ? (
                       <Loader2 size={14} className={`animate-spin ${isDone ? "text-white" : isFailed ? "text-white" : "text-indigo-600 dark:text-indigo-400"}`} />
@@ -762,6 +793,8 @@ export default function AgendaPage() {
                       <Check size={16} className="stroke-[3]" />
                     ) : isFailed ? (
                       <X size={16} className="stroke-[3]" />
+                    ) : isBatchRev ? (
+                      <Eye size={16} className="stroke-[2.5] text-purple-400" />
                     ) : pTier === "p75" || pTier === "p50" || pTier === "p25" ? (
                       <Check size={16} className="stroke-[2.5]" />
                     ) : (

@@ -386,7 +386,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            className={`w-full max-w-xl max-h-[92vh] flex flex-col p-5 sm:p-6 rounded-3xl border ${cardBg} shadow-2xl space-y-4 bg-white/95 dark:bg-slate-900/95`}
+            className={`w-full max-w-xl max-h-[92vh] flex flex-col p-5 sm:p-6 rounded-3xl border ${cardBg} shadow-2xl space-y-4 bg-white/95 dark:bg-slate-900/95 overflow-x-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -441,7 +441,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             </div>
 
             {/* Scrollable Form Body */}
-            <form onSubmit={handleCreateSubmit} className="flex-1 overflow-y-auto pr-1 space-y-4 text-xs scrollbar-thin">
+            <form onSubmit={handleCreateSubmit} className="flex-1 overflow-y-auto overflow-x-hidden pr-1 space-y-4 text-xs scrollbar-thin">
               {createType === 'list' ? (
                 <div className="space-y-3 pt-1">
                   <div>
@@ -662,19 +662,35 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             {(() => {
                               const normalizedSubj = String(formSubject || '').trim().toLowerCase();
 
+                              const standardCatRegex = /^(GS[1-4]|CSAT|REV|General|N\/A)$/i;
+
                               const fromRevisions = (topicRevisions || [])
-                                .filter((r: any) => String(r.subject || '').trim().toLowerCase() === normalizedSubj && r.topic && !r.isBatchedRevision)
+                                .filter((r: any) => String(r.subject || '').trim().toLowerCase() === normalizedSubj && r.topic)
                                 .flatMap((r: any) => String(r.topic).split(',').map((t: string) => t.trim()))
-                                .filter((t: string) => !t.toLowerCase().includes("week ") && !t.toLowerCase().startsWith("[r"));
+                                .filter((t: string) =>
+                                  t &&
+                                  !standardCatRegex.test(t) &&
+                                  !t.toLowerCase().includes("week ") &&
+                                  !t.toLowerCase().startsWith("[r") &&
+                                  !t.toLowerCase().includes("batch revision")
+                                );
 
                               const fromSyllabus = (syllabusItems || [])
                                 .filter((s: any) => String(s.subject || '').trim().toLowerCase() === normalizedSubj)
                                 .flatMap((s: any) => {
                                   const list: string[] = [];
-                                  if (s.topic) list.push(String(s.topic).trim());
+                                  if (s.category && !standardCatRegex.test(s.category.trim())) {
+                                    list.push(String(s.category).trim());
+                                  }
+                                  if (s.topic && !standardCatRegex.test(s.topic.trim())) {
+                                    list.push(String(s.topic).trim());
+                                  }
                                   if (s.topics) {
-                                    if (Array.isArray(s.topics)) list.push(...s.topics.map((t: any) => String(t).trim()));
-                                    else list.push(...String(s.topics).split(',').map((t: string) => t.trim()));
+                                    const arr = Array.isArray(s.topics) ? s.topics : String(s.topics).split(',');
+                                    arr.forEach((t: any) => {
+                                      const str = String(t).trim();
+                                      if (str && !standardCatRegex.test(str)) list.push(str);
+                                    });
                                   }
                                   return list;
                                 });

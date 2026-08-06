@@ -127,6 +127,7 @@ export async function processTopicTag(
         doc = await prisma.topicRevision.create({ data: createData });
       }
     } else {
+      const isBatch = !!tag.isBatchedRevision;
       const createData: any = {
         userId,
         customId,
@@ -134,15 +135,15 @@ export async function processTopicTag(
         category: catName,
         topic: topicName,
         firstReadDate: logDate,
-        lastRevisedDate: logDate,
+        lastRevisedDate: isBatch ? '' : logDate,
         isAugmentedRevision: false,
-        status: 'Completed',
+        status: isBatch ? 'Pending' : 'Completed',
         isOverdue: false,
         overdueDays: 0,
         nextScheduledDate: '',
-        revisions: [],
+        revisions: isBatch ? [{ stage: 'R1', scheduledDate: logDate, completedDate: '', status: 'Pending' }] : [],
       };
-      if (tag.isBatchedRevision) {
+      if (isBatch) {
         createData.isBatchedRevision = true;
       }
 

@@ -96,7 +96,7 @@ function recalculateHabitStreak(habit: any) {
 
   const doneDatesSet = new Set(doneDatesArr);
   const skippedDatesSet = new Set<string>(
-    history.filter((h: any) => h.status === "skipped" || h.status === "rest").map((h: any) => String(h.date))
+    history.filter((h: any) => h.status === "skipped" || h.status === "rest").map((h: any) => String(h.date)),
   );
 
   const formatDateStr = (d: Date) => {
@@ -302,7 +302,13 @@ export async function GET(req: Request) {
               modified = true;
             } else {
               const entry = history[existingIdx];
-              if (entry.status !== "done" && entry.status !== "failed" && entry.status !== "false" && entry.status !== "skipped" && entry.status !== "rest") {
+              if (
+                entry.status !== "done" &&
+                entry.status !== "failed" &&
+                entry.status !== "false" &&
+                entry.status !== "skipped" &&
+                entry.status !== "rest"
+              ) {
                 history[existingIdx] = { ...entry, status: "failed" };
                 modified = true;
               }
@@ -331,7 +337,7 @@ export async function GET(req: Request) {
           };
         }
         return recalculateHabitStreak(h);
-      })
+      }),
     );
 
     const habitSubjects = Array.from(new Set(habits.map((h: any) => h.subject).filter(Boolean)));
@@ -352,7 +358,15 @@ export async function GET(req: Request) {
       return a.localeCompare(b);
     });
 
-    return NextResponse.json({ habits, lists, syllabusSubjects, syllabusItems, topicRevisions: formattedTopicRevisions, batchedRevisions, categories });
+    return NextResponse.json({
+      habits,
+      lists,
+      syllabusSubjects,
+      syllabusItems,
+      topicRevisions: formattedTopicRevisions,
+      batchedRevisions,
+      categories,
+    });
   } catch (error: any) {
     console.error("Failed to fetch habit tracker data:", error);
     return NextResponse.json({ error: "Database error" }, { status: 500 });
@@ -500,10 +514,7 @@ export async function POST(req: Request) {
         where: {
           userId,
           status: { not: "Completed" },
-          OR: [
-            { nextScheduledDate: targetDate },
-            { firstReadDate: targetDate },
-          ],
+          OR: [{ nextScheduledDate: targetDate }, { firstReadDate: targetDate }],
         },
       });
 
@@ -653,7 +664,8 @@ export async function POST(req: Request) {
         habit.subject ||
         habit.topic ||
         habit.title.includes(":") ||
-        habitAny.selectedMicroTopicsCluster
+        habitAny.selectedMicroTopicsCluster ||
+        habitAny.isBatchRevision
       ) {
         try {
           const isDone = history.some((h: any) => h.date === date && h.status === "done");
@@ -666,11 +678,38 @@ export async function POST(req: Request) {
           let topicsToSync: Array<{ subject: string; topic: string; isTopicDone: boolean }> = [];
 
           const habitObj = habit as any;
-          if (Array.isArray(habitObj.selectedMicroTopicsCluster) && habitObj.selectedMicroTopicsCluster.length > 0) {
-            topicsToSync = habitObj.selectedMicroTopicsCluster.map((item: any) => {
-              const topicKey = `${item.category || ""}|${item.subject}|${item.topic}`;
-              const isTopicDone = isDone || completedTopicsSet.has(topicKey) || completedTopicsSet.has(item.topic);
-              return { subject: item.subject, topic: item.topic, isTopicDone };
+          const existingBatchRecord = await prisma.batchedRevisionItem.findFirst({
+            where: { userId, habitId: habit.id },
+          });
+
+          const cluster =
+            Array.isArray(habitObj.selectedMicroTopicsCluster) && habitObj.selectedMicroTopicsCluster.length > 0
+              ? habitObj.selectedMicroTopicsCluster
+              : Array.isArray(existingBatchRecord?.topicStatuses) && (existingBatchRecord?.topicStatuses as any[]).length > 0
+                ? (existingBatchRecord?.topicStatuses as any[])
+                : [];
+
+          if (cluster.length > 0) {
+            topicsToSync = cluster.map((item: any) => {
+              const itemTopic = String(item.topic || item.topicId || "")
+                .trim()
+                .toLowerCase();
+              const itemSubj = String(item.subject || "")
+                .trim()
+                .toLowerCase();
+
+              const isTopicDone =
+                isDone ||
+                Array.from(completedTopicsSet).some((savedKey: string) => {
+                  const s = String(savedKey).trim().toLowerCase();
+                  return s === itemTopic || s.endsWith(`|${itemTopic}`) || s.includes(`|${itemSubj}|${itemTopic}`);
+                });
+
+              return {
+                subject: item.subject || habit.subject || "General",
+                topic: item.topic || item.topicId,
+                isTopicDone,
+              };
             });
           } else {
             let cleanSubj = habit.subject?.trim() || "";
@@ -702,9 +741,15 @@ export async function POST(req: Request) {
 
           const isBatchRevision = Boolean(habit.isBatchRevision);
 
-          // Loop & sync each TopicRevision record in DB
+          // Loop & sync each TopicRevision record in DB ONLY when all topics of its subject are 100% completed
           for (const item of topicsToSync) {
             if (!item.subject || !item.topic) continue;
+
+            const subjectTopics = topicsToSync.filter(
+              (t) => t.subject.toLowerCase().trim() === item.subject.toLowerCase().trim(),
+            );
+            const isSubjectFullyDone = subjectTopics.length > 0 && subjectTopics.every((t) => t.isTopicDone);
+
             let topicDoc = await prisma.topicRevision.findFirst({
               where: {
                 userId,
@@ -713,7 +758,7 @@ export async function POST(req: Request) {
               },
             });
 
-            if (!topicDoc && item.isTopicDone) {
+            if (!topicDoc && isSubjectFullyDone) {
               topicDoc = await processTopicTag(
                 userId,
                 {
@@ -727,46 +772,10 @@ export async function POST(req: Request) {
               );
             }
 
-            if (topicDoc) {
+            if (topicDoc && isSubjectFullyDone) {
               const revisionsArr: any[] = Array.isArray(topicDoc.revisions) ? [...(topicDoc.revisions as any[])] : [];
-              let targetStage = "";
-              if (habit.title.startsWith("[R1 Revision]")) targetStage = "R1";
-              else if (habit.title.startsWith("[R2 Revision]")) targetStage = "R2";
-              else if (habit.title.startsWith("[R3 Revision]")) targetStage = "R3";
-              else {
-                // Find next pending stage or create a stage entry
-                const pendingRev = revisionsArr.find((r: any) => r.status === "Pending" || !r.completedDate);
-                targetStage = pendingRev
-                  ? pendingRev.stage
-                  : revisionsArr.length > 0
-                    ? `R${revisionsArr.length}`
-                    : "First Read";
-              }
 
-              let revEntry = revisionsArr.find((r: any) => r.stage === targetStage);
-              if (!revEntry) {
-                revEntry = { stage: targetStage, scheduledDate: date, completedDate: "", status: "Pending" };
-                revisionsArr.push(revEntry);
-              }
-
-              if (revEntry) {
-                revEntry.status = item.isTopicDone ? "Completed" : "Pending";
-                revEntry.completedDate = item.isTopicDone ? date : "";
-              }
-
-              // Compute next scheduled revision date
-              let nextSched = topicDoc.nextScheduledDate || "";
-              if (item.isTopicDone) {
-                if (targetStage === "First Read" || targetStage === "R1") {
-                  nextSched = addDaysStr(date, 14);
-                } else if (targetStage === "R2") {
-                  nextSched = addDaysStr(date, 24);
-                } else if (targetStage === "R3") {
-                  nextSched = addDaysStr(date, 30);
-                }
-              }
-
-              if (item.isTopicDone && isBatchRevision) {
+              if (isBatchRevision) {
                 const extraStageName = `Extra Revision (Batch: ${habit.title || "Cluster"})`;
                 let extraEntry = revisionsArr.find((r: any) => r.stage === extraStageName && r.completedDate === date);
                 if (!extraEntry) {
@@ -778,21 +787,59 @@ export async function POST(req: Request) {
                     note: "Logged via Batched Revision Task",
                   });
                 }
-              }
 
-              await prisma.topicRevision.update({
-                where: { id: topicDoc.id },
-                data: {
-                  revisions: revisionsArr,
-                  lastRevisedDate: item.isTopicDone ? date : topicDoc.lastRevisedDate,
-                  firstReadDate: topicDoc.firstReadDate || (item.isTopicDone ? date : ""),
-                  nextScheduledDate: nextSched,
-                  isOverdue: false,
-                  overdueDays: 0,
-                  status: item.isTopicDone ? "Completed" : "Pending",
-                  isBatchedRevision: isBatchRevision ? true : topicDoc.isBatchedRevision,
-                },
-              });
+                await prisma.topicRevision.update({
+                  where: { id: topicDoc.id },
+                  data: {
+                    revisions: revisionsArr,
+                    lastRevisedDate: date,
+                  },
+                });
+              } else {
+                let targetStage = "";
+                if (habit.title.startsWith("[R1 Revision]")) targetStage = "R1";
+                else if (habit.title.startsWith("[R2 Revision]")) targetStage = "R2";
+                else if (habit.title.startsWith("[R3 Revision]")) targetStage = "R3";
+                else {
+                  const pendingRev = revisionsArr.find((r: any) => r.status === "Pending" || !r.completedDate);
+                  targetStage = pendingRev
+                    ? pendingRev.stage
+                    : revisionsArr.length > 0
+                      ? `R${revisionsArr.length}`
+                      : "First Read";
+                }
+
+                let revEntry = revisionsArr.find((r: any) => r.stage === targetStage);
+                if (!revEntry) {
+                  revEntry = { stage: targetStage, scheduledDate: date, completedDate: "", status: "Pending" };
+                  revisionsArr.push(revEntry);
+                }
+
+                revEntry.status = "Completed";
+                revEntry.completedDate = date;
+
+                let nextSched = topicDoc.nextScheduledDate || "";
+                if (targetStage === "First Read" || targetStage === "R1") {
+                  nextSched = addDaysStr(date, 14);
+                } else if (targetStage === "R2") {
+                  nextSched = addDaysStr(date, 24);
+                } else if (targetStage === "R3") {
+                  nextSched = addDaysStr(date, 30);
+                }
+
+                await prisma.topicRevision.update({
+                  where: { id: topicDoc.id },
+                  data: {
+                    revisions: revisionsArr,
+                    lastRevisedDate: date,
+                    firstReadDate: topicDoc.firstReadDate || date,
+                    nextScheduledDate: nextSched,
+                    isOverdue: false,
+                    overdueDays: 0,
+                    status: "Completed",
+                  },
+                });
+              }
             }
           }
 
@@ -803,30 +850,66 @@ export async function POST(req: Request) {
             });
 
             if (existingBatchRecord || isBatchRevision) {
-              const updatedStatuses = topicsToSync.map((t) => ({
-                topicId: t.topic,
-                topic: t.topic,
-                subject: t.subject,
-                isDone: t.isTopicDone,
-              }));
+              const existingStatuses: any[] = Array.isArray(existingBatchRecord?.topicStatuses)
+                ? (existingBatchRecord.topicStatuses as any[])
+                : [];
+              const existingRevIds: any[] = Array.isArray(existingBatchRecord?.topicRevisionIds)
+                ? (existingBatchRecord.topicRevisionIds as any[])
+                : [];
+
+              const topicRevDocs =
+                topicsToSync.length > 0
+                  ? await prisma.topicRevision.findMany({
+                      where: {
+                        userId,
+                        OR: topicsToSync.map((t) => ({
+                          subject: { equals: t.subject, mode: "insensitive" },
+                          topic: { equals: t.topic, mode: "insensitive" },
+                        })),
+                      },
+                    })
+                  : [];
+
+              const updatedStatuses = topicsToSync.map((t) => {
+                const matchedRevDoc = topicRevDocs.find(
+                  (rd) =>
+                    rd.subject.toLowerCase() === t.subject.toLowerCase() &&
+                    rd.topic.toLowerCase() === t.topic.toLowerCase(),
+                );
+                const prevStatus = existingStatuses.find(
+                  (s: any) => String(s.topic).toLowerCase() === t.topic.toLowerCase(),
+                );
+                return {
+                  topicId: prevStatus?.topicId || t.topic,
+                  topic: t.topic,
+                  subject: t.subject,
+                  category: prevStatus?.category || (t as any).category || "GS1",
+                  syllabusItemId: prevStatus?.syllabusItemId || null,
+                  isDone: t.isTopicDone,
+                  completedDate: t.isTopicDone ? date : "",
+                  topicRevisionId: matchedRevDoc?.id || prevStatus?.topicRevisionId || null,
+                };
+              });
+
+              const currentTopicRevIds = updatedStatuses.map((t) => t.topicRevisionId).filter(Boolean);
+              const combinedTopicRevIds = Array.from(new Set([...existingRevIds, ...currentTopicRevIds]));
 
               const uniqueSubjectIds = Array.from(
-                new Set(updatedStatuses.flatMap((t: any) => [t.subject, t.syllabusItemId, t.topicId]).filter(Boolean))
+                new Set(updatedStatuses.flatMap((t: any) => [t.subject, t.syllabusItemId, t.topicId]).filter(Boolean)),
               );
-              const topicRevIdsArr = Array.from(
-                new Set(updatedStatuses.map((t: any) => t.topicRevisionId).filter(Boolean))
-              );
+
+              const isAllTopicsDone = topicsToSync.length > 0 && topicsToSync.every((t) => t.isTopicDone);
 
               if (existingBatchRecord) {
                 await prisma.batchedRevisionItem.update({
                   where: { id: existingBatchRecord.id },
                   data: {
                     title: habit.title,
-                    topicRevisionIds: topicRevIdsArr as any,
+                    topicRevisionIds: combinedTopicRevIds as any,
                     subjectIds: uniqueSubjectIds as any,
                     topicStatuses: updatedStatuses as any,
-                    isAllDone: isDone,
-                    completedDate: isDone ? date : "",
+                    isAllDone: isAllTopicsDone,
+                    completedDate: isAllTopicsDone ? date : "",
                   },
                 });
               } else if (isBatchRevision) {
@@ -834,12 +917,12 @@ export async function POST(req: Request) {
                   data: {
                     userId,
                     habitId: habit.id,
-                    topicRevisionIds: topicRevIdsArr as any,
+                    topicRevisionIds: combinedTopicRevIds as any,
                     title: habit.title,
                     subjectIds: uniqueSubjectIds as any,
                     topicStatuses: updatedStatuses as any,
-                    isAllDone: isDone,
-                    completedDate: isDone ? date : "",
+                    isAllDone: isAllTopicsDone,
+                    completedDate: isAllTopicsDone ? date : "",
                   },
                 });
               }
@@ -924,8 +1007,8 @@ export async function POST(req: Request) {
       const resolvedIsAugmented = isBatchRevTask
         ? false
         : isAugmentedRevision !== undefined
-        ? Boolean(isAugmentedRevision)
-        : !(/csat|maths|mathematics|math/i.test(cleanSubject) || /csat|maths|mathematics|math/i.test(categoryLabel));
+          ? Boolean(isAugmentedRevision)
+          : !(/csat|maths|mathematics|math/i.test(cleanSubject) || /csat|maths|mathematics|math/i.test(categoryLabel));
 
       const rawTarget = target || { value: null, unit: "yes_no" };
       const rawUnitStr = (rawTarget.unit || "yes_no").toLowerCase().trim();
@@ -959,7 +1042,7 @@ export async function POST(req: Request) {
           isAugmentedRevision: resolvedIsAugmented,
           isBatchRevision: isBatchRevTask,
           subject: cleanSubject,
-          topic: isBatchRevTask ? ((topic || "").trim() || title || "Batched Revision") : (topic || "").trim(),
+          topic: isBatchRevTask ? (topic || "").trim() || title || "Batched Revision" : (topic || "").trim(),
           color: color || "#6366F1",
           icon: icon || "🏃",
           streakCurrent: 0,
@@ -980,14 +1063,44 @@ export async function POST(req: Request) {
 
           // 1. Group cluster topics by distinct subject
           const distinctSubjectsMap = new Map<string, string>(); // subject -> category
+          const resolvedItemsMap = new Map<string, { subject: string; category: string }>();
 
           for (const rawItem of rawCluster) {
             const itemObj = (typeof rawItem === "string" ? { topic: rawItem } : rawItem || {}) as any;
             const itemTopic = String(itemObj.topic || itemObj.name || itemObj.topicName || itemObj.title || "").trim();
             if (!itemTopic) continue;
 
-            const itemSubj = String(itemObj.subject || itemObj.subjectName || cleanSubject || "Weekly Revision").trim() || "Weekly Revision";
-            const itemCat = String(itemObj.category || itemObj.categoryLabel || categoryLabel || "REV").trim() || "REV";
+            let itemSubj = String(itemObj.subject || itemObj.subjectName || "").trim();
+            if (!itemSubj || itemSubj.toLowerCase() === "weekly revision" || itemSubj.toLowerCase() === "batch revision") {
+              const matchingSys = await prisma.syllabusItem.findFirst({
+                where: {
+                  userId,
+                  category: { equals: itemTopic, mode: "insensitive" },
+                },
+              });
+              if (matchingSys?.subject) {
+                itemSubj = matchingSys.subject;
+              } else {
+                const matchingRev = await prisma.topicRevision.findFirst({
+                  where: {
+                    userId,
+                    topic: { equals: itemTopic, mode: "insensitive" },
+                  },
+                });
+                if (matchingRev?.subject) {
+                  itemSubj = matchingRev.subject;
+                } else {
+                  itemSubj = cleanSubject || "Weekly Revision";
+                }
+              }
+            }
+
+            let itemCat = String(itemObj.category || itemObj.categoryLabel || "").trim();
+            if (!itemCat || itemCat === "REV" || itemCat === "N/A") {
+              itemCat = categoryLabel || "GS1";
+            }
+
+            resolvedItemsMap.set(itemTopic, { subject: itemSubj, category: itemCat });
 
             if (!distinctSubjectsMap.has(itemSubj)) {
               distinctSubjectsMap.set(itemSubj, itemCat);
@@ -1013,7 +1126,7 @@ export async function POST(req: Request) {
                 isAugmentedRevision: false,
                 isBatchedRevision: true,
               },
-              taskStartDate
+              taskStartDate,
             );
 
             if (topicDoc?.id) {
@@ -1038,8 +1151,12 @@ export async function POST(req: Request) {
             const itemTopic = String(itemObj.topic || itemObj.name || itemObj.topicName || itemObj.title || "").trim();
             if (!itemTopic) continue;
 
-            const itemSubj = String(itemObj.subject || itemObj.subjectName || cleanSubject || "Weekly Revision").trim() || "Weekly Revision";
-            const itemCat = String(itemObj.category || itemObj.categoryLabel || categoryLabel || "REV").trim() || "REV";
+            const resolved = resolvedItemsMap.get(itemTopic) || {
+              subject: cleanSubject || "Weekly Revision",
+              category: categoryLabel || "GS1",
+            };
+            const itemSubj = resolved.subject;
+            const itemCat = resolved.category;
             const topicRevId = subjectToRevIdMap[itemSubj] || createdTopicRevIds[0] || null;
 
             const sysItem = await prisma.syllabusItem.findFirst({
@@ -1071,8 +1188,10 @@ export async function POST(req: Request) {
             new Set([
               ...Array.from(distinctSubjectsMap.keys()),
               ...createdTopicRevIds,
-              ...topicStatusesList.flatMap((t) => [t.subject, t.syllabusItemId, t.topicRevisionId, t.topicId]).filter(Boolean),
-            ])
+              ...topicStatusesList
+                .flatMap((t) => [t.subject, t.syllabusItemId, t.topicRevisionId, t.topicId])
+                .filter(Boolean),
+            ]),
           );
 
           // 4. Create linked BatchedRevisionItem record in PostgreSQL with createdTopicRevIds array
@@ -1338,12 +1457,12 @@ export async function POST(req: Request) {
             ? (existingBatchItem.topicRevisionIds as string[])
             : [];
           const allRevIdsToDelete = Array.from(
-            new Set([...batchRevIds, ...statusRevIds].filter((id): id is string => Boolean(id)))
+            new Set([...batchRevIds, ...statusRevIds].filter((id): id is string => Boolean(id))),
           );
 
           if (allRevIdsToDelete.length > 0) {
             await prisma.topicRevision.deleteMany({
-              where: { id: { in: allRevIdsToDelete }, userId },
+              where: { id: { in: allRevIdsToDelete }, userId, isBatchedRevision: true },
             });
           }
 
@@ -1361,7 +1480,7 @@ export async function POST(req: Request) {
               if (tDoc) {
                 const revs = Array.isArray(tDoc.revisions) ? (tDoc.revisions as any[]) : [];
                 const cleanRevs = revs.filter(
-                  (r: any) => !(r.stage && String(r.stage).includes("Extra Revision (Batch"))
+                  (r: any) => !(r.stage && String(r.stage).includes("Extra Revision (Batch")),
                 );
 
                 await prisma.topicRevision.update({
@@ -1371,15 +1490,29 @@ export async function POST(req: Request) {
               }
             }
           }
-
-          await prisma.batchedRevisionItem.deleteMany({
-            where: { id: existingBatchItem.id },
-          });
-        } else {
-          await prisma.batchedRevisionItem.deleteMany({
-            where: { userId, habitId: targetHabit.id },
-          });
         }
+
+        const targetHabitAny = targetHabit as any;
+        const clusterItems = Array.isArray(targetHabitAny.selectedMicroTopicsCluster)
+          ? (targetHabitAny.selectedMicroTopicsCluster as any[])
+          : [];
+
+        for (const item of clusterItems) {
+          if (item.subject && item.topic) {
+            await prisma.topicRevision.deleteMany({
+              where: {
+                userId,
+                subject: { equals: item.subject, mode: "insensitive" },
+                topic: { equals: item.topic, mode: "insensitive" },
+                isBatchedRevision: true,
+              },
+            });
+          }
+        }
+
+        await prisma.batchedRevisionItem.deleteMany({
+          where: { userId, habitId: targetHabit.id },
+        });
 
         let subject = targetHabit.subject?.trim() || "";
         let topic = targetHabit.topic?.trim() || "";
@@ -1458,7 +1591,13 @@ export async function POST(req: Request) {
         new Set([...syllabusItems.map((s: any) => s.subject).filter(Boolean), ...studyTaskSubjects]),
       );
 
-      return NextResponse.json({ message: "Habit deleted", habits, syllabusSubjects, batchedRevisions, topicRevisions });
+      return NextResponse.json({
+        message: "Habit deleted",
+        habits,
+        syllabusSubjects,
+        batchedRevisions,
+        topicRevisions,
+      });
     }
 
     if (action === "delete_topic") {

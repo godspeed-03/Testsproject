@@ -35,6 +35,7 @@ export async function GET() {
       dailySnapshots,
       monthlySnapshots,
       consistencySnapshots,
+      weeklyData,
       allTimeSnapshot,
       routineConfig,
       batchedRevisions,
@@ -48,6 +49,7 @@ export async function GET() {
       prisma.dailySnapshot.findMany({ where: { userId } }),
       prisma.monthlySnapshot.findMany({ where: { userId } }),
       prisma.consistencySnapshot.findMany({ where: { userId } }),
+      prisma.weeklyData.findMany({ where: { userId } }),
       prisma.allTimeSnapshot.findUnique({ where: { userId } }),
       prisma.routineConfig.findUnique({ where: { userId } }),
       prisma.batchedRevisionItem.findMany({ where: { userId } }),
@@ -71,6 +73,8 @@ export async function GET() {
       status: item.status || 'Not Started',
       date: item.date || '',
       nextRev: item.nextRev || '',
+      color: item.color || '',
+      icon: item.icon || '',
       rules: buildDynamicRulesFromLegacy(item, dbRuleSets),
     }));
 
@@ -133,6 +137,21 @@ export async function GET() {
     }
 
     return NextResponse.json({
+      meta: {
+        version: '2.0',
+        app: 'UPSC Tracker',
+        exportedAt: new Date().toISOString(),
+        userEmail: user.email,
+        counts: {
+          habits: formattedHabits.length,
+          checkLists: formattedLists.length,
+          topicRevisions: formattedTopicRevisions.length,
+          batchedRevisions: batchedRevisions.length,
+          syllabusItems: formattedSyllabus.length,
+          testLogs: formattedTestLogs.length,
+          ruleSets: formattedRuleSets.length,
+        },
+      },
       habits: formattedHabits,
       lists: formattedLists,
       checkLists: formattedLists,
@@ -144,6 +163,7 @@ export async function GET() {
       dailySnapshots,
       monthlySnapshots,
       consistencySnapshots,
+      weeklyData,
       allTimeSnapshot,
       routineConfig: formattedRoutineConfig,
       exportedAt: new Date().toISOString(),

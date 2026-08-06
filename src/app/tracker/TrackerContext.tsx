@@ -715,17 +715,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   };
 
   const handleItemClick = (h: any, date: string) => {
-    const todayStr = getTodayIso();
-    if (date < todayStr) {
-      alert('Backdating is disabled: You cannot edit or log completion for past dates.');
-      return;
-    }
-    if (!isHabitScheduledForDate(h, date)) {
-      alert('This habit is not scheduled for this date.');
-      return;
-    }
-
-    // Check if task is a Batch Revision item
+    // 1. Always open Batch Revision modal when clicking a Batch Revision item
     const isBatchRev = Boolean(
       h.isBatchRevision ||
       h.isBatchedRevision ||
@@ -738,9 +728,20 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     );
 
     if (isBatchRev) {
+      console.log("isBatchRev", isBatchRev);
       setBatchRevModalHabit(h);
       setBatchRevModalDate(date);
       setShowBatchRevModal(true);
+      return;
+    }
+
+    const todayStr = getTodayIso();
+    if (date < todayStr) {
+      alert('Backdating is disabled: You cannot edit or log completion for past dates.');
+      return;
+    }
+    if (!isHabitScheduledForDate(h, date)) {
+      alert('This habit is not scheduled for this date.');
       return;
     }
 
@@ -768,7 +769,8 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     if (!batchRevModalHabit) return;
     const habitId = batchRevModalHabit.id || batchRevModalHabit._id;
     const statusToSave = isAllDone ? 'done' : 'pending';
-    await handleToggleLog(habitId, batchRevModalDate, statusToSave, 1, false, completedTopicKeys);
+    const valueToSave = isAllDone ? 1 : 0;
+    await handleToggleLog(habitId, batchRevModalDate, statusToSave, valueToSave, false, completedTopicKeys);
   };
 
   const handleSaveHabitProgress = async (valToSave?: number) => {
@@ -1221,6 +1223,13 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     existingModalVal,
     progressModalMode,
     setProgressModalMode,
+    showBatchRevModal,
+    setShowBatchRevModal,
+    batchRevModalHabit,
+    setBatchRevModalHabit,
+    batchRevModalDate,
+    setBatchRevModalDate,
+    handleSaveBatchRevProgress,
     habitWeekOffsets,
     setHabitWeekOffsets,
     selectedHabitForDetail,

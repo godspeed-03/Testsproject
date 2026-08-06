@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getUserFromCookies } from '@/lib/auth';
 import { buildDynamicRulesFromLegacy } from '@/lib/syllabusRules';
+import { runFullConsistencyPipeline } from '@/lib/consistencyEngineV3';
 
 function sanitizeBson(obj: any): any {
   if (!obj || typeof obj !== 'object') return obj;
@@ -35,6 +36,8 @@ export async function POST(req: Request) {
     const testLogsInput = data.testlogs || data.testLogs || [];
     const ruleSetsInput = data.rulesets || data.ruleSets || data.syllabusRuleSets || [];
     const routineConfigInput = data.routineconfig || data.routineConfig || data.tables || null;
+    const batchedRevisionsInput = data.batchedrevisions || data.batchedRevisions || data.batchedRevisionItems || [];
+    const weeklyDataInput = data.weeklydata || data.weeklyData || [];
 
     // 1. Process Habits
     if (Array.isArray(habitsInput) && habitsInput.length > 0) {
@@ -52,6 +55,7 @@ export async function POST(req: Request) {
         endDate: h.endDate || null,
         isStudyTask: !!h.isStudyTask,
         isAugmentedRevision: h.isAugmentedRevision !== undefined ? !!h.isAugmentedRevision : true,
+        isBatchRevision: h.isBatchRevision !== undefined ? !!h.isBatchRevision : false,
         subject: h.subject || '',
         topic: h.topic || '',
         color: h.color || '#6366F1',
@@ -90,7 +94,8 @@ export async function POST(req: Request) {
         topic: t.topic || 'General Topic',
         firstReadDate: t.firstReadDate || t.date || '',
         lastRevisedDate: t.lastRevisedDate || '',
-        isAugmentedRevision: t.isAugmentedRevision !== undefined ? t.isAugmentedRevision : true,
+        status: t.status || 'Pending',
+        isAugmentedRevision: t.isAugmentedRevision !== undefined ? !!t.isAugmentedRevision : true,
         isBatchedRevision: t.isBatchedRevision !== undefined ? !!t.isBatchedRevision : false,
         isOverdue: !!t.isOverdue,
         overdueDays: t.overdueDays || 0,
@@ -101,7 +106,6 @@ export async function POST(req: Request) {
     }
 
     // 3b. Process Batched Revisions
-    const batchedRevisionsInput = data.batchedrevisions || data.batchedRevisions || data.batchedRevisionItems || [];
     if (Array.isArray(batchedRevisionsInput) && batchedRevisionsInput.length > 0) {
       await prisma.batchedRevisionItem.deleteMany({ where: { userId } });
       const docs = batchedRevisionsInput.map((b: any) => ({
@@ -128,6 +132,8 @@ export async function POST(req: Request) {
         status: item.status || 'Not Started',
         date: item.date || '',
         nextRev: item.nextRev || '',
+        color: item.color || '',
+        icon: item.icon || '',
         rules: item.rules || buildDynamicRulesFromLegacy(item),
       }));
       await prisma.syllabusItem.createMany({ data: docs });
@@ -175,7 +181,22 @@ export async function POST(req: Request) {
       await prisma.syllabusRuleSet.createMany({ data: docs });
     }
 
-    // 7. Process Routine Config
+    // 7. Process Weekly Data
+    if (Array.isArray(weeklyDataInput) && weeklyDataInput.length > 0) {
+      await prisma.weeklyData.deleteMany({ where: { userId } });
+      const docs = weeklyDataInput.map((w: any) => ({
+        userId,
+        weekKey: w.weekKey || `week_${Date.now()}`,
+        totalHours: w.totalHours || 0,
+        weeklyScore: w.weeklyScore || 0,
+        completedHabitsCount: w.completedHabitsCount || 0,
+        completedTopicsCount: w.completedTopicsCount || 0,
+        breakdown: w.breakdown || {},
+      }));
+      await prisma.weeklyData.createMany({ data: docs });
+    }
+
+    // 8. Process Routine Config
     if (routineConfigInput) {
       let payload = routineConfigInput;
       while (payload && payload.configPayload && typeof payload.configPayload === 'object' && !payload.timeSlots && !payload.tables && !payload.satakGoals) {
@@ -194,16 +215,23 @@ export async function POST(req: Request) {
       });
     }
 
+    // Recalculate full consistency pipeline asynchronously for instant data synchronization
+    runFullConsistencyPipeline(userId).catch((err) => {
+      console.error('Post-import consistency engine recalculation error:', err);
+    });
+
     return NextResponse.json({
       success: true,
-      message: 'System data imported successfully into PostgreSQL via Prisma',
+      message: 'System data imported successfully into PostgreSQL database',
       importedCount: {
         habits: habitsInput.length,
         lists: listsInput.length,
         topicRevisions: topicRevisionsInput.length,
+        batchedRevisions: batchedRevisionsInput.length,
         syllabus: syllabusInput.length,
         testLogs: testLogsInput.length,
         ruleSets: ruleSetsInput.length,
+        weeklyData: weeklyDataInput.length,
         routineConfig: routineConfigInput ? 1 : 0,
       },
     });

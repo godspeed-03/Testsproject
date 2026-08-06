@@ -33,7 +33,10 @@ export default function BatchRevisionCompletionModal({
   const clusterItems: TopicClusterItem[] = React.useMemo(() => {
     if (!habit) return [];
     const matchedBatch = (batchedRevisions || []).find(
-      (b: any) => b.habitId === (habit.id || habit._id) || b.habitId === habit.customId
+      (b: any) =>
+        b.habitId === (habit.id || habit._id) ||
+        b.habitId === habit.customId ||
+        (b.title && habit.title && String(b.title).trim() === String(habit.title).trim())
     );
     if (matchedBatch && Array.isArray(matchedBatch.topicStatuses) && matchedBatch.topicStatuses.length > 0) {
       return matchedBatch.topicStatuses.map((t: any) => ({
@@ -74,23 +77,39 @@ export default function BatchRevisionCompletionModal({
       const savedCompletedArr: string[] = Array.isArray(hist?.completedTopics) ? hist.completedTopics : [];
 
       const matchedBatch = (batchedRevisions || []).find(
-        (b: any) => b.habitId === (habit.id || habit._id) || b.habitId === habit.customId
+        (b: any) =>
+          b.habitId === (habit.id || habit._id) ||
+          b.habitId === habit.customId ||
+          (b.title && habit.title && String(b.title).trim() === String(habit.title).trim())
       );
       const batchTopicStatuses = matchedBatch && Array.isArray(matchedBatch.topicStatuses) ? matchedBatch.topicStatuses : [];
 
       const initialMap: Record<string, boolean> = {};
       clusterItems.forEach((item) => {
         const key = getTopicKey(item);
+        const itemTopicLower = item.topic.toLowerCase().trim();
+        const itemSubjLower = item.subject.toLowerCase().trim();
+
         const batchItem = batchTopicStatuses.find(
-          (bt: any) => String(bt.topic).toLowerCase() === item.topic.toLowerCase()
+          (bt: any) =>
+            String(bt.topic || bt.topicId).toLowerCase().trim() === itemTopicLower &&
+            (!bt.subject || String(bt.subject).toLowerCase().trim() === itemSubjLower)
         );
 
-        if (isDone) {
-          initialMap[key] = true;
-        } else if (batchItem && typeof batchItem.isDone === "boolean") {
+        if (batchItem && typeof batchItem.isDone === "boolean") {
           initialMap[key] = batchItem.isDone;
         } else if (savedCompletedArr.length > 0) {
-          initialMap[key] = savedCompletedArr.includes(key) || savedCompletedArr.includes(item.topic);
+          initialMap[key] = savedCompletedArr.some((savedKey: string) => {
+            const savedLower = String(savedKey).toLowerCase().trim();
+            return (
+              savedLower === key.toLowerCase().trim() ||
+              savedLower === itemTopicLower ||
+              savedLower.endsWith(`|${itemTopicLower}`) ||
+              savedLower.includes(`|${itemSubjLower}|${itemTopicLower}`)
+            );
+          });
+        } else if (isDone) {
+          initialMap[key] = true;
         } else {
           initialMap[key] = false;
         }
@@ -143,7 +162,7 @@ export default function BatchRevisionCompletionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-999999 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-900 border border-purple-500/30 dark:border-purple-500/40 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="p-5 border-b border-purple-500/20 dark:border-purple-800/40 bg-purple-50/50 dark:bg-purple-950/20 flex items-center justify-between shrink-0">

@@ -356,7 +356,9 @@ export async function recalculateMonthlySnapshot(userId: string, monthKey?: stri
   });
 
   const sortedDayKeys = Array.from(dayKeysSet).sort();
-  await Promise.all(sortedDayKeys.map((dayKey) => recalculateDailySnapshot(effectiveUserId, dayKey)));
+  for (const dayKey of sortedDayKeys) {
+    await recalculateDailySnapshot(effectiveUserId, dayKey);
+  }
 
   const dailyDocs = await prisma.dailySnapshot.findMany({
     where: { userId: effectiveUserId, monthKey: mKey },

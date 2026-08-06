@@ -222,10 +222,11 @@ export async function GET(req: Request) {
     }
     const userId = user.userId;
 
-    const [habitsRaw, lists, syllabusItems] = await Promise.all([
+    const [habitsRaw, lists, syllabusItems, topicRevisions] = await Promise.all([
       prisma.habitItem.findMany({ where: { userId } }),
       prisma.checkList.findMany({ where: { userId } }),
       prisma.syllabusItem.findMany({ where: { userId } }),
+      prisma.topicRevision.findMany({ where: { userId } }),
     ]);
 
     const nowIst = new Date(new Date().getTime() + 5.5 * 3600000 + new Date().getTimezoneOffset() * 60000);
@@ -321,10 +322,20 @@ export async function GET(req: Request) {
       new Set([...syllabusItems.map((s: any) => s.subject).filter(Boolean), ...habitSubjects]),
     );
 
+    const CATEGORY_ORDER = ["gs1", "gs2", "gs3", "gs4", "maths", "csat"];
     const dbCategories = syllabusItems.map((s: any) => String(s.category || "").trim()).filter(Boolean);
-    const categories = Array.from(new Set(dbCategories));
+    const categories = Array.from(new Set(dbCategories)).sort((a, b) => {
+      const aLower = a.toLowerCase().trim();
+      const bLower = b.toLowerCase().trim();
+      const aIdx = CATEGORY_ORDER.findIndex((c) => aLower === c || aLower.startsWith(c));
+      const bIdx = CATEGORY_ORDER.findIndex((c) => bLower === c || bLower.startsWith(c));
+      if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+      if (aIdx !== -1) return -1;
+      if (bIdx !== -1) return 1;
+      return a.localeCompare(b);
+    });
 
-    return NextResponse.json({ habits, lists, syllabusSubjects, syllabusItems, categories });
+    return NextResponse.json({ habits, lists, syllabusSubjects, syllabusItems, topicRevisions, categories });
   } catch (error: any) {
     console.error("Failed to fetch habit tracker data:", error);
     return NextResponse.json({ error: "Database error" }, { status: 500 });

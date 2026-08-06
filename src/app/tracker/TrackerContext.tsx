@@ -289,6 +289,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [categories, setCategories] = useState<string[]>([]);
   const [syllabusSubjects, setSyllabusSubjects] = useState<string[]>([]);
   const [syllabusItems, setSyllabusItems] = useState<any[]>([]);
+  const [topicRevisions, setTopicRevisions] = useState<any[]>([]);
   const [formIsStudyTask, setFormIsStudyTask] = useState(true);
   const [formStudyTaskMode, setFormStudyTaskMode] = useState<'none' | 'single' | 'batch_revision'>('single');
   const [formIsBatchRevision, setFormIsBatchRevision] = useState(false);
@@ -486,8 +487,22 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
         const data = await res.json();
         setHabits(data.habits || []);
         setLists(data.lists || []);
-        if (data.categories) setCategories(data.categories);
+        if (data.categories) {
+          const CATEGORY_ORDER = ["gs1", "gs2", "gs3", "gs4", "maths", "csat"];
+          const sortedCats = [...(data.categories as string[])].sort((a, b) => {
+            const aLower = a.toLowerCase().trim();
+            const bLower = b.toLowerCase().trim();
+            const aIdx = CATEGORY_ORDER.findIndex((c) => aLower === c || aLower.startsWith(c));
+            const bIdx = CATEGORY_ORDER.findIndex((c) => bLower === c || bLower.startsWith(c));
+            if (aIdx !== -1 && bIdx !== -1) return aIdx - bIdx;
+            if (aIdx !== -1) return -1;
+            if (bIdx !== -1) return 1;
+            return a.localeCompare(b);
+          });
+          setCategories(sortedCats);
+        }
         if (data.syllabusItems) setSyllabusItems(data.syllabusItems);
+        if (data.topicRevisions) setTopicRevisions(data.topicRevisions);
         if (data.syllabusSubjects) {
           setSyllabusSubjects(data.syllabusSubjects);
           if (data.syllabusSubjects.length > 0 && !formSubject) {
@@ -590,15 +605,22 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     const selectedCat = typeof formCategory === 'string' ? formCategory : (formCategory?.label || '');
     if (!selectedCat) return syllabusSubjects;
 
-    const matched = (syllabusItems || [])
-      .filter((item: any) => {
-        const itemCat = String(item.category || '').trim();
-        return itemCat.toLowerCase() === selectedCat.trim().toLowerCase();
-      })
-      .map((item: any) => item.subject)
-      .filter(Boolean);
+    const catLower = selectedCat.trim().toLowerCase();
 
-    return Array.from(new Set(matched));
+    const fromSyl = (syllabusItems || [])
+      .filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower)
+      .map((item: any) => item.subject);
+
+    const fromHab = (habits || [])
+      .filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower)
+      .map((item: any) => item.subject);
+
+    const fromRev = (topicRevisions || [])
+      .filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower)
+      .map((item: any) => item.subject);
+
+    const allMatched = Array.from(new Set([...fromSyl, ...fromHab, ...fromRev].filter(Boolean)));
+    return allMatched.length > 0 ? allMatched : syllabusSubjects;
   };
 
   const handleOpenCreateModal = (type: 'habit' | 'task' | 'list' = 'task') => {
@@ -1087,6 +1109,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     categories,
     syllabusSubjects,
     syllabusItems,
+    topicRevisions,
     formIsStudyTask,
     setFormIsStudyTask,
     formStudyTaskMode,

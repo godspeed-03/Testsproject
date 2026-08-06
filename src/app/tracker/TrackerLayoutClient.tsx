@@ -30,6 +30,7 @@ import {
 import { useTracker, getTargetGoalLabel, calculateHabitStreak } from './TrackerContext';
 import ShadcnDatePicker from '@/components/ui/ShadcnDatePicker';
 import ShadcnSelect from '@/components/ui/ShadcnSelect';
+import ShadcnMultiSelect from '@/components/ui/ShadcnMultiSelect';
 import ShadcnTimePicker from '@/components/ui/ShadcnTimePicker';
 import TimetableCodeEditorModal from '@/components/TimetableCodeEditorModal';
 import BatchRevisionCompletionModal from '@/components/dashboard/BatchRevisionCompletionModal';
@@ -177,6 +178,7 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
     categories,
     syllabusSubjects,
     syllabusItems,
+    topicRevisions,
     formIsStudyTask,
     setFormIsStudyTask,
     formStudyTaskMode,
@@ -533,14 +535,11 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                 onChange={(val: string) => {
                                   const newCatObj = { id: val.toLowerCase(), label: val, icon: '📚', color: '#6366F1' };
                                   setFormCategory(newCatObj);
-                                  const matchedSubjects = (syllabusItems || [])
-                                    .filter((item: any) => {
-                                      const itemCat = String(item.category || '').trim();
-                                      return itemCat.toLowerCase() === val.trim().toLowerCase();
-                                    })
-                                    .map((item: any) => item.subject)
-                                    .filter(Boolean);
-
+                                  const catLower = val.trim().toLowerCase();
+                                  const fromSyl = (syllabusItems || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
+                                  const fromHab = (habits || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
+                                  const fromRev = (topicRevisions || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
+                                  const matchedSubjects = Array.from(new Set([...fromSyl, ...fromHab, ...fromRev].filter(Boolean)));
                                   const nextSubject = matchedSubjects.length > 0 ? matchedSubjects[0] : '';
                                   setFormSubject(nextSubject);
 
@@ -628,10 +627,11 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                                 onChange={(val: string) => {
                                   const newCatObj = { id: val.toLowerCase(), label: val, icon: '📚', color: '#6366F1' };
                                   setFormCategory(newCatObj);
-                                  const matchedSubjects = (syllabusItems || [])
-                                    .filter((item: any) => String(item.category || '').trim().toLowerCase() === val.trim().toLowerCase())
-                                    .map((item: any) => item.subject)
-                                    .filter(Boolean);
+                                  const catLower = val.trim().toLowerCase();
+                                  const fromSyl = (syllabusItems || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
+                                  const fromHab = (habits || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
+                                  const fromRev = (topicRevisions || []).filter((item: any) => String(item.category || '').trim().toLowerCase() === catLower).map((i: any) => i.subject);
+                                  const matchedSubjects = Array.from(new Set([...fromSyl, ...fromHab, ...fromRev].filter(Boolean)));
                                   const nextSubject = matchedSubjects.length > 0 ? matchedSubjects[0] : '';
                                   setFormSubject(nextSubject);
                                 }}
@@ -655,109 +655,80 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                             </div>
                           </div>
 
-                          {/* Topic Selection for active subject */}
-                          <div className="space-y-2.5 bg-white/90 dark:bg-slate-950/80 p-3.5 rounded-2xl border border-purple-500/30 dark:border-purple-500/40 shadow-xs">
-                            <div className="flex items-center justify-between">
-                              <label className="font-black text-xs text-purple-700 dark:text-purple-300 flex items-center gap-1.5">
-                                <span>Select Topics for {formSubject || 'Subject'}</span>
-                              </label>
-                            </div>
+                          {/* Topic Multi-Select Dropdown for active subject */}
+                          {(() => {
+                            const normalizedSubj = String(formSubject || '').trim().toLowerCase();
 
-                            {/* Direct Multi-Topic Selection from DB (Pills + Select All) */}
-                            {(() => {
-                              const fromHabits = (habits || [])
-                                .filter((h: any) => h.subject?.toLowerCase() === formSubject?.toLowerCase() && h.topic)
-                                .flatMap((h: any) => String(h.topic).split(',').map((t: string) => t.trim()));
+                            const fromHabits = (habits || [])
+                              .filter((h: any) => String(h.subject || '').trim().toLowerCase() === normalizedSubj && h.topic)
+                              .flatMap((h: any) => String(h.topic).split(',').map((t: string) => t.trim()));
 
-                              const fromSyllabus = (syllabusItems || [])
-                                .filter((s: any) => s.subject?.toLowerCase() === formSubject?.toLowerCase() && (s.topics || s.topic))
-                                .flatMap((s: any) => (Array.isArray(s.topics) ? s.topics : String(s.topics || s.topic).split(',').map((t: string) => t.trim())));
+                            const fromRevisions = (topicRevisions || [])
+                              .filter((r: any) => String(r.subject || '').trim().toLowerCase() === normalizedSubj && r.topic)
+                              .flatMap((r: any) => String(r.topic).split(',').map((t: string) => t.trim()));
 
-                              const existingTopics: string[] = Array.from(
-                                new Set([...fromHabits, ...fromSyllabus].filter(Boolean))
+                            const fromSyllabus = (syllabusItems || [])
+                              .filter((s: any) => String(s.subject || '').trim().toLowerCase() === normalizedSubj)
+                              .flatMap((s: any) => {
+                                const list: string[] = [];
+                                if (s.topic) list.push(String(s.topic).trim());
+                                if (s.topics) {
+                                  if (Array.isArray(s.topics)) list.push(...s.topics.map((t: any) => String(t).trim()));
+                                  else list.push(...String(s.topics).split(',').map((t: string) => t.trim()));
+                                }
+                                if (Array.isArray(s.rules)) {
+                                  s.rules.forEach((r: any) => {
+                                    if (r.topic) list.push(String(r.topic).trim());
+                                    if (r.title) list.push(String(r.title).trim());
+                                    if (r.name) list.push(String(r.name).trim());
+                                  });
+                                }
+                                return list;
+                              });
+
+                            const existingTopics: string[] = Array.from(
+                              new Set([...fromHabits, ...fromRevisions, ...fromSyllabus].filter(Boolean))
+                            );
+
+                            const catLabel = typeof formCategory === 'string' ? formCategory : (formCategory?.label || 'GS1');
+
+                            const selectedForThisSubj = formRevisionClusterBadges
+                              .filter((b: any) => String(b.subject || '').trim().toLowerCase() === normalizedSubj)
+                              .map((b: any) => b.topic);
+
+                            const options = existingTopics.map((top: string) => ({
+                              value: top,
+                              label: top,
+                            }));
+
+                            const handleSelectionChange = (newSelectedTopics: string[]) => {
+                              const otherSubjBadges = formRevisionClusterBadges.filter(
+                                (b: any) => String(b.subject || '').trim().toLowerCase() !== normalizedSubj
                               );
 
-                              if (existingTopics.length === 0) return null;
+                              const newSubjBadges = newSelectedTopics.map((top: string) => ({
+                                category: catLabel,
+                                subject: formSubject,
+                                topic: top,
+                              }));
 
-                              const catLabel = typeof formCategory === 'string' ? formCategory : (formCategory?.label || 'GS1');
-                              const allSelected = existingTopics.every((top: string) =>
-                                formRevisionClusterBadges.some(
-                                  (b: any) => b.subject?.toLowerCase() === formSubject.toLowerCase() && b.topic.toLowerCase() === top.toLowerCase()
-                                )
-                              );
+                              const updatedBadges = [...otherSubjBadges, ...newSubjBadges];
+                              setFormRevisionClusterBadges(updatedBadges);
+                            };
 
-                              return (
-                                <div className="space-y-2 pt-2 border-t border-purple-500/20 dark:border-purple-800/40">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-black uppercase tracking-wider text-purple-600 dark:text-purple-400 block">
-                                      Select Topics for {formSubject} ({existingTopics.length} in DB)
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        if (allSelected) {
-                                          // Remove all topics for this subject
-                                          setFormRevisionClusterBadges(
-                                            formRevisionClusterBadges.filter((b: any) => b.subject?.toLowerCase() !== formSubject.toLowerCase())
-                                          );
-                                        } else {
-                                          // Add all remaining topics for this subject
-                                          const existingForSubj = formRevisionClusterBadges.filter(
-                                            (b: any) => b.subject?.toLowerCase() === formSubject.toLowerCase()
-                                          );
-                                          const existingTopicNames = new Set(existingForSubj.map((b: any) => b.topic.toLowerCase()));
-                                          const newBadges = existingTopics
-                                            .filter((top: string) => !existingTopicNames.has(top.toLowerCase()))
-                                            .map((top: string) => ({ category: catLabel, subject: formSubject, topic: top }));
-                                          
-                                          const updatedBadges = [...formRevisionClusterBadges, ...newBadges];
-                                          setFormRevisionClusterBadges(updatedBadges);
-                                          if (!formTitle) setFormTitle(`Batch Revision (${updatedBadges.length} Topics)`);
-                                        }
-                                      }}
-                                      className="text-[10px] font-black text-purple-600 dark:text-purple-400 hover:underline cursor-pointer"
-                                    >
-                                      {allSelected ? 'Clear All for Subject' : '+ Select All Topics'}
-                                    </button>
-                                  </div>
-
-                                  <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto custom-scrollbar p-1">
-                                    {existingTopics.map((top: string) => {
-                                      const isSelected = formRevisionClusterBadges.some(
-                                        (b: any) => b.subject?.toLowerCase() === formSubject.toLowerCase() && b.topic.toLowerCase() === top.toLowerCase()
-                                      );
-                                      return (
-                                        <button
-                                          key={top}
-                                          type="button"
-                                          onClick={() => {
-                                            if (isSelected) {
-                                              setFormRevisionClusterBadges(
-                                                formRevisionClusterBadges.filter(
-                                                  (b: any) => !(b.subject?.toLowerCase() === formSubject.toLowerCase() && b.topic.toLowerCase() === top.toLowerCase())
-                                                )
-                                              );
-                                            } else {
-                                              const nextBadges = [...formRevisionClusterBadges, { category: catLabel, subject: formSubject, topic: top }];
-                                              setFormRevisionClusterBadges(nextBadges);
-                                              if (!formTitle) setFormTitle(`Batch Revision (${nextBadges.length} Topics)`);
-                                            }
-                                          }}
-                                          className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-2xs border ${
-                                            isSelected
-                                              ? 'bg-purple-600 border-purple-500 text-white shadow-purple-500/20'
-                                              : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-purple-500 hover:text-purple-600'
-                                          }`}
-                                        >
-                                          {isSelected ? '✓ ' : '+ '}{top}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
+                            return (
+                              <div className="space-y-2 bg-white/90 dark:bg-slate-950/80 p-3.5 rounded-2xl border border-purple-500/30 dark:border-purple-500/40 shadow-xs">
+                                <ShadcnMultiSelect
+                                  label={`Select Topics for ${formSubject || 'Subject'}`}
+                                  placeholder={loading ? "Loading topics from DB..." : `Select ${formSubject || 'subject'} topics...`}
+                                  options={options}
+                                  selectedValues={selectedForThisSubj}
+                                  onChange={handleSelectionChange}
+                                  isLoading={loading}
+                                />
+                              </div>
+                            );
+                          })()}
 
                           {/* Selected Revision Cluster Badges (Shows accumulated topics across different subjects & categories!) */}
                           <div className="space-y-1.5 p-3 rounded-2xl bg-purple-500/10 border border-purple-500/30 dark:bg-purple-950/30 dark:border-purple-800/50">

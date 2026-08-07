@@ -12,6 +12,7 @@ interface HabitCellTooltipProps {
   isDone: boolean;
   isFailed: boolean;
   isPast: boolean;
+  onLogUnscheduled?: () => void;
   children: React.ReactNode;
 }
 
@@ -23,6 +24,7 @@ export default function HabitCellTooltip({
   isDone,
   isFailed,
   isPast,
+  onLogUnscheduled,
   children
 }: HabitCellTooltipProps) {
   const [open, setOpen] = React.useState(false);
@@ -128,6 +130,20 @@ export default function HabitCellTooltip({
               </div>
             )}
           </div>
+
+          {onLogUnscheduled && !scheduled && !isPast && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(false);
+                onLogUnscheduled();
+              }}
+              className="mt-2 w-full py-1.5 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] flex items-center justify-center gap-1 shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+            >
+              ⚡ Log Extra Study
+            </button>
+          )}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

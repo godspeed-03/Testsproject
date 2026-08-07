@@ -1582,47 +1582,85 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
             </div>
 
             {/* Current Logged Till Now Status Card */}
-            <div className="p-3.5 rounded-2xl bg-accent-light border border-accent-primary/20 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-extrabold text-accent-primary">
-                <div className="w-2 h-2 rounded-full bg-accent-primary animate-pulse" />
-                <span>Logged Till Now Today</span>
-              </div>
-              <span className="px-3 py-1 rounded-xl bg-white dark:bg-slate-800 text-accent-primary font-black font-display text-xs shadow-xs border border-accent-primary/20">
-                {existingModalVal} {progressModalHabit.target?.unit || "hours"}
-              </span>
-            </div>
+            {(() => {
+              const formatLoggedAmount = (val: number, habit: any) => {
+                if (!val || val <= 0) return "0m";
+                const unitStr = (habit?.target?.unit || "").toLowerCase().trim();
+                
+                if (["mins", "minutes", "min", "minute"].includes(unitStr)) {
+                  const hrs = Math.floor(val / 60);
+                  const rem = val % 60;
+                  if (hrs > 0 && rem > 0) return `${hrs}h ${rem}m`;
+                  if (hrs > 0) return `${hrs} hrs`;
+                  return `${rem} mins`;
+                }
 
-            {/* Log Method Segmented Switcher (If existing value > 0) */}
-            {existingModalVal > 0 && (
-              <div className="grid grid-cols-2 gap-1.5 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 text-xs font-extrabold">
-                <button
-                  type="button"
-                  onClick={() => setProgressModalMode("add")}
-                  className={`py-2 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 ${
-                    progressModalMode === "add"
-                      ? "bg-accent-gradient text-white shadow-md shadow-accent/10 font-black"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                  }`}
-                >
-                  <Plus size={14} /> Add to{" "}
-                  <span className="font-display">
-                    {existingModalVal} {progressModalHabit.target?.unit || "h"}
-                  </span>
-                </button>
+                if (["hours", "hrs", "hour"].includes(unitStr)) {
+                  if (val > 24) {
+                    const hrs = Math.floor(val / 60);
+                    const rem = val % 60;
+                    if (hrs > 0 && rem > 0) return `${hrs}h ${rem}m`;
+                    if (hrs > 0) return `${hrs} hrs`;
+                    return `${rem} mins`;
+                  }
+                  const hrs = Math.floor(val);
+                  const rem = Math.round((val - hrs) * 60);
+                  if (hrs > 0 && rem > 0) return `${hrs}h ${rem}m`;
+                  if (hrs > 0) return `${hrs} hrs`;
+                  return `${rem} mins`;
+                }
 
-                <button
-                  type="button"
-                  onClick={() => setProgressModalMode("replace")}
-                  className={`py-2 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 ${
-                    progressModalMode === "replace"
-                      ? "bg-accent-gradient text-white shadow-md shadow-accent/10 font-black"
-                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
-                  }`}
-                >
-                  <Edit3 size={14} /> Overwrite Total
-                </button>
-              </div>
-            )}
+                return `${val} ${habit?.target?.unit || ""}`;
+              };
+
+              const formattedLoggedStr = formatLoggedAmount(existingModalVal, progressModalHabit);
+
+              return (
+                <>
+                  <div className="p-3.5 rounded-2xl bg-accent-light border border-accent-primary/20 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-extrabold text-accent-primary">
+                      <div className="w-2 h-2 rounded-full bg-accent-primary animate-pulse" />
+                      <span>Logged Till Now Today</span>
+                    </div>
+                    <span className="px-3 py-1 rounded-xl bg-white dark:bg-slate-800 text-accent-primary font-black font-display text-xs shadow-xs border border-accent-primary/20">
+                      {formattedLoggedStr}
+                    </span>
+                  </div>
+
+                  {/* Log Method Segmented Switcher (If existing value > 0) */}
+                  {existingModalVal > 0 && (
+                    <div className="grid grid-cols-2 gap-1.5 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800/80 text-xs font-extrabold">
+                      <button
+                        type="button"
+                        onClick={() => setProgressModalMode("add")}
+                        className={`py-2 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 ${
+                          progressModalMode === "add"
+                            ? "bg-accent-gradient text-white shadow-md shadow-accent/10 font-black"
+                            : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                        }`}
+                      >
+                        <Plus size={14} /> Add to{" "}
+                        <span className="font-display">
+                          {formattedLoggedStr}
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setProgressModalMode("replace")}
+                        className={`py-2 px-3 rounded-xl transition-all text-center flex items-center justify-center gap-1.5 ${
+                          progressModalMode === "replace"
+                            ? "bg-accent-gradient text-white shadow-md shadow-accent/10 font-black"
+                            : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                        }`}
+                      >
+                        <Edit3 size={14} /> Overwrite Total
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
 
             {/* Hero Stepper / Hours & Minutes Slider Controls */}
             {(() => {
@@ -1695,7 +1733,11 @@ export default function TrackerLayoutClient({ children }: { children: React.Reac
                 setProgressModalValue(Number((newTotalMins / 60).toFixed(4)));
               };
 
-              const existingValInHours = isMinsOnly ? (existingModalVal || 0) / 60 : existingModalVal || 0;
+              const existingValInHours = (() => {
+                if (!existingModalVal) return 0;
+                if (isMinsOnly || existingModalVal > 24) return existingModalVal / 60;
+                return existingModalVal;
+              })();
 
               const projectedTotalInHours =
                 progressModalMode === "add" && existingValInHours > 0

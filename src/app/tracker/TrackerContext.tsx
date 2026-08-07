@@ -872,10 +872,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       toast.error('Backdating is disabled: You cannot edit or log completion for past dates.');
       return;
     }
-    if (!isHabitScheduledForDate(h, date)) {
-      toast.warning('This habit is not scheduled for this date.');
-      return;
-    }
 
     const unitStr = (h.target?.unit || '').toLowerCase().trim();
     const customUnitStr = (h.target?.customUnit || '').toLowerCase().trim();

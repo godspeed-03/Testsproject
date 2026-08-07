@@ -400,10 +400,7 @@ export default function HabitsPage() {
                         const pTier = getHabitProgressColor(val, h.target?.value || 1, h.target?.unit, hist?.status);
 
                         let cellStyle = '';
-
-                        if (!scheduled) {
-                          cellStyle = 'bg-slate-100/30 dark:bg-slate-950/20 text-slate-400/50 dark:text-slate-600/50 border border-transparent';
-                        } else if (isSkipped) {
+                        if (isSkipped) {
                           cellStyle = 'bg-violet-600 text-white font-black shadow-md shadow-violet-500/40 border border-violet-400 ring-2 ring-violet-500/50';
                         } else if (isDone || pTier === 'done') {
                           cellStyle = 'bg-emerald-500 text-white font-black shadow-xs shadow-emerald-500/20 border border-emerald-400';
@@ -413,6 +410,8 @@ export default function HabitsPage() {
                           cellStyle = 'bg-amber-500 text-slate-950 font-black shadow-xs shadow-amber-500/20 border border-amber-400';
                         } else if (pTier === 'p25') {
                           cellStyle = 'bg-orange-500 text-white font-black shadow-xs shadow-orange-500/20 border border-orange-400';
+                        } else if (!scheduled) {
+                          cellStyle = 'bg-slate-100/30 dark:bg-slate-950/20 text-slate-400/50 dark:text-slate-600/50 border border-transparent';
                         } else if (isFailed) {
                           cellStyle = 'bg-rose-500 text-white font-black shadow-xs shadow-rose-500/20 border border-rose-400';
                         } else if (isToday) {
@@ -433,11 +432,12 @@ export default function HabitsPage() {
                             isDone={isDone}
                             isFailed={isFailed}
                             isPast={isPast}
+                            onLogUnscheduled={() => handleItemClick(h, d.iso)}
                           >
                             <div
                               className={`py-1 px-1 rounded-lg text-center transition-all flex items-center justify-center min-h-[28px] w-full cursor-default ${cellStyle}`}
                             >
-                              {!scheduled ? (
+                              {!scheduled && val === 0 && !isDone && !isSkipped ? (
                                 <span className="text-[10px] font-semibold text-slate-400/40 dark:text-slate-600/40">{d.dayNum}</span>
                               ) : (
                                 <span className="text-[11px] font-black font-display">{d.dayNum}</span>
@@ -487,9 +487,7 @@ export default function HabitsPage() {
                           const pTier = getHabitProgressColor(val, h.target?.value || 1, h.target?.unit, hist?.status);
 
                           let cardStyle = '';
-                          if (!scheduled) {
-                            cardStyle = 'bg-slate-100/50 dark:bg-slate-950/30 text-slate-300 dark:text-slate-700 border border-dashed border-slate-200 dark:border-slate-800 opacity-60';
-                          } else if (isSkipped) {
+                          if (isSkipped) {
                             cardStyle = 'bg-violet-600 text-white font-black shadow-md shadow-violet-500/40 border border-violet-400 ring-2 ring-violet-500/50';
                           } else if (isDone || pTier === 'done') {
                             cardStyle = 'bg-emerald-500 text-white font-black shadow-md shadow-emerald-500/20 border border-emerald-400';
@@ -499,6 +497,8 @@ export default function HabitsPage() {
                             cardStyle = 'bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/20 border border-amber-400';
                           } else if (pTier === 'p25') {
                             cardStyle = 'bg-orange-500 text-white font-black shadow-md shadow-orange-500/20 border border-orange-400';
+                          } else if (!scheduled) {
+                            cardStyle = 'bg-slate-100/50 dark:bg-slate-950/30 text-slate-300 dark:text-slate-700 border border-dashed border-slate-200 dark:border-slate-800 opacity-60';
                           } else if (isFailed) {
                             cardStyle = 'bg-rose-500 text-white font-black shadow-md shadow-rose-500/20 border border-rose-400';
                           } else if (w.isToday) {
@@ -555,6 +555,7 @@ export default function HabitsPage() {
                               isDone={isDone}
                               isFailed={isFailed}
                               isPast={isPast}
+                              onLogUnscheduled={() => handleItemClick(h, w.iso)}
                             >
                               <div
                                 className={`p-2 sm:p-2.5 rounded-xl text-center transition-all flex flex-col items-center justify-center gap-1 min-h-[64px] w-full cursor-default ${cardStyle}`}

@@ -147,6 +147,22 @@ export default function SyllabusPage() {
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [expandedSubjectIds, setExpandedSubjectIds] = useState<string[]>([]);
 
+  useEffect(() => {
+    try {
+      const savedMode = localStorage.getItem("upsc_syllabus_view_mode");
+      if (savedMode === "grid" || savedMode === "table") {
+        setViewMode(savedMode);
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleSetViewMode = (mode: "grid" | "table") => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem("upsc_syllabus_view_mode", mode);
+    } catch (e) {}
+  };
+
   const toggleExpandSubject = (subjectId: string) => {
     setExpandedSubjectIds((prev) =>
       prev.includes(subjectId) ? prev.filter((id) => id !== subjectId) : [...prev, subjectId]
@@ -543,7 +559,7 @@ export default function SyllabusPage() {
               <div className="flex items-center bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
                 <button
                   type="button"
-                  onClick={() => setViewMode("grid")}
+                  onClick={() => handleSetViewMode("grid")}
                   className={`px-2.5 py-1 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
                     viewMode === "grid"
                       ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs"
@@ -556,7 +572,7 @@ export default function SyllabusPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setViewMode("table")}
+                  onClick={() => handleSetViewMode("table")}
                   className={`px-2.5 py-1 rounded-lg text-xs font-black flex items-center gap-1.5 transition-all cursor-pointer ${
                     viewMode === "table"
                       ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-xs"

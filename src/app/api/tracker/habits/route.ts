@@ -575,7 +575,8 @@ export async function POST(req: Request) {
     // Action: toggle_log
     if (action === "toggle_log") {
       const { habitId, date, status, value, note } = body;
-      const todayStr = new Date().toISOString().split("T")[0];
+      const nowIst = new Date(new Date().getTime() + 5.5 * 3600000 + new Date().getTimezoneOffset() * 60000);
+      const todayStr = nowIst.toISOString().split("T")[0];
       if (date < todayStr) {
         return NextResponse.json(
           { error: "Backdating is disabled. Completion cannot be modified for past dates." },

@@ -55,9 +55,16 @@ export default function HabitsPage() {
   const textMuted = 'text-slate-500 dark:text-slate-400';
 
   const todayIso = getTodayIso();
-  const habitList = [...habits.filter((h: any) => h.type === 'habit')].sort((a: any, b: any) => {
-    return (a.title || '').localeCompare(b.title || '');
-  });
+  const habitList = habits
+    .filter((h: any) => {
+      if (h.type === 'task' || h.type === 'todo') return false;
+      if (h.isStudyTask) return false;
+      if (h.isBatchRevision || h.isBatchedRevision) return false;
+      if (h.frequency?.mode === 'once') return false;
+      if (typeof h.title === 'string' && (/^\[R[123]\s+Revision\]/i.test(h.title.trim()) || /automated spaced repetition/i.test(h.description || ''))) return false;
+      return true;
+    })
+    .sort((a: any, b: any) => (a.title || '').localeCompare(b.title || ''));
 
   const getMonthDaysForOffset = (offsetMonths: number = 0) => {
     const today = new Date();
@@ -232,21 +239,27 @@ export default function HabitsPage() {
 
                     {/* Right Corner Badges */}
                     <div className="flex items-center gap-1.5 text-xs font-bold shrink-0">
-                      {h.target?.unit === 'time' || h.target?.targetTime ? (
-                        <span className={`px-2 py-0.5 rounded-lg border text-2xs font-black flex items-center gap-1 ${
-                          todayHist?.wakeTime
-                            ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30'
-                            : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-200 border-indigo-500/30'
-                        }`}>
-                          ⏰ {todayHist?.wakeTime ? `${todayHist.wakeTime} (${todayHist.pts ?? 100} pts)` : (() => {
-                            const t = h.target?.targetTime || '04:00';
+                      {h.target?.unit === 'time' || h.target?.customUnit === 'time' || h.target?.targetTime ? (
+                        (() => {
+                          const formatTime12 = (t?: string) => {
+                            if (!t) return '04:00 AM';
+                            if (t.includes('AM') || t.includes('PM')) return t;
                             let [hStr, mStr] = t.split(':');
                             let hour = parseInt(hStr || '4', 10);
+                            if (isNaN(hour)) return t;
                             const isPm = hour >= 12;
                             const h12 = hour % 12 === 0 ? 12 : hour % 12;
                             return `${String(h12).padStart(2, '0')}:${mStr || '00'} ${isPm ? 'PM' : 'AM'}`;
-                          })()}
-                        </span>
+                          };
+
+                          const target12 = formatTime12(h.target?.targetTime || '04:00');
+
+                          return (
+                            <span className="px-2 py-0.5 rounded-lg border text-2xs font-black flex items-center gap-1 bg-indigo-500/15 text-indigo-700 dark:text-indigo-200 border-indigo-500/30">
+                              ⏰ Target: {target12}
+                            </span>
+                          );
+                        })()
                       ) : isNumeric ? (
                         <span className={`px-2 py-0.5 rounded-lg border text-2xs font-black ${
                           todayVal > 0
@@ -391,7 +404,7 @@ export default function HabitsPage() {
                         if (!scheduled) {
                           cellStyle = 'bg-slate-100/30 dark:bg-slate-950/20 text-slate-400/50 dark:text-slate-600/50 border border-transparent';
                         } else if (isSkipped) {
-                          cellStyle = 'bg-purple-600 text-white font-black shadow-md shadow-purple-500/40 border border-purple-400 ring-2 ring-purple-500/50';
+                          cellStyle = 'bg-violet-600 text-white font-black shadow-md shadow-violet-500/40 border border-violet-400 ring-2 ring-violet-500/50';
                         } else if (isDone || pTier === 'done') {
                           cellStyle = 'bg-emerald-500 text-white font-black shadow-xs shadow-emerald-500/20 border border-emerald-400';
                         } else if (pTier === 'p75') {
@@ -421,20 +434,15 @@ export default function HabitsPage() {
                             isFailed={isFailed}
                             isPast={isPast}
                           >
-                            <button
-                              type="button"
-                              disabled={!scheduled || (isPast && !isDone) || saving}
-                              onClick={() => handleItemClick(h, d.iso)}
-                              className={`py-1 px-1 rounded-lg text-center transition-all flex items-center justify-center min-h-[28px] w-full cursor-pointer ${cellStyle}`}
+                            <div
+                              className={`py-1 px-1 rounded-lg text-center transition-all flex items-center justify-center min-h-[28px] w-full cursor-default ${cellStyle}`}
                             >
-                              {togglingId === `${habitId}_${d.iso}` ? (
-                                <Loader2 size={10} className="animate-spin text-white" />
-                              ) : !scheduled ? (
+                              {!scheduled ? (
                                 <span className="text-[10px] font-semibold text-slate-400/40 dark:text-slate-600/40">{d.dayNum}</span>
                               ) : (
                                 <span className="text-[11px] font-black font-display">{d.dayNum}</span>
                               )}
-                            </button>
+                            </div>
                           </HabitCellTooltip>
                         );
                       })}
@@ -482,7 +490,7 @@ export default function HabitsPage() {
                           if (!scheduled) {
                             cardStyle = 'bg-slate-100/50 dark:bg-slate-950/30 text-slate-300 dark:text-slate-700 border border-dashed border-slate-200 dark:border-slate-800 opacity-60';
                           } else if (isSkipped) {
-                            cardStyle = 'bg-purple-600 text-white font-black shadow-md shadow-purple-500/40 border border-purple-400 ring-2 ring-purple-500/50';
+                            cardStyle = 'bg-violet-600 text-white font-black shadow-md shadow-violet-500/40 border border-violet-400 ring-2 ring-violet-500/50';
                           } else if (isDone || pTier === 'done') {
                             cardStyle = 'bg-emerald-500 text-white font-black shadow-md shadow-emerald-500/20 border border-emerald-400';
                           } else if (pTier === 'p75') {
@@ -548,21 +556,16 @@ export default function HabitsPage() {
                               isFailed={isFailed}
                               isPast={isPast}
                             >
-                              <button
-                                type="button"
-                                disabled={!scheduled || (isPast && !isDone && !isFailed) || saving}
-                                onClick={() => handleItemClick(h, w.iso)}
-                                className={`p-2 sm:p-2.5 rounded-xl text-center transition-all flex flex-col items-center justify-center gap-1 min-h-[64px] w-full cursor-pointer ${cardStyle}`}
+                              <div
+                                className={`p-2 sm:p-2.5 rounded-xl text-center transition-all flex flex-col items-center justify-center gap-1 min-h-[64px] w-full cursor-default ${cardStyle}`}
                               >
                                 <span className="text-[10px] font-black uppercase tracking-wider">{w.dayName}</span>
-                                {togglingId === `${habitId}_${w.iso}` ? (
-                                  <Loader2 size={14} className="animate-spin text-white" />
-                                ) : !scheduled ? (
+                                {!scheduled ? (
                                   <span className="text-[9px] font-bold uppercase opacity-60">Off</span>
                                 ) : (
                                   <span className="text-xs font-black">{w.dayNum}</span>
                                 )}
-                              </button>
+                              </div>
                             </HabitCellTooltip>
                           );
                         })}

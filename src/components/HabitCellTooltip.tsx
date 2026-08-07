@@ -66,7 +66,7 @@ export default function HabitCellTooltip({
                 <Check size={10} /> Done ({pct}%)
               </span>
             ) : hist?.status === 'skipped' || hist?.status === 'rest' ? (
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1">
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-violet-500/20 text-violet-300 border border-violet-500/40 flex items-center gap-1">
                 ☕ Rest Day
               </span>
             ) : val > 0 ? (

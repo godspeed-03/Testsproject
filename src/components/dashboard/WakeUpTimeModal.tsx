@@ -80,7 +80,7 @@ export function calculateWakeUpTier(actualTimeStr: string, targetTimeStr: string
     return {
       tier: 3,
       pts: 10,
-      status: 'failed',
+      status: 'done',
       label: 'Major Delay',
       desc: 'Significant delay. Tier penalty applied.',
       streakAction: 'reset',

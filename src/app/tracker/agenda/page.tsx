@@ -63,6 +63,8 @@ export default function AgendaPage() {
     handleItemClick,
     handleMarkRestDay,
     batchedRevisions,
+    habits,
+    isHabitScheduledForDate,
   } = useTracker();
 
   const { isRestDayActive, completedCount, restCount } = React.useMemo(() => {
@@ -84,6 +86,27 @@ export default function AgendaPage() {
     const isRest = rest > 0 && (comp + rest === total);
     return { isRestDayActive: isRest, completedCount: comp, restCount: rest };
   }, [todayItems, selectedDate]);
+
+  const restDaysMap = React.useMemo(() => {
+    const map: Record<string, boolean> = {};
+    (weekDays || []).forEach((w: any) => {
+      const iso = w.iso;
+      const itemsForIso = (habits || []).filter((h: any) => isHabitScheduledForDate(h, iso));
+      if (itemsForIso.length > 0) {
+        let rest = 0;
+        let comp = 0;
+        itemsForIso.forEach((h: any) => {
+          const hist = (h.history || []).find((entry: any) => entry.date === iso);
+          if (hist?.status === "skipped" || hist?.status === "rest") rest++;
+          else if (hist?.status === "done" || (hist?.pts !== undefined && hist.pts > 0)) comp++;
+        });
+        if (rest > 0 && (comp + rest === itemsForIso.length)) {
+          map[iso] = true;
+        }
+      }
+    });
+    return map;
+  }, [weekDays, habits, isHabitScheduledForDate]);
 
   const cardBg = "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800/80";
   const textTitle = "text-slate-900 dark:text-slate-100";
@@ -137,7 +160,7 @@ export default function AgendaPage() {
                   type="button"
                   disabled={saving}
                   onClick={() => confirmRestDayWithSonner(() => handleMarkRestDay(selectedDate))}
-                  className="px-2 sm:px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-black hover:bg-amber-500/20 transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 shrink-0"
+                  className="px-2 sm:px-3 py-1.5 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-300 border border-violet-500/30 text-xs font-black hover:bg-violet-500/20 transition-all flex items-center gap-1 sm:gap-1.5 cursor-pointer shadow-xs disabled:opacity-50 shrink-0"
                 >
                   <Coffee size={14} />
                   <span>Rest Day</span>
@@ -198,12 +221,18 @@ export default function AgendaPage() {
               {weekDays.map((w: any) => {
                 const isSel = w.iso === selectedDate;
                 const isSunday = w.dayName === "Sun";
+                const isRestDay = Boolean(restDaysMap[w.iso]);
 
                 let cardBgClass = "";
                 if (isSel) {
-                  cardBgClass = w.isToday
+                  cardBgClass = isRestDay
+                    ? "bg-violet-600 text-white font-black shadow-md ring-2 ring-violet-300 scale-102 border border-violet-400"
+                    : w.isToday
                     ? "bg-accent-gradient text-white font-black shadow-md ring-2 ring-amber-400 scale-102"
                     : "bg-accent-gradient text-white font-black shadow-md scale-102";
+                } else if (isRestDay) {
+                  cardBgClass =
+                    "bg-violet-500/20 text-violet-600 dark:text-violet-300 border-2 border-violet-500/50 font-black shadow-xs hover:bg-violet-500/30";
                 } else if (w.isToday) {
                   cardBgClass =
                     "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-2 border-amber-500 font-extrabold shadow-xs hover:bg-amber-500/25";
@@ -243,12 +272,12 @@ export default function AgendaPage() {
 
       {/* Rest Day Active Hero Banner */}
       {isRestDayActive && (
-        <div className="p-8 sm:p-10 rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-slate-900/90 to-slate-900 text-center space-y-4 shadow-xl backdrop-blur-md">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-500 border border-amber-500/40 flex items-center justify-center mx-auto shadow-lg shadow-amber-500/10">
+        <div className="p-8 sm:p-10 rounded-3xl border border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-slate-900/90 to-slate-900 text-center space-y-4 shadow-xl backdrop-blur-md">
+          <div className="w-14 h-14 rounded-2xl bg-violet-500/20 text-violet-400 border border-violet-500/40 flex items-center justify-center mx-auto shadow-lg shadow-violet-500/10">
             <Coffee size={28} />
           </div>
           <div className="space-y-1.5 max-w-md mx-auto">
-            <h3 className="font-black text-lg sm:text-xl text-amber-400 font-display">
+            <h3 className="font-black text-lg sm:text-xl text-violet-300 font-display">
               {completedCount > 0 ? "Partial Rest Day ☕" : `${selectedDate === getTodayIso() ? "Today" : selectedDate} is a Rest Day ☕`}
             </h3>
             <p className="text-xs text-slate-300 font-medium leading-relaxed">
@@ -261,7 +290,7 @@ export default function AgendaPage() {
             <button
               type="button"
               onClick={() => setShowRestDayItems(!showRestDayItems)}
-              className="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold hover:bg-amber-500/30 transition-all cursor-pointer shadow-xs"
+              className="px-4 py-2 rounded-xl bg-violet-500/20 text-violet-300 border border-violet-500/40 text-xs font-bold hover:bg-violet-500/30 transition-all cursor-pointer shadow-xs"
             >
               {showRestDayItems ? "Hide Rest Day Habits" : "Show Rest Day Habits"}
             </button>
@@ -295,89 +324,129 @@ export default function AgendaPage() {
             ) : (
               displayItems.map((h: any) => {
             const hist = (h.history || []).find((entry: any) => entry.date === selectedDate);
+            const u = (h.target?.unit || 'times').toLowerCase().trim();
+            const cu = (h.target?.customUnit || '').toLowerCase().trim();
+            const formatTime12 = (t?: string) => {
+              if (!t) return '04:00 AM';
+              if (t.includes('AM') || t.includes('PM')) return t;
+              let [hStr, mStr] = t.split(':');
+              let hour = parseInt(hStr || '4', 10);
+              if (isNaN(hour)) return t;
+              const isPm = hour >= 12;
+              const h12 = hour % 12 === 0 ? 12 : hour % 12;
+              return `${String(h12).padStart(2, '0')}:${mStr || '00'} ${isPm ? 'PM' : 'AM'}`;
+            };
+            const isTimelyTarget = Boolean(
+              u === 'time' ||
+              cu === 'time' ||
+              h.target?.targetTime ||
+              hist?.wakeTime ||
+              (typeof h.title === 'string' && /wake|sleep|bedtime|timing/i.test(h.title))
+            );
+            const targetTimeDisplay = formatTime12(h.target?.targetTime || '04:00');
+            const loggedTimeDisplay = hist?.wakeTime ? formatTime12(hist.wakeTime) : null;
+            const ptsVal = hist?.pts;
+            const isTimelyPenalty = (ptsVal !== undefined && ptsVal <= 0) || (hist?.tier !== undefined && hist.tier >= 4);
+
             const isPastDate = selectedDate < getTodayIso();
-            const isDone = hist?.status === "done";
             const isSkipped = hist?.status === "skipped" || hist?.status === "rest";
             const loggedVal = hist ? hist.value || 0 : 0;
-            const isFailed = !isSkipped && (hist?.status === "failed" || hist?.status === "false" || (isPastDate && !isDone && loggedVal === 0)) && loggedVal === 0;
+
+            const isFailed = !isSkipped && (
+              (isTimelyTarget && (ptsVal !== undefined ? ptsVal <= 0 : (hist?.status === "failed" && (hist?.tier === undefined || hist?.tier >= 4)))) ||
+              (!isTimelyTarget && (hist?.status === "failed" || hist?.status === "false" || (isPastDate && hist?.status !== "done" && loggedVal === 0)))
+            );
+
+            const isDone = !isSkipped && !isFailed && (
+              hist?.status === "done" ||
+              (isTimelyTarget && ptsVal !== undefined && ptsVal > 0)
+            );
+
             const isNumeric =
               h.target?.unit &&
               h.target?.unit !== "yes_no" &&
               h.target?.unit !== "boolean" &&
               h.target?.unit !== "times";
 
-            const pTier = getHabitProgressColor(loggedVal, h.target?.value || 1, h.target?.unit, hist?.status);
+            let pTier = getHabitProgressColor(loggedVal, h.target?.value || 1, h.target?.unit, hist?.status);
+            if (isTimelyTarget && ptsVal !== undefined && !isSkipped) {
+              if (isTimelyPenalty) pTier = 'failed';
+              else if (ptsVal >= 100) pTier = 'done';
+              else if (ptsVal >= 75) pTier = 'p75';
+              else if (ptsVal >= 40) pTier = 'p50';
+              else if (ptsVal > 0) pTier = 'p25';
+            }
 
             const itemCardBg = isSkipped
-              ? "bg-amber-500/10 border-amber-500/40 dark:bg-amber-950/30 dark:border-amber-500/40"
-              : isDone || pTier === "done"
-                ? "bg-emerald-500/10 border-emerald-500/40 dark:bg-emerald-950/30 dark:border-emerald-500/40"
-                : pTier === "p75"
-                  ? "bg-lime-500/15 border-lime-500/50 dark:bg-lime-950/30 dark:border-lime-500/40"
-                  : pTier === "p50"
-                    ? "bg-amber-500/15 border-amber-500/50 dark:bg-amber-950/30 dark:border-amber-500/40"
-                    : pTier === "p25"
-                      ? "bg-orange-500/15 border-orange-500/50 dark:bg-orange-950/30 dark:border-orange-500/40"
-                      : isFailed
-                        ? "bg-rose-500/10 border-rose-500/40 dark:bg-rose-950/30 dark:border-rose-500/40"
+              ? "bg-violet-500/10 border-violet-500/40 dark:bg-violet-950/30 dark:border-violet-500/40"
+              : isFailed
+                ? "bg-rose-500/10 border-rose-500/40 dark:bg-rose-950/30 dark:border-rose-500/40"
+                : pTier === "done" || (isDone && ptsVal === undefined)
+                  ? "bg-emerald-500/10 border-emerald-500/40 dark:bg-emerald-950/30 dark:border-emerald-500/40"
+                  : pTier === "p75"
+                    ? "bg-lime-500/15 border-lime-500/50 dark:bg-lime-950/30 dark:border-lime-500/40"
+                    : pTier === "p50"
+                      ? "bg-amber-500/15 border-amber-500/50 dark:bg-amber-950/30 dark:border-amber-500/40"
+                      : pTier === "p25"
+                        ? "bg-orange-500/15 border-orange-500/50 dark:bg-orange-950/30 dark:border-orange-500/40"
                         : cardBg;
 
             const titleColorClass = isSkipped
-              ? "text-amber-600 dark:text-amber-400 font-black"
-              : isDone || pTier === "done"
-                ? "line-through text-emerald-700 dark:text-emerald-400"
-                : pTier === "p75"
-                  ? "text-lime-700 dark:text-lime-400 font-black"
-                  : pTier === "p50"
-                    ? "text-amber-700 dark:text-amber-400 font-black"
-                    : pTier === "p25"
-                      ? "text-orange-700 dark:text-orange-400 font-black"
-                      : isFailed
-                        ? "line-through text-rose-700 dark:text-rose-400"
+              ? "text-violet-600 dark:text-violet-400 font-black"
+              : isFailed
+                ? "line-through text-rose-700 dark:text-rose-400 font-black"
+                : pTier === "done" || (isDone && ptsVal === undefined)
+                  ? "line-through text-emerald-700 dark:text-emerald-400 font-black"
+                  : pTier === "p75"
+                    ? "line-through text-lime-700 dark:text-lime-400 font-black"
+                    : pTier === "p50"
+                      ? "line-through text-amber-700 dark:text-amber-400 font-black"
+                      : pTier === "p25"
+                        ? "line-through text-orange-700 dark:text-orange-400 font-black"
                         : textTitle;
 
             const badgeColorClass = isSkipped
-              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-              : isDone || pTier === "done"
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                : pTier === "p75"
-                  ? "bg-lime-500/10 text-lime-600 dark:text-lime-400 border-lime-500/30"
-                  : pTier === "p50"
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
-                    : pTier === "p25"
-                      ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30"
-                      : isFailed
-                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
+              ? "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/30"
+              : isFailed
+                ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30"
+                : pTier === "done" || (isDone && ptsVal === undefined)
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                  : pTier === "p75"
+                    ? "bg-lime-500/10 text-lime-600 dark:text-lime-400 border-lime-500/30"
+                    : pTier === "p50"
+                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                      : pTier === "p25"
+                        ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/30"
                         : "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20";
 
             const buttonStyleClass = isSkipped
-              ? "bg-amber-500/20 text-amber-500 border border-amber-500/40 shadow-sm"
-              : isDone || pTier === "done"
-                ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
-                : pTier === "p75"
-                  ? "bg-lime-500 text-slate-950 font-black shadow-md shadow-lime-500/30"
-                  : pTier === "p50"
-                    ? "bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/30"
-                    : pTier === "p25"
-                      ? "bg-orange-500 text-white font-black shadow-md shadow-orange-500/30"
-                      : isFailed
-                        ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 border border-rose-600"
+              ? "bg-violet-600 text-white shadow-md shadow-violet-500/30 border border-violet-500"
+              : isFailed
+                ? "bg-rose-600 text-white shadow-md shadow-rose-500/30 border border-rose-500"
+                : pTier === "done" || (isDone && ptsVal === undefined)
+                  ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
+                  : pTier === "p75"
+                    ? "bg-lime-500 text-slate-950 font-black shadow-md shadow-lime-500/30"
+                    : pTier === "p50"
+                      ? "bg-amber-500 text-slate-950 font-black shadow-md shadow-amber-500/30"
+                      : pTier === "p25"
+                        ? "bg-orange-500 text-white font-black shadow-md shadow-orange-500/30"
                         : "bg-slate-100 dark:bg-slate-800/80 hover:bg-emerald-500/10 hover:text-emerald-500 text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-emerald-500";
 
             const hasProgress = isSkipped || isDone || isFailed || pTier !== "none";
             const habitColor = h.color || null;
             const topAccentColor = isSkipped
-              ? "border-t-amber-500"
-              : isDone || pTier === "done"
-                ? "border-t-emerald-500"
-                : pTier === "p75"
-                  ? "border-t-lime-500"
-                  : pTier === "p50"
-                    ? "border-t-amber-500"
-                    : pTier === "p25"
-                      ? "border-t-orange-500"
-                      : isFailed
-                        ? "border-t-rose-500"
+              ? "border-t-violet-500"
+              : isFailed
+                ? "border-t-rose-500"
+                : pTier === "done" || (isDone && ptsVal === undefined)
+                  ? "border-t-emerald-500"
+                  : pTier === "p75"
+                    ? "border-t-lime-500"
+                    : pTier === "p50"
+                      ? "border-t-amber-500"
+                      : pTier === "p25"
+                        ? "border-t-orange-500"
                         : habitColor
                           ? ""
                           : "border-t-indigo-500";
@@ -385,19 +454,18 @@ export default function AgendaPage() {
 
             const progressBarFill = isSkipped
               ? "bg-amber-500"
-              : isDone || pTier === "done"
-                ? "bg-emerald-500"
-                : pTier === "p75"
-                  ? "bg-lime-500"
-                  : pTier === "p50"
-                    ? "bg-amber-500"
-                    : pTier === "p25"
-                      ? "bg-orange-500"
-                      : isFailed
-                        ? "bg-rose-500"
+              : isFailed
+                ? "bg-rose-500"
+                : pTier === "done" || (isDone && ptsVal === undefined)
+                  ? "bg-emerald-500"
+                  : pTier === "p75"
+                    ? "bg-lime-500"
+                    : pTier === "p50"
+                      ? "bg-amber-500"
+                      : pTier === "p25"
+                        ? "bg-orange-500"
                         : "bg-indigo-500";
 
-            const u = (h.target?.unit || 'times').toLowerCase().trim();
             const isTime = ['mins', 'minutes', 'min', 'minute', 'hours', 'hrs', 'hour'].includes(u);
             const loggedMins = ['hours', 'hrs', 'hour'].includes(u) ? Math.round(loggedVal * 60) : loggedVal;
             const targetMins = ['hours', 'hrs', 'hour'].includes(u) ? Math.round((h.target?.value || 1) * 60) : (h.target?.value || 1);
@@ -443,7 +511,19 @@ export default function AgendaPage() {
             const calcPct = isTime
               ? Math.round((loggedMins / Math.max(targetMins, 1)) * 100)
               : Math.round((loggedVal / Math.max(h.target?.value || 1, 1)) * 100);
-            const cardPct = isBatchRev ? (isDone ? 100 : batchPct) : (isDone ? 100 : Math.min(calcPct, 100));
+
+            let cardPct = 0;
+            if (isSkipped) {
+              cardPct = 100;
+            } else if (isFailed) {
+              cardPct = 0;
+            } else if (isTimelyTarget && ptsVal !== undefined) {
+              cardPct = Math.max(0, Math.min(ptsVal, 100));
+            } else if (isBatchRev) {
+              cardPct = isDone ? 100 : batchPct;
+            } else {
+              cardPct = isDone ? 100 : Math.min(calcPct, 100);
+            }
 
             if (layoutMode === "rows") {
               return (
@@ -505,7 +585,40 @@ export default function AgendaPage() {
                         {h.title}
                       </h4>
 
-                      {isNumeric ? (
+                      {isTimelyTarget ? (
+                        <span className={`px-2 py-1 rounded-lg text-[10px] font-black border shrink-0 flex items-center gap-2 ${
+                          isTimelyPenalty
+                            ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30 shadow-2xs'
+                            : ptsVal !== undefined && ptsVal >= 100
+                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 shadow-2xs'
+                              : ptsVal !== undefined && ptsVal >= 75
+                                ? 'bg-lime-500/15 text-lime-700 dark:text-lime-300 border-lime-500/30 shadow-2xs'
+                                : ptsVal !== undefined && ptsVal >= 40
+                                  ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 shadow-2xs'
+                                  : ptsVal !== undefined && ptsVal > 0
+                                    ? 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30 shadow-2xs'
+                                    : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-200 border-indigo-500/30'
+                        }`}>
+                          <span>🎯 Target: {targetTimeDisplay}</span>
+                          {loggedTimeDisplay && <span className="opacity-40">|</span>}
+                          {loggedTimeDisplay && <span>⏰ Logged: {loggedTimeDisplay}</span>}
+                          {ptsVal !== undefined && (
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
+                              isTimelyPenalty
+                                ? 'bg-rose-500/25 text-rose-800 dark:text-rose-200 border border-rose-500/30'
+                                : ptsVal >= 100
+                                  ? 'bg-emerald-500/25 text-emerald-800 dark:text-emerald-200 border border-emerald-500/30'
+                                  : ptsVal >= 75
+                                    ? 'bg-lime-500/25 text-lime-800 dark:text-lime-200 border border-lime-500/30'
+                                    : ptsVal >= 40
+                                      ? 'bg-amber-500/25 text-amber-800 dark:text-amber-200 border border-amber-500/30'
+                                      : 'bg-orange-500/25 text-orange-800 dark:text-orange-200 border border-orange-500/30'
+                            }`}>
+                              {ptsVal > 0 ? `+${ptsVal}` : ptsVal} pts
+                            </span>
+                          )}
+                        </span>
+                      ) : isNumeric ? (
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-black border shrink-0 ${badgeColorClass}`}>
                           {(() => {
                             if (isTime) {
@@ -708,7 +821,63 @@ export default function AgendaPage() {
                   {/* Goal display */}
                   <div>
                     <div className="flex items-center justify-between text-xs">
-                      {isNumeric ? (
+                      {isTimelyTarget ? (
+                        <div className={`w-full px-2.5 py-1.5 rounded-lg text-2xs font-bold border flex items-center justify-between gap-2 shadow-2xs ${
+                          isTimelyPenalty
+                            ? 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border-rose-500/30'
+                            : ptsVal !== undefined && ptsVal >= 100
+                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                              : ptsVal !== undefined && ptsVal >= 75
+                                ? 'bg-lime-500/15 text-lime-700 dark:text-lime-300 border-lime-500/30'
+                                : ptsVal !== undefined && ptsVal >= 40
+                                  ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30'
+                                  : ptsVal !== undefined && ptsVal > 0
+                                    ? 'bg-orange-500/15 text-orange-700 dark:text-orange-300 border-orange-500/30'
+                                    : 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-200 border-indigo-500/30'
+                        }`}>
+                          <div className="flex flex-col gap-0.5 leading-tight font-bold min-w-0">
+                            <div className="flex items-center gap-1 font-semibold opacity-90 truncate">
+                              <span>🎯 Target:</span>
+                              <span className="font-extrabold">{targetTimeDisplay}</span>
+                            </div>
+                            {loggedTimeDisplay ? (
+                              <div className="flex items-center gap-1 font-extrabold truncate">
+                                <span>⏰ Logged:</span>
+                                <span className="font-black">{loggedTimeDisplay}</span>
+                              </div>
+                            ) : isDone ? (
+                              <div className="flex items-center gap-1 font-extrabold truncate">
+                                <span>⏰ Status:</span>
+                                <span className="font-black">Completed</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 text-[9.5px] opacity-75 truncate">
+                                <span>⏰ Status:</span>
+                                <span>Pending Log</span>
+                              </div>
+                            )}
+                          </div>
+                          {ptsVal !== undefined ? (
+                            <div className={`text-[10px] font-black px-2 py-1 rounded-md shrink-0 self-center ${
+                              isTimelyPenalty
+                                ? 'bg-rose-500/25 text-rose-800 dark:text-rose-200 border border-rose-500/30'
+                                : ptsVal >= 100
+                                  ? 'bg-emerald-500/25 text-emerald-800 dark:text-emerald-200 border border-emerald-500/30'
+                                  : ptsVal >= 75
+                                    ? 'bg-lime-500/25 text-lime-800 dark:text-lime-200 border border-lime-500/30'
+                                    : ptsVal >= 40
+                                      ? 'bg-amber-500/25 text-amber-800 dark:text-amber-200 border border-amber-500/30'
+                                      : 'bg-orange-500/25 text-orange-800 dark:text-orange-200 border border-orange-500/30'
+                            }`}>
+                              {ptsVal > 0 ? `+${ptsVal}` : ptsVal} pts
+                            </div>
+                          ) : (
+                            <div className="text-[9.5px] font-black opacity-75 px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 shrink-0">
+                              Target
+                            </div>
+                          )}
+                        </div>
+                      ) : isNumeric ? (
                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-black border ${badgeColorClass}`}>
                           Logged: {(() => {
                             if (isTime) {
@@ -802,10 +971,10 @@ export default function AgendaPage() {
                       <Loader2 size={14} className={`animate-spin ${isDone ? "text-white" : isFailed ? "text-white" : "text-indigo-600 dark:text-indigo-400"}`} />
                     ) : isSkipped ? (
                       <Coffee size={15} className="stroke-[2.5]" />
-                    ) : isDone || pTier === "done" ? (
-                      <Check size={16} className="stroke-[3]" />
                     ) : isFailed ? (
                       <X size={16} className="stroke-[3]" />
+                    ) : isDone || pTier === "done" ? (
+                      <Check size={16} className="stroke-[3]" />
                     ) : isBatchRev ? (
                       <Eye size={16} className="stroke-[2.5] text-purple-400" />
                     ) : pTier === "p75" || pTier === "p50" || pTier === "p25" ? (

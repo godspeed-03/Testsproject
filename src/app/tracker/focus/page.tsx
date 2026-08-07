@@ -16,10 +16,14 @@ interface SessionLap {
 export default function FocusPage() {
   const {
     habits,
+    loading,
     saving,
     timerHabitId,
     setTimerHabitId,
+    handleSetTimerHabitId,
     timerRunning,
+    timerStartTime,
+    baseAccumulatedSecs,
     timerElapsed,
     laps,
     setLaps,
@@ -91,31 +95,50 @@ export default function FocusPage() {
   });
 
   useEffect(() => {
+    if (loading) return;
+
     if (finalHabitList.length > 0) {
       const exists = finalHabitList.some((h: any) => (h.id || h._id) === timerHabitId);
       if (!exists) {
-        setTimerHabitId(finalHabitList[0].id || finalHabitList[0]._id);
+        try {
+          const saved = localStorage.getItem("upsc_stopwatch_state");
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed?.habitId) {
+              const savedExists = finalHabitList.some((h: any) => (h.id || h._id) === parsed.habitId);
+              if (savedExists) {
+                const choiceSetter = handleSetTimerHabitId || setTimerHabitId;
+                choiceSetter(parsed.habitId);
+                return;
+              }
+            }
+          }
+        } catch (e) {}
+
+        const choiceSetter = handleSetTimerHabitId || setTimerHabitId;
+        choiceSetter(finalHabitList[0].id || finalHabitList[0]._id);
       }
-    } else {
-      setTimerHabitId("");
     }
-  }, [finalHabitList, timerHabitId]);
+  }, [finalHabitList, timerHabitId, loading]);
 
   const activeHabit = habits.find((h: any) => (h.id || h._id) === timerHabitId) || finalHabitList[0];
 
   // Current session duration metrics
   const sessionHoursNum = Number((timerElapsed / 3600).toFixed(2));
 
-  // Goal & Logged Progress for Active Habit
+  // Goal & Logged Progress for Active Habit (DB values stored in minutes)
   const existingEntry = activeHabit ? (activeHabit.history || []).find((e: any) => e.date === todayStr) : null;
-  const currentLoggedHours = existingEntry ? Number((existingEntry.value || 0).toFixed(2)) : 0;
-  const targetGoalHours = activeHabit?.target?.value || 3;
-  const projectedTotalHours = Number((currentLoggedHours + sessionHoursNum).toFixed(2));
-  const goalProgressPct = Math.min(100, Math.round((projectedTotalHours / Math.max(1, targetGoalHours)) * 100));
+  const currentLoggedMinutes = existingEntry ? (existingEntry.value || 0) : 0;
+  const currentLoggedHours = currentLoggedMinutes / 60;
+  const targetValMinutes = activeHabit?.target?.value || 180;
+  const targetGoalHours = targetValMinutes / 60;
+  const projectedTotalHours = currentLoggedHours + sessionHoursNum;
+  const goalProgressPct = Math.min(100, Math.round((projectedTotalHours / Math.max(0.1, targetGoalHours)) * 100));
 
   // Helper to format decimal hours to human readable X hr Y mins
   const formatHoursAndMins = (hrsDecimal: number) => {
     const totalMins = Math.round(hrsDecimal * 60);
+    if (totalMins <= 0) return "0 mins";
     const h = Math.floor(totalMins / 60);
     const m = totalMins % 60;
     if (h > 0 && m > 0) return `${h} hr ${m} mins`;
@@ -166,23 +189,21 @@ export default function FocusPage() {
     }
 
     const focusMinutes = Math.max(1, Math.round(timerElapsed / 60));
-    const focusHours = Number((focusMinutes / 60).toFixed(2));
-    const newTotalVal = Number((currentLoggedHours + focusHours).toFixed(2));
+    const newTotalMinutes = currentLoggedMinutes + focusMinutes;
 
-    const targetVal = activeHabit.target?.value || 0;
     const isYesNoUnit = activeHabit.target?.unit === "yes_no" || activeHabit.target?.unit === "boolean";
-    const isGoalMet = isYesNoUnit || targetVal === 0 || newTotalVal >= targetVal;
+    const isGoalMet = isYesNoUnit || targetValMinutes === 0 || newTotalMinutes >= targetValMinutes;
     const targetStatus = isGoalMet ? "done" : "pending";
 
-    await handleToggleLog(activeHabit.id || activeHabit._id, todayStr, targetStatus, focusHours, true);
+    await handleToggleLog(activeHabit.id || activeHabit._id, todayStr, targetStatus, focusMinutes, true);
 
     if (isGoalMet) {
       setLogSuccessMessage(
-        `🎉 Goal Reached! Saved +${formatHoursAndMins(focusHours)} to "${activeHabit.title}". Total: ${formatHoursAndMins(newTotalVal)} / ${formatHoursAndMins(targetGoalHours)}`,
+        `🎉 Goal Reached! Saved +${formatHoursAndMins(focusMinutes / 60)} to "${activeHabit.title}". Total: ${formatHoursAndMins(newTotalMinutes / 60)} / ${formatHoursAndMins(targetGoalHours)}`,
       );
     } else {
       setLogSuccessMessage(
-        `⏱ Saved +${formatHoursAndMins(focusHours)} to "${activeHabit.title}". Daily Total: ${formatHoursAndMins(newTotalVal)} / ${formatHoursAndMins(targetGoalHours)} (Pending completion)`,
+        `⏱ Saved +${formatHoursAndMins(focusMinutes / 60)} to "${activeHabit.title}". Daily Total: ${formatHoursAndMins(newTotalMinutes / 60)} / ${formatHoursAndMins(targetGoalHours)} (Pending completion)`,
       );
     }
 
@@ -239,21 +260,22 @@ export default function FocusPage() {
             <ShadcnSelect
               value={timerHabitId}
               onChange={(val: string) => {
-                setTimerHabitId(val);
+                const choiceSetter = handleSetTimerHabitId || setTimerHabitId;
+                choiceSetter(val);
                 if (typeof syncTimerToStorage === "function") {
-                  syncTimerToStorage(timerRunning, null, timerElapsed, val, laps);
+                  syncTimerToStorage(timerRunning, timerStartTime, baseAccumulatedSecs, val, laps);
                 }
               }}
               options={
                 finalHabitList.length > 0
                   ? finalHabitList.map((h: any) => {
                       const hist = (h.history || []).find((e: any) => e.date === todayStr);
-                      const valNum = hist ? hist.value || 0 : 0;
-                      const tgtNum = h.target?.value || 0;
+                      const valMins = hist ? hist.value || 0 : 0;
+                      const tgtMins = h.target?.value || 0;
                       const progressStr =
-                        valNum > 0
-                          ? ` [${formatHoursAndMins(valNum)} / ${formatHoursAndMins(tgtNum)}]`
-                          : ` [Goal: ${formatHoursAndMins(tgtNum)}]`;
+                        valMins > 0
+                          ? ` [${formatHoursAndMins(valMins / 60)} / ${formatHoursAndMins(tgtMins / 60)}]`
+                          : ` [Goal: ${formatHoursAndMins(tgtMins / 60)}]`;
                       return {
                         value: h.id || h._id,
                         label: `${h.icon || "📚"} ${h.title}${progressStr}`,

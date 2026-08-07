@@ -59,7 +59,7 @@ export const confirmRestDayWithSonner = (
   toast.custom((t) => (
     <div className="w-full max-w-sm p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800/90 shadow-2xl space-y-3 font-sans text-slate-900 dark:text-slate-100 animate-in fade-in zoom-in-95 duration-150 glass-panel">
       <div className="flex items-start gap-3">
-        <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
+        <div className="w-9 h-9 rounded-xl bg-violet-500/15 text-violet-600 dark:text-violet-300 border border-violet-500/30 flex items-center justify-center shrink-0 shadow-sm mt-0.5">
           <Coffee size={20} strokeWidth={2.2} />
         </div>
         <div className="flex-1 min-w-0">
@@ -83,7 +83,7 @@ export const confirmRestDayWithSonner = (
             toast.dismiss(t);
             onConfirm();
           }}
-          className="px-4 py-1.5 rounded-xl text-xs font-black bg-amber-500 hover:bg-amber-600 text-white shadow-md shadow-amber-500/20 transition-all cursor-pointer active:scale-95"
+          className="px-4 py-1.5 rounded-xl text-xs font-black bg-violet-600 hover:bg-violet-700 text-white shadow-md shadow-violet-500/20 transition-all cursor-pointer active:scale-95"
         >
           Mark Rest Day
         </button>
@@ -114,7 +114,7 @@ export const getTomorrowIso = (): string => {
 
 export const getHabitProgressColor = (loggedVal: number, targetVal: number, unitStr: string, status?: string) => {
   if (status === 'done') return 'done';
-  if ((status === 'failed' || status === 'false') && (!loggedVal || loggedVal <= 0)) return 'failed';
+  if (status === 'failed' || status === 'false') return 'failed';
   if (!loggedVal || loggedVal <= 0) return 'none';
 
   let normLogged = loggedVal;
@@ -489,6 +489,11 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const [timerElapsed, setTimerElapsed] = useState<number>(0);
   const [laps, setLaps] = useState<any[]>([]);
 
+  const handleSetTimerHabitId = (id: string) => {
+    setTimerHabitId(id);
+    syncTimerToStorage(timerRunning, timerStartTime, baseAccumulatedSecs, id, laps);
+  };
+
   // 1. Load persistent timer state on initial mount from localStorage
   useEffect(() => {
     try {
@@ -664,15 +669,22 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     }
 
     setFormTargetVal(val);
-    const knownUnits = ['yes_no', 'minutes', 'mins', 'min', 'minute', 'lectures', 'times', 'pages', 'answers', 'Liters', 'km'];
-    if (knownUnits.includes(u)) {
-      setFormTargetUnit(u);
+    const isTimely = rawUnit === 'time' || item.target?.customUnit === 'time' || Boolean(item.target?.targetTime);
+    if (isTimely) {
+      setFormTargetUnit('time');
+      setFormWakeUpTargetTime(item.target?.targetTime || '04:00');
       setFormCustomUnit('');
     } else {
-      setFormTargetUnit('custom');
-      setFormCustomUnit(u);
+      const knownUnits = ['yes_no', 'minutes', 'mins', 'min', 'minute', 'lectures', 'times', 'pages', 'answers', 'Liters', 'km'];
+      if (knownUnits.includes(u)) {
+        setFormTargetUnit(u);
+        setFormCustomUnit('');
+      } else {
+        setFormTargetUnit('custom');
+        setFormCustomUnit(u);
+      }
     }
-    setFormStartDate(item.startDate || new Date().toISOString().split('T')[0]);
+    setFormStartDate(item.startDate || getTodayIso());
     setFormEndDate(item.endDate || '');
 
     const isBatchRev = Boolean(item.isBatchRevision);
@@ -857,18 +869,21 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
 
     const todayStr = getTodayIso();
     if (date < todayStr) {
-      alert('Backdating is disabled: You cannot edit or log completion for past dates.');
+      toast.error('Backdating is disabled: You cannot edit or log completion for past dates.');
       return;
     }
     if (!isHabitScheduledForDate(h, date)) {
-      alert('This habit is not scheduled for this date.');
+      toast.warning('This habit is not scheduled for this date.');
       return;
     }
 
+    const unitStr = (h.target?.unit || '').toLowerCase().trim();
+    const customUnitStr = (h.target?.customUnit || '').toLowerCase().trim();
     const isWakeUpHabit = Boolean(
-      h.target?.unit === 'time' ||
+      unitStr === 'time' ||
+      customUnitStr === 'time' ||
       h.target?.targetTime ||
-      (typeof h.title === 'string' && /wake\s*up/i.test(h.title))
+      (typeof h.title === 'string' && /wake|sleep|bedtime|timing/i.test(h.title))
     );
 
     if (isWakeUpHabit) {
@@ -879,7 +894,6 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     }
 
     const isRevision = typeof h.title === 'string' && /^\[R[123]\s+Revision\]/i.test(h.title);
-    const unitStr = (h.target?.unit || '').toLowerCase().trim();
     const isBooleanGoal = unitStr === 'yes_no' || unitStr === 'boolean' || h.type === 'event';
     
     if (isRevision || isBooleanGoal) {
@@ -937,9 +951,9 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
 
   const handleSaveHabitProgress = async (valToSave?: number) => {
     if (!progressModalHabit) return;
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayIso();
     if (progressModalDate < todayStr) {
-      alert('Backdating is disabled: You cannot edit or log completion for past dates.');
+      toast.error('Backdating is disabled: You cannot edit or log completion for past dates.');
       setShowProgressModal(false);
       return;
     }
@@ -1067,6 +1081,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
 
         const finalTargetUnit = formTargetUnit === 'custom' ? (formCustomUnit.trim() || 'times') : formTargetUnit;
 
+        const isTimeUnit = finalTargetUnit === 'time' || (formCustomUnit || '').toLowerCase().trim() === 'time' || /wake|sleep|bedtime|timing/i.test(computedTitle);
         const payload = {
           action: editingHabitId ? 'update' : 'create',
           id: editingHabitId,
@@ -1082,13 +1097,14 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           target: {
             value: (finalTargetUnit === 'yes_no' || finalTargetUnit === 'boolean') ? null : (Number(formTargetVal) || 1),
             unit: finalTargetUnit,
-            targetTime: finalTargetUnit === 'time' ? (formWakeUpTargetTime || '04:00') : undefined
+            customUnit: formTargetUnit === 'custom' ? formCustomUnit : undefined,
+            targetTime: isTimeUnit ? (formWakeUpTargetTime || '04:00') : undefined
           },
-          penaltyTiers: finalTargetUnit === 'time' ? [
+          penaltyTiers: isTimeUnit ? [
             { tier: 0, maxTime: "04:15", pts: 100, status: "done", label: "Perfect Wake-Up", streakAction: "increment" },
             { tier: 1, maxTime: "05:00", pts: 75, status: "done", label: "Grace Period", streakAction: "increment" },
             { tier: 2, maxTime: "06:00", pts: 40, status: "done", label: "Minor Delay", streakAction: "freeze" },
-            { tier: 3, maxTime: "07:00", pts: 10, status: "failed", label: "Major Delay", streakAction: "reset" },
+            { tier: 3, maxTime: "07:00", pts: 10, status: "done", label: "Major Delay", streakAction: "freeze" },
             { tier: 4, maxTime: "23:59", pts: -20, status: "failed", label: "Severe Miss", streakAction: "reset" }
           ] : undefined,
           startDate: formStartDate,
@@ -1223,7 +1239,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
 
     const days = [];
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getTodayIso();
 
     for (let i = 0; i < 7; i++) {
       const curr = new Date(startOfWeek);
@@ -1265,7 +1281,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   };
 
   const handleGoToToday = () => {
-    setSelectedDate(new Date().toISOString().split('T')[0]);
+    setSelectedDate(getTodayIso());
   };
 
   // Filter items for selectedDate
@@ -1400,6 +1416,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     setEditingHabitId,
     timerHabitId,
     setTimerHabitId,
+    handleSetTimerHabitId,
     timerMode,
     setTimerMode,
     timerSeconds,

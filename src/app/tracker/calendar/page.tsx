@@ -376,8 +376,12 @@ export default function CalendarPage() {
                     <span className="text-rose-600 dark:text-rose-400">Missed Dot (Red)</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-3.5 h-3.5 rounded-md bg-emerald-950 border border-emerald-500/50" />
+                    <span className="w-3.5 h-3.5 rounded-md bg-emerald-500 border border-emerald-400" />
                     <span className="text-slate-600 dark:text-slate-300">100% Tier Shading</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-3.5 h-3.5 rounded-md bg-violet-600 border border-violet-400" />
+                    <span className="text-slate-600 dark:text-slate-300">Rest Day</span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="w-3.5 h-3.5 rounded-md bg-rose-950 border border-rose-500/50" />
@@ -462,7 +466,8 @@ export default function CalendarPage() {
                         const scheduled = isHabitScheduledForDate(activeHabit, d.iso);
                         const hist = (activeHabit?.history || []).find((entry: any) => entry.date === d.iso);
                         const isDone = hist?.status === 'done';
-                        const isFailed = hist?.status === 'failed' || hist?.status === 'false';
+                        const isSkipped = hist?.status === 'skipped' || hist?.status === 'rest';
+                        const isFailed = !isSkipped && (hist?.status === 'failed' || hist?.status === 'false');
                         const val = hist ? (hist.value || 0) : 0;
                         const pTier = getHabitProgressColor(val, activeHabit?.target?.value || 1, activeHabit?.target?.unit, hist?.status);
 
@@ -470,6 +475,8 @@ export default function CalendarPage() {
 
                         if (!scheduled) {
                           cellStyle = 'bg-slate-100/50 dark:bg-slate-950/30 text-slate-300 dark:text-slate-700 border border-dashed border-slate-200 dark:border-slate-800 opacity-50';
+                        } else if (isSkipped) {
+                          cellStyle = 'bg-violet-600 text-white font-black shadow-md shadow-violet-500/40 border border-violet-400 ring-2 ring-violet-500/50';
                         } else if (isDone || pTier === 'done') {
                           cellStyle = 'bg-emerald-500 text-white font-black shadow-md shadow-emerald-500/20 border border-emerald-400';
                         } else if (pTier === 'p75') {
